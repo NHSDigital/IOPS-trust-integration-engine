@@ -1,4 +1,4 @@
-package uk.nhsdigital.integrationengine.configuration
+package uk.nhs.nhsdigital.integrationengine.configuration
 
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
