@@ -1,24 +1,48 @@
 package uk.nhs.nhsdigital.integrationengine.controller
 
 import ca.uhn.fhir.context.FhirContext
+import ca.uhn.hl7v2.DefaultHapiContext
+import ca.uhn.hl7v2.HapiContext
+import ca.uhn.hl7v2.model.Message
+import ca.uhn.hl7v2.model.v24.message.ADT_A01
+import ca.uhn.hl7v2.model.v24.message.ADT_A02
+import ca.uhn.hl7v2.model.v24.message.ADT_A03
+import ca.uhn.hl7v2.model.v24.message.ADT_A05
+import ca.uhn.hl7v2.model.v24.segment.*
+import ca.uhn.hl7v2.parser.CanonicalModelClassFactory
+import ca.uhn.hl7v2.parser.PipeParser
 import io.swagger.v3.oas.annotations.Operation
-
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.parameters.RequestBody
+import mu.KLogging
 import org.hl7.fhir.r4.model.*
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import uk.nhs.nhsdigital.integrationengine.util.FhirSystems
+import uk.nhs.nhsdigital.integrationengine.transforms.PIDtoFHIRPatient
+import uk.nhs.nhsdigital.integrationengine.transforms.PV1toFHIREncounter
 import java.text.SimpleDateFormat
+
 
 @RestController
 @RequestMapping("/HL7v2")
 class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
     val v2MediaType = "x-application/hl7-v2+er7"
     var sdf = SimpleDateFormat("yyyyMMddHHmm")
+
+    var context: HapiContext = DefaultHapiContext()
+
+    var pV1toFHIREncounter = PV1toFHIREncounter();
+    var piDtoFHIRPatient = PIDtoFHIRPatient();
+
+    init {
+        var mcf = CanonicalModelClassFactory("2.4")
+        context.setModelClassFactory(mcf)
+    }
+
+    companion object : KLogging()
 
     @Operation(summary = "Convert HL7 v2.4 ITK Message into FHIR R4 Resource")
     @PostMapping(path = ["/\$convertFHIRR4"], consumes = ["x-application/hl7-v2+er7"]
@@ -29,16 +53,56 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
         content = [ Content(mediaType = "x-application/hl7-v2+er7" ,
             examples = [
                 ExampleObject(
-                    name = "HL7 v2.4 ADT_A03 Discharge a Patient.",
+                    name = "HL7 v2.4 ADT_A01 Admit Inpatient",
+                    value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201010101418||ADT^A01^ADT_A01|1391320453338055|P|2.4|1|20101010141857|||GBR|UNICODE|EN||iTKv1.0\n" +
+                            "EVN||201010101400|||111111111^Cortana^Emily^^^Miss^^RCB55|201010101400\n" +
+                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|||GBR||DEU\n" +
+                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
+                            "NK1|1|SMITH^ALBERT^J^^MR^^L|1|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                            "PV1|1|I|RCB^OBS1^BAY2-6^RCB55|13|||C3456789^Darwin^Samuel^^^Dr^^^GMC|G5612908^Townley^Gregory^^^Dr^^^GMP|C3456789^Darwin^Samuel^^^Dr^^^GMC|300||||19|||||2139^^^VISITID|||||||||||||||||||||||||201010201716\n" +
+                            "PV2||||||||||||||||||||||||||||||||||||||C\n" +
+                            "ZU1|201010071234|1|C|201010091300||500|||||||||201010081200|201010081156|02|Y|0\n" +
+                            "ZU3|004|03|5|||||Normal|8b||1|1\n" +
+                            "ZU4||201010081756|201010090000\n" +
+                            "ZU8|Z|1|No",
+                    summary = "Admission Notification"),
+                ExampleObject(
+                    name = "HL7 v2.4 ADT_A03 Discharge Patient (Inpatient or Outpatient)",
                     value = "MSH|^~\\&|MATSYSTEM|RCB|PAS|RCB|201003311730||ADT^A03^ADT_A03|13403891320453338089|P|2.4|0|20100331173057|||GBR|UNICODE|EN||iTKv1.0\n" +
                             "EVN||201003311720|||111111111^Cortana^Emily^^Miss^^RCB55|201003311725\n" +
                             "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
-                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
+                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
                             "PV1|61|O|RCB^MATWRD^Bed 3^RCB55|82|||C3456789^Darwin^Samuel^^^Dr^^^GMC||C3456789^Darwin^Samuel^^^Dr^^^GMC|500||||79|B6||C3456789^Darwin^Samuel^^^Dr^^^GMC|Pregnant|11554^^^VISITID|||||||||||||||||19||||||||201003301100|201003311715\n" +
                             "PV2|||Labour||||||||||||||||||||||2|||||||||||||C",
-                    summary = "Discharge Notification")])])
+                    summary = "Discharge Notification"),
+                ExampleObject(
+                    name = "HL7 v2.4 ADT_A28 Create New Patient",
+                    value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201001021215||ADT^A28^ADT_A05|13403891320453338075|P|2.4|0|20100102121557|||GBR|UNICODE|EN||iTKv1.0\n" +
+                            "EVN||201001021213|||111111111^Cortana^Emily^^Miss^^RCB55|201001021213\n" +
+                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196513121515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
+                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
+                            "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                            "AL1|1|DA|Z88.5|5||199807011755\n" +
+                            "ZU8|U|1|Yes|",
+                    summary = "Create Patient"),
+                ExampleObject(
+                    name = "HL7 v2.4 ADT_A31 Update Patient Information",
+                    value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201001021236||ADT^A31^ADT_A05|134039113204538055|P|2.4|0|20100102123657|||GBR|UNICODE|EN||iTKv1.0\n" +
+                            "EVN||201001021237|||111111111^Cortana^Emily^^Miss^^RCB55|201001021230\n" +
+                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196513121515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
+                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
+                            "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                            "AL1|1|DA|Z88.5|5||199807011755\n" +
+                            "AL1|2|DA|T63.0|7||199306050000\n" +
+                            "ZU8|U|1|Yes",
+                    summary = "Update Patient")])])
     fun convertFHIR(@org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
-        return fhirContext.newJsonParser().encodeResourceToString(
+
+        var resource = convertADT(v2Message)
+        if (resource == null) return "" else
+        return fhirContext.newJsonParser().encodeResourceToString(resource)
+
+        /*return fhirContext.newJsonParser().encodeResourceToString(
             Encounter()
                 .setServiceProvider(Reference().setIdentifier(Identifier().setSystem(FhirSystems.ODS_CODE).setValue("RCP")))
                 .setClass_(Coding().setSystem("http://terminology.hl7.org/CodeSystem/v3-ActCode").setCode("AMB"))
@@ -51,7 +115,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
                     .setSystem(FhirSystems.SNOMED_CT)
                     .setCode("58000006")
                     .setDisplay("Patient discharge")
-                )))
+                )))*/
     }
 
     @Operation(summary = "Send a HL7 v2.4 ITK Message to a FHIR R4 Server")
@@ -75,5 +139,48 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
         @org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
         return "MSH|^~\\&|Main_HIS|XYZ_HOSPITAL|iFW|ABC_Lab|20160915003015||ACK|9B38584D|P|2.6.1|\n" +
                 "MSA|AA|9B38584D|Everything was okay dokay!|"
+    }
+
+    fun convertADT(message : String) : Resource? {
+        var pid: PID? = null
+        val evn: EVN? = null
+        var msh: MSH? = null
+        var pd1: PD1? = null
+        var nk1: List<NK1>? = null
+        var pv1: PV1? = null
+        var dg1: List<DG1>? = null
+
+        var message2 = message.replace("\n","\r")
+
+        var parser :PipeParser  = context.getPipeParser();
+        parser.parserConfiguration.isValidating = false
+        val v2message = parser.parse(message2)
+
+        if (v2message != null) {
+            logger.info(v2message.name)
+
+            if (v2message is ADT_A03) {
+                val adt03: ADT_A03 = v2message
+                pid = adt03.pid
+                pv1 = adt03.pV1
+            }
+            if (v2message is ADT_A01) {
+                pid = v2message.pid
+                pv1 = v2message.pV1
+            }
+            if (v2message is ADT_A02) {
+                pid = v2message.pid
+                pv1 = v2message.pV1
+            }
+            if (v2message is ADT_A05) {
+                pid = v2message.pid
+            }
+            if (pv1 != null) {
+                return pV1toFHIREncounter.transform(pv1)
+            } else if (pid != null) {
+                return piDtoFHIRPatient.transform(pid)
+            }
+        }
+        return null
     }
 }
