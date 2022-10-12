@@ -25,6 +25,7 @@ class PIDtoFHIRPatient : Transformer<PID, Patient> {
                             cx.assigningAuthority.namespaceID.value
                 if (cx.assigningAuthority.namespaceID.value == "NHS" || cx.assigningAuthority.namespaceID.value == "NH") {
                     identifier.system = "https://fhir.nhs.uk/Id/nhs-number"
+                   /*
                     val extension = identifier.addExtension()
                     extension.url =
                         "https://fhir.nhs.uk/R4/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
@@ -41,7 +42,7 @@ class PIDtoFHIRPatient : Transformer<PID, Patient> {
                             .setSystem("https://fhir.nhs.uk/R4/CodeSystem/UKCore-NHSNumberVerificationStatus").code =
                             "01"
                     }
-                    extension.setValue(concept)
+                    extension.setValue(concept)*/
                 }
             }
             patient.addIdentifier(identifier)

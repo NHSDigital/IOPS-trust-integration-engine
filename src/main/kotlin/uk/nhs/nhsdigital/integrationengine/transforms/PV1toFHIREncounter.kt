@@ -2,8 +2,8 @@ package uk.nhs.nhsdigital.integrationengine.transforms
 
 import ca.uhn.hl7v2.model.v24.segment.PV1
 import org.apache.commons.collections4.Transformer
-import org.hl7.fhir.r4.model.Coding
-import org.hl7.fhir.r4.model.Encounter
+import org.hl7.fhir.r4.model.*
+import uk.nhs.nhsdigital.integrationengine.util.FhirSystems
 
 class PV1toFHIREncounter : Transformer<PV1, Encounter> {
 
@@ -24,19 +24,18 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                 "E" -> {
                     encounter.class_ = Coding().setCode("EMER").setDisplay("emergency")
                         .setSystem("http://terminology.hl7.org/CodeSystem/v3-ActCode")
-                    encounter.status = Encounter.EncounterStatus.INPROGRESS
                 }
 
                 "O" -> {
                     encounter.class_ = Coding().setCode("AMB").setDisplay("ambulatory")
                         .setSystem("http://terminology.hl7.org/CodeSystem/v3-ActCode")
-                    encounter.status = Encounter.EncounterStatus.INPROGRESS
+
                 }
 
                 "I" -> {
                     encounter.class_ = Coding().setCode("IMP").setDisplay("inpatient encounter")
                         .setSystem("http://terminology.hl7.org/CodeSystem/v3-ActCode")
-                    encounter.status = Encounter.EncounterStatus.INPROGRESS
+
                 }
 
                 "P" -> {
@@ -47,13 +46,18 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
             }
         }
         if (pv1.admissionType != null) {
-            encounter.addType().addCoding().setCode(pv1.admissionType.value).system =
-                "https://fhir.nhs.uk/R4/CodeSystem/UKCore-AdmissionMethod"
+            var admissionMethod = Extension().setUrl("https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-AdmissionMethod")
+                .setValue(CodeableConcept().addCoding(
+                    Coding().setSystem("https://fhir.hl7.org.uk/CodeSystem/UKCore-AdmissionMethodEngland").setCode(pv1.admissionType.value)
+
+                ))
+            encounter.addExtension(admissionMethod)
         }
 
         if (pv1.admitDateTime != null) {
             try {
                 encounter.period.start = pv1.admitDateTime.timeOfAnEvent.valueAsDate
+                encounter.status = Encounter.EncounterStatus.INPROGRESS
             } catch (ex: Exception) {
             }
         }
@@ -112,18 +116,19 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
             }
         }
         if (pv1.hospitalService != null) {
-            encounter.addType().addCoding().setCode(pv1.hospitalService.value).system =
-                "https://fhir.nhs.uk/STU3/CodeSystem/DCH-Specialty-1"
+            encounter.serviceType = CodeableConcept().addCoding(Coding()
+                .setCode(pv1.hospitalService.value)
+                .setSystem("https://fhir.nhs.uk/CodeSystem/NHSDataModelAndDictionary-treatment-function"))
         }
 
         if (pv1.admitSource != null) {
             encounter.hospitalization.admitSource.addCoding().setCode(pv1.admitSource.value).system =
-                "https://fhir.nhs.uk/R4/CodeSystem/UKCore-SourceOfAdmission"
+                "https://fhir.nhs.uk/CodeSystem/UKCore-SourceOfAdmission"
         }
         if (pv1.dischargeDisposition != null && (pv1.dischargeDisposition.value != null) && (pv1.dischargeDisposition.value.isEmpty())) {
             // Note using disposition not location.
             encounter.hospitalization.dischargeDisposition.addCoding()
-                .setSystem("https://fhir.nhs.uk/R4/CodeSystem/UKCore-DischargeMethod").code =
+                .setSystem("https://fhir.hl7.org.uk/CodeSystem/UKCore-DischargeMethodEngland").code =
                 pv1.dischargeDisposition.value
         }
         /*
@@ -135,7 +140,18 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                     .setSystem("https://fhir.nhs.uk/R4/CodeSystem/UKCore-DischargeMethod")
                     .setCode(pv1.getDischargedToLocation().getDischargeLocation().getValue());
         }*/
-
+        if (pv1.assignedPatientLocation != null ) {
+            if (!pv1.assignedPatientLocation.pointOfCare.isEmpty) {
+                encounter.setServiceProvider(
+                    Reference().setIdentifier(Identifier().setSystem(FhirSystems.ODS_CODE).setValue(pv1.assignedPatientLocation.pointOfCare.value))
+                )
+            }
+            if (!pv1.assignedPatientLocation.facility.isEmpty) {
+                encounter.addLocation(Encounter.EncounterLocationComponent().setLocation(
+                    Reference().setIdentifier(Identifier().setSystem(FhirSystems.ODS_SITE_CODE).setValue(pv1.assignedPatientLocation.facility.namespaceID.value))
+                ))
+            }
+        }
 
         return encounter
     }

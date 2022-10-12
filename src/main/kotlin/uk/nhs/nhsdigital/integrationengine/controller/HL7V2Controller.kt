@@ -21,8 +21,10 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import uk.nhs.nhsdigital.integrationengine.transforms.PD1toFHIRPractitionerRole
 import uk.nhs.nhsdigital.integrationengine.transforms.PIDtoFHIRPatient
 import uk.nhs.nhsdigital.integrationengine.transforms.PV1toFHIREncounter
+import uk.nhs.nhsdigital.integrationengine.util.FhirSystems
 import java.text.SimpleDateFormat
 
 
@@ -36,6 +38,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
 
     var pV1toFHIREncounter = PV1toFHIREncounter();
     var piDtoFHIRPatient = PIDtoFHIRPatient();
+    var pD1toFHIRPractitionerRole = PD1toFHIRPractitionerRole()
 
     init {
         var mcf = CanonicalModelClassFactory("2.4")
@@ -111,10 +114,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
                     Period().setStart(sdf.parse("201003301100"))
                         .setEnd(sdf.parse("201003311715"))
                 )
-                .addType(CodeableConcept().addCoding(Coding()
-                    .setSystem(FhirSystems.SNOMED_CT)
-                    .setCode("58000006")
-                    .setDisplay("Patient discharge")
+                .addType(
                 )))*/
     }
 
@@ -149,6 +149,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
         var nk1: List<NK1>? = null
         var pv1: PV1? = null
         var dg1: List<DG1>? = null
+        var encounterType : CodeableConcept? = null;
 
         var message2 = message.replace("\n","\r")
 
@@ -163,22 +164,51 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
                 val adt03: ADT_A03 = v2message
                 pid = adt03.pid
                 pv1 = adt03.pV1
+                encounterType = CodeableConcept().addCoding(Coding()
+                    .setSystem(FhirSystems.SNOMED_CT)
+                    .setCode("58000006")
+                    .setDisplay("Patient discharge"))
             }
             if (v2message is ADT_A01) {
                 pid = v2message.pid
                 pv1 = v2message.pV1
+
+                encounterType = CodeableConcept().addCoding(Coding()
+                    .setSystem(FhirSystems.SNOMED_CT)
+                    .setCode("32485007")
+                    .setDisplay("Hospital admission"))
             }
             if (v2message is ADT_A02) {
                 pid = v2message.pid
                 pv1 = v2message.pV1
+                encounterType = CodeableConcept().addCoding(Coding()
+                    .setSystem(FhirSystems.SNOMED_CT)
+                    .setCode("107724000")
+                    .setDisplay("Patient transfer"))
             }
             if (v2message is ADT_A05) {
                 pid = v2message.pid
+                pd1 = v2message.pD1
             }
-            if (pv1 != null) {
-                return pV1toFHIREncounter.transform(pv1)
+            if (pv1 != null && pid != null) {
+                var encounter = pV1toFHIREncounter.transform(pv1)
+                var patient = piDtoFHIRPatient.transform(pid)
+                if (encounterType != null) encounter.serviceType = encounterType
+                for ( identifier in patient.identifier) {
+                    if (identifier.system.equals(FhirSystems.NHS_NUMBER)) encounter.subject = Reference().setIdentifier(identifier)
+                }
+                return encounter
+
             } else if (pid != null) {
-                return piDtoFHIRPatient.transform(pid)
+                var patient = piDtoFHIRPatient.transform(pid)
+                if (pd1 !=null) {
+                    var practitionerRole = pD1toFHIRPractitionerRole.transform(pd1)
+                    if (practitionerRole != null) {
+                        if (practitionerRole.hasPractitioner()) patient.addGeneralPractitioner(practitionerRole.practitioner)
+                        if (practitionerRole.hasOrganization()) patient.addGeneralPractitioner(practitionerRole.organization)
+                    }
+                }
+                return patient
             }
         }
         return null
