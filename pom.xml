@@ -63,6 +63,9 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- HAPI FHIR -->
+
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-base</artifactId>
@@ -109,6 +112,7 @@
             <version>${fhir.version}</version>
         </dependency>
 
+        <!-- HL7 v2 -->
 
         <!-- https://mvnrepository.com/artifact/ca.uhn.hapi/hapi -->
         <dependency>
@@ -123,6 +127,23 @@
             <artifactId>hapi-structures-v24</artifactId>
             <version>2.3</version>
         </dependency>
+
+
+        <!-- AWS -->
+
+        <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-cognitoidp -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-cognitoidp</artifactId>
+            <version>1.12.225</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-sqs -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-sqs</artifactId>
+            <version>1.12.252</version>
+        </dependency>
+
 
 
 
