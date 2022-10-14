@@ -20,7 +20,10 @@ import java.util.*
 class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGenericClient,
                //sqs: AmazonSQS?,
                   @Qualifier("R4") val ctx: FhirContext,
-                  val fhirServerProperties: FHIRServerProperties) {
+                  val fhirServerProperties: FHIRServerProperties,
+                  val awsOrganization: AWSOrganization,
+                  val awsPractitioner: AWSPractitioner,
+                  val awsAuditEvent: AWSAuditEvent) {
 
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
@@ -85,26 +88,23 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         }
         if (newPatient.hasGeneralPractitioner()) {
             var surgery : Organization? = null
-            for (practitioner in newPatient.generalPractitioner) {
-                if (practitioner.hasIdentifier() && practitioner.identifier.system.equals(FhirSystems.ODS_CODE)) {
-                    surgery = getOrganization(practitioner.identifier)
-                    if (surgery != null) practitioner.reference = "Organization/" + surgery.idElement.idPart
+            var practitioner : Practitioner? = null
+            for (generalPractitioner in newPatient.generalPractitioner) {
+                if (generalPractitioner.hasIdentifier() ) {
+                    if (generalPractitioner.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                        surgery = awsOrganization.getOrganization(generalPractitioner.identifier)
+                        if (surgery != null) generalPractitioner.reference = "Organization/" + surgery.idElement.idPart
+                    }
+                    if (generalPractitioner.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER) || generalPractitioner.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
+                        practitioner = awsPractitioner.getPractitioner(generalPractitioner.identifier)
+                        if (practitioner != null) generalPractitioner.reference = "Practitioner/" + practitioner.idElement.idPart
+                    }
                 }
             }
-            if (!patient.hasGeneralPractitioner()) {
-                changed = true
-            } else if (surgery != null && (!patient.generalPractitionerFirstRep.hasReference() || !patient.generalPractitionerFirstRep.reference.contains(
-                    surgery.idElement.idPart
-                ) ||
-                patient.generalPractitionerFirstRep.reference != "Organization/" + surgery.idElement.idPart
-            )) {
-                changed = true
-
-
-            }
-        } else {
-            throw UnprocessableEntityException("EMIS patient must have a general practitioner")
         }
+        // TODO do change detection
+        changed = true;
+
         if (!changed) return MethodOutcome().setResource(patient)
         var retry = 3
         while (retry > 0) {
@@ -112,7 +112,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
                 response = awsClient!!.update().resource(patient).withId(patient.id).execute()
                 log.info("AWS Patient updated " + response.resource.idElement.value)
                 val auditEvent = createAudit(patient, AuditEvent.AuditEventAction.C)
-                writeAWS(auditEvent)
+                awsAuditEvent.writeAWS(auditEvent)
                 break
             } catch (ex: Exception) {
                 // do nothing
@@ -132,7 +132,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         )
         for (practitioner in newPatient.generalPractitioner) {
             if (practitioner.hasIdentifier() && practitioner.identifier.system.equals(FhirSystems.ODS_CODE)) {
-                val surgery = getOrganization(practitioner.identifier)
+                val surgery = awsOrganization.getOrganization(practitioner.identifier)
                 if (surgery != null) practitioner.reference = "Organization/" + surgery.idElement.idPart
             }
         }
@@ -146,7 +146,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
                     .execute()
                 val patient = response.resource as Patient
                 val auditEvent = createAudit(patient, AuditEvent.AuditEventAction.C)
-                writeAWS(auditEvent)
+                awsAuditEvent.writeAWS(auditEvent)
                 break
             } catch (ex: Exception) {
                 // do nothing
@@ -158,31 +158,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         return response
     }
 
-    private fun getOrganization(identifier: Identifier): Organization? {
-        var bundle: Bundle? = null
-        var retry = 3
-        while (retry > 0) {
-            try {
-                bundle = awsClient
-                    .search<IBaseBundle>()
-                    .forResource(Organization::class.java)
-                    .where(
-                        Organization.IDENTIFIER.exactly()
-                            .systemAndCode(identifier.system, identifier.value)
-                    )
-                    .returnBundle(Bundle::class.java)
-                    .execute()
-                break
-            } catch (ex: Exception) {
-                // do nothing
-                log.error(ex.message)
-                retry--
-                if (retry == 0) throw ex
-            }
-        }
-        if (bundle == null || !bundle.hasEntry()) return null
-        return bundle.entryFirstRep.resource as Organization
-    }
+
 
     fun createAudit(patient: Patient, auditEventAction: AuditEvent.AuditEventAction?): AuditEvent {
         val auditEvent = AuditEvent()
@@ -219,20 +195,5 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         return auditEvent
     }
 
-    fun writeAWS(event: AuditEvent) {
-        val audit = ctx!!.newJsonParser().encodeResourceToString(event)
-        if (event.hasOutcome() && event.outcome != AuditEvent.AuditEventOutcome._0) {
-            log.error(audit)
-        } else {
-            log.info(audit)
-        }
-        /* Add back in at later date
-        val send_msg_request = SendMessageRequest()
-            .withQueueUrl(sqs.getQueueUrl(MessageProperties.getAwsQueueName()).getQueueUrl())
-            .withMessageBody(audit)
-            .withDelaySeconds(5)
-        sqs!!.sendMessage(send_msg_request)
 
-         */
-    }
 }

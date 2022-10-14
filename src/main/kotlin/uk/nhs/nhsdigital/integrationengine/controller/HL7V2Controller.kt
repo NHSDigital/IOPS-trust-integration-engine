@@ -26,6 +26,7 @@ import uk.nhs.nhsdigital.integrationengine.transforms.PIDtoFHIRPatient
 import uk.nhs.nhsdigital.integrationengine.transforms.PV1toFHIREncounter
 import uk.nhs.nhsdigital.integrationengine.util.FhirSystems
 import java.text.SimpleDateFormat
+import java.util.*
 
 
 @RestController
@@ -34,6 +35,9 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                      val awsPatient : AWSPatient) {
     val v2MediaType = "x-application/hl7-v2+er7"
     var sdf = SimpleDateFormat("yyyyMMddHHmm")
+
+    var timestampSS = SimpleDateFormat("yyyyMMddHHmmss")
+    var timestamp = SimpleDateFormat("yyyyMMddHHmm")
 
     var context: HapiContext = DefaultHapiContext()
 
@@ -150,10 +154,13 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     fun processEvent(
         @org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
         var resource = convertADT(v2Message)
+        var patient : Patient? = null;
         if (resource is Patient) {
-            awsPatient.createUpdateAWSPatient(resource)
+            patient = awsPatient.createUpdateAWSPatient(resource)
         }
-        return "MSH|^~\\&|Main_HIS|XYZ_HOSPITAL|iFW|ABC_Lab|20160915003015||ACK|9B38584D|P|2.6.1|\n" +
+        if (patient != null) return "MSH|^~\\&|TIE|NHS_TRUST|PAS|RCB|"+timestamp.format(Date())+"||ACK|9B38584D|P|2.4|0|"+timestampSS.format(Date())+"|||GBR|UNICODE|EN||iTKv1.0\n" +
+                "MSA|AA|9B38584D|"+ patient.idElement.value +"|"
+        return "MSH|^~\\&|TIE|NHS_TRUST|PAS|RCB|20160915003015||ACK|9B38584D|P|2.6.1|\n" +
                 "MSA|AA|9B38584D|Everything was okay dokay!|"
     }
 

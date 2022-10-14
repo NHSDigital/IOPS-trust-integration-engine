@@ -6,6 +6,7 @@ import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.Identifier
 import org.hl7.fhir.r4.model.Organization
+import org.hl7.fhir.r4.model.Practitioner
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
@@ -13,23 +14,23 @@ import uk.nhs.nhsdigital.integrationengine.configuration.FHIRServerProperties
 import uk.nhs.nhsdigital.integrationengine.configuration.MessageProperties
 
 @Component
-class AWSOrganization(val messageProperties: MessageProperties, val awsClient: IGenericClient,
+class AWSPractitioner(val messageProperties: MessageProperties, val awsClient: IGenericClient,
     //sqs: AmazonSQS?,
                       @Qualifier("R4") val ctx: FhirContext,
                       val fhirServerProperties: FHIRServerProperties
 ) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
-    public fun getOrganization(identifier: Identifier): Organization? {
+    public fun getPractitioner(identifier: Identifier): Practitioner? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
             try {
                 bundle = awsClient
                     .search<IBaseBundle>()
-                    .forResource(Organization::class.java)
+                    .forResource(Practitioner::class.java)
                     .where(
-                        Organization.IDENTIFIER.exactly()
+                        Practitioner.IDENTIFIER.exactly()
                             .systemAndCode(identifier.system, identifier.value)
                     )
                     .returnBundle(Bundle::class.java)
@@ -43,6 +44,6 @@ class AWSOrganization(val messageProperties: MessageProperties, val awsClient: I
             }
         }
         if (bundle == null || !bundle.hasEntry()) return null
-        return bundle.entryFirstRep.resource as Organization
+        return bundle.entryFirstRep.resource as Practitioner
     }
 }
