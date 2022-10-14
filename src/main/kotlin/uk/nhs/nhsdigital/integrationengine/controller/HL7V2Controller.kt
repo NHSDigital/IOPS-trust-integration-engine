@@ -3,7 +3,6 @@ package uk.nhs.nhsdigital.integrationengine.controller
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.hl7v2.DefaultHapiContext
 import ca.uhn.hl7v2.HapiContext
-import ca.uhn.hl7v2.model.Message
 import ca.uhn.hl7v2.model.v24.message.ADT_A01
 import ca.uhn.hl7v2.model.v24.message.ADT_A02
 import ca.uhn.hl7v2.model.v24.message.ADT_A03
@@ -21,6 +20,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import uk.nhs.nhsdigital.integrationengine.awsProvider.AWSPatient
 import uk.nhs.nhsdigital.integrationengine.transforms.PD1toFHIRPractitionerRole
 import uk.nhs.nhsdigital.integrationengine.transforms.PIDtoFHIRPatient
 import uk.nhs.nhsdigital.integrationengine.transforms.PV1toFHIREncounter
@@ -30,7 +30,8 @@ import java.text.SimpleDateFormat
 
 @RestController
 @RequestMapping("/HL7v2")
-class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
+class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
+                     val awsPatient : AWSPatient) {
     val v2MediaType = "x-application/hl7-v2+er7"
     var sdf = SimpleDateFormat("yyyyMMddHHmm")
 
@@ -39,6 +40,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
     var pV1toFHIREncounter = PV1toFHIREncounter();
     var piDtoFHIRPatient = PIDtoFHIRPatient();
     var pD1toFHIRPractitionerRole = PD1toFHIRPractitionerRole()
+
 
     init {
         var mcf = CanonicalModelClassFactory("2.4")
@@ -126,6 +128,16 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
         required = true,
         content = [ Content(mediaType = "x-application/hl7-v2+er7" ,
             examples = [
+                ExampleObject(
+                    name = "HL7 v2.4 ADT_A28 Create New Patient",
+                    value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201001021215||ADT^A28^ADT_A05|13403891320453338075|P|2.4|0|20100102121557|||GBR|UNICODE|EN||iTKv1.0\n" +
+                            "EVN||201001021213|||111111111^Cortana^Emily^^Miss^^RCB55|201001021213\n" +
+                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196513121515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
+                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
+                            "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                            "AL1|1|DA|Z88.5|5||199807011755\n" +
+                            "ZU8|U|1|Yes|",
+                    summary = "Create Patient"),
             ExampleObject(
                 name = "HL7 v2.4 ADT_A03 Discharge a Patient.",
                 value = "MSH|^~\\&|MATSYSTEM|RCB|PAS|RCB|201003311730||ADT^A03^ADT_A03|13403891320453338089|P|2.4|0|20100331173057|||GBR|UNICODE|EN||iTKv1.0\n" +
@@ -137,6 +149,10 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext) {
                 summary = "Discharge Notification")])])
     fun processEvent(
         @org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
+        var resource = convertADT(v2Message)
+        if (resource is Patient) {
+            awsPatient.createUpdateAWSPatient(resource)
+        }
         return "MSH|^~\\&|Main_HIS|XYZ_HOSPITAL|iFW|ABC_Lab|20160915003015||ACK|9B38584D|P|2.6.1|\n" +
                 "MSA|AA|9B38584D|Everything was okay dokay!|"
     }
