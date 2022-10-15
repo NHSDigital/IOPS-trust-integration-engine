@@ -69,6 +69,8 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
                 val practitionerRole = awsPractitionerRole.getPractitionerRole(newMedicationRequest.requester,bundle)
                 if (practitionerRole != null) newMedicationRequest.requester.reference = "PractitionerRole/" + practitionerRole.idElement.idPart
         }
+        // This v3esquw data should have been processed into propoer resources so remove
+        newMedicationRequest.contained = ArrayList()
 
         if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.hasResource()
@@ -131,6 +133,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
         var retry = 3
         while (retry > 0) {
             try {
+                newMedicationRequest.id = medicationRequest.idElement.value
                 response = awsClient!!.update().resource(newMedicationRequest).withId(medicationRequest.id).execute()
                 log.info("AWS MedicationRequest updated " + response.resource.idElement.value)
                 val auditEvent = awsAuditEvent.createAudit(medicationRequest, AuditEvent.AuditEventAction.C)

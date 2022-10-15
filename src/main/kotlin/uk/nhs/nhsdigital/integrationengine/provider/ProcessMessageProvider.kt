@@ -4,15 +4,14 @@ import ca.uhn.fhir.rest.annotation.Operation
 import ca.uhn.fhir.rest.annotation.ResourceParam
 import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
-import uk.nhs.nhsdigital.integrationengine.awsProvider.AWSBundle
-import uk.nhs.nhsdigital.integrationengine.awsProvider.AWSMedicationDispense
-import uk.nhs.nhsdigital.integrationengine.awsProvider.AWSMedicationRequest
-import uk.nhs.nhsdigital.integrationengine.awsProvider.AWSPatient
+import uk.nhs.nhsdigital.integrationengine.awsProvider.*
+import uk.nhs.nhsdigital.integrationengine.util.FhirSystems
 
 @Component
 class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                              val awsMedicationDispense: AWSMedicationDispense,
-                            val awsBundle: AWSBundle) {
+                             val awsTask : AWSTask,
+                             val awsBundle: AWSBundle) {
 
     @Operation(name = "\$process-message", idempotent = true)
     fun expand(@ResourceParam bundle:Bundle,
@@ -36,19 +35,32 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                         focusType = "ServiceRequest"
                     }
                 }
+                var medicationRequest : MedicationRequest? = null
+                var prescriptionOrder = Task().setCode(CodeableConcept().addCoding(Coding()
+                    .setSystem(FhirSystems.SNOMED_CT)
+                    .setCode("16076005")
+                    .setDisplay("Prescription")
+                ))
                 if (focusType != null) {
                     focusResources.addAll(awsBundle.filterResources(bundle,focusType))
+
                     if (focusResources.size>0) {
                         for (workerResource in focusResources) {
                             when (focusType) {
                                 "MedicationRequest" -> {
-                                    val medicationRequest = awsMedicationRequest.createUpdateAWSMedicationRequest(workerResource as MedicationRequest,bundle)
+                                    medicationRequest = awsMedicationRequest.createUpdateAWSMedicationRequest(workerResource as MedicationRequest,bundle)
                                     if (medicationRequest != null) {
                                         operationOutcome.issue.add(
                                         OperationOutcome.OperationOutcomeIssueComponent()
                                             .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
                                             .setCode(OperationOutcome.IssueType.INFORMATIONAL)
                                             .addLocation(medicationRequest.id))
+                                        prescriptionOrder.addInput(
+                                            Task.ParameterComponent()
+                                                .setType(CodeableConcept().addCoding(Coding().setCode("MedicationRequest")))
+                                                .setValue(Reference().setReference(medicationRequest.idElement.value))
+                                        )
+                                        awsTask
                                     }
                                 }
                                 "MedicationDispense" -> {
@@ -63,6 +75,38 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                                 }
                             }
                         }
+                    }
+                }
+                when (messageHeader.eventCoding.code) {
+                    "prescription-order" -> {
+
+                        if (medicationRequest != null) {
+                            prescriptionOrder.setFor(medicationRequest.subject)
+                            val groupIdentifier = medicationRequest.groupIdentifier
+
+                            prescriptionOrder.addIdentifier(Identifier()
+                                .setSystem(groupIdentifier.system)
+                                .setValue(groupIdentifier.value)
+                            )
+                            prescriptionOrder.setGroupIdentifier(Identifier()
+                                .setSystem(groupIdentifier.system)
+                                .setValue(groupIdentifier.value))
+
+                            val id = medicationRequest.groupIdentifier.getExtensionByUrl("https://fhir.nhs.uk/StructureDefinition/Extension-DM-PrescriptionId")
+                            if (id != null) {
+                                if (id.value is Identifier) {
+                                    prescriptionOrder.addIdentifier(Identifier()
+                                        .setSystem((id as Identifier).system)
+                                        .setValue((id as Identifier).value)
+                                    )
+                                }
+                            }
+                            prescriptionOrder.setStatus(Task.TaskStatus.REQUESTED)
+                            prescriptionOrder.setIntent(Task.TaskIntent.ORDER)
+                            prescriptionOrder.setAuthoredOn(medicationRequest.authoredOn)
+                            awsTask.createUpdateAWSTask(prescriptionOrder)
+                        }
+
                     }
                 }
             }

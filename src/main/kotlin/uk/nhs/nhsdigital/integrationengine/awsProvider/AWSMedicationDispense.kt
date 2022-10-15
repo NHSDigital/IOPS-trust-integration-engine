@@ -70,15 +70,20 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
             for (performer in newMedicationDispense.performer) {
                 if (performer.hasActor()) {
                     val practitionerRole = awsPractitionerRole.getPractitionerRole(performer.actor, bundle)
-                    if (practitionerRole != null) performer.actor.reference =
-                        "PractitionerRole/" + practitionerRole.idElement.idPart
+                    if (practitionerRole != null) {
+                        performer.actor.reference =
+                            "PractitionerRole/" + practitionerRole.idElement.idPart
+                        performer.actor.resource = null
+                    }
                 }
             }
         }
         if (newMedicationDispense.hasAuthorizingPrescription() && newMedicationDispense.authorizingPrescriptionFirstRep.hasIdentifier()) {
             val medicationRequest = awsMedicationRequest.getMedicationRequest(newMedicationDispense.authorizingPrescriptionFirstRep.identifier)
-            if (medicationRequest != null) newMedicationDispense.authorizingPrescriptionFirstRep.reference =
-                "MedicationRequest/" + medicationRequest.idElement.idPart
+            if (medicationRequest != null) {
+                newMedicationDispense.authorizingPrescriptionFirstRep.reference =
+                    "MedicationRequest/" + medicationRequest.idElement.idPart
+            }
         }
         if (newMedicationDispense.hasAuthorizingPrescription()
             && newMedicationDispense.authorizingPrescriptionFirstRep.resource != null
@@ -87,10 +92,16 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
             if (domainResource.hasIdentifier()) {
                 val medicationRequest =
                     awsMedicationRequest.getMedicationRequest(domainResource.identifierFirstRep)
-                if (medicationRequest != null) newMedicationDispense.authorizingPrescriptionFirstRep.reference =
-                    "MedicationRequest/" + medicationRequest.idElement.idPart
+                if (medicationRequest != null) {
+                    newMedicationDispense.authorizingPrescriptionFirstRep.reference =
+                        "MedicationRequest/" + medicationRequest.idElement.idPart
+                    newMedicationDispense.authorizingPrescriptionFirstRep.resource = null
+                }
             }
+
         }
+        // Get rid of the v3esque contained data
+        newMedicationDispense.contained = ArrayList()
 
         if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.hasResource()
@@ -127,6 +138,7 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
         var retry = 3
         while (retry > 0) {
             try {
+                newMedicationDispense.id = medicationDispense.idElement.value
                 response = awsClient!!.update().resource(newMedicationDispense).withId(medicationDispense.id).execute()
                 log.info("AWS MedicationDispense updated " + response.resource.idElement.value)
                 val auditEvent = awsAuditEvent.createAudit(medicationDispense, AuditEvent.AuditEventAction.C)

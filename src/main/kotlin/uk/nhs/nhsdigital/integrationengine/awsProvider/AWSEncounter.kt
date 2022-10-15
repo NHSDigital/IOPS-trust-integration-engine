@@ -74,15 +74,15 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
             }
         }
 
-        return if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
+       if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.resource is Encounter
         ) {
             val encounter = awsBundle.entryFirstRep.resource as Encounter
             // Dont update for now - just return aws Encounter
-            updateEncounter(encounter, newEncounter)!!.resource as Encounter
+            return updateEncounter(encounter, newEncounter)!!.resource as Encounter
         } else {
-            createEncounter(newEncounter)!!.resource as Encounter
+            return createEncounter(newEncounter)!!.resource as Encounter
         }
     }
 
