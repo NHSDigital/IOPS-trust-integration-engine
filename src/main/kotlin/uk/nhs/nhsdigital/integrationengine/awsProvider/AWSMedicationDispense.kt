@@ -75,6 +75,22 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
                 }
             }
         }
+        if (newMedicationDispense.hasAuthorizingPrescription() && newMedicationDispense.authorizingPrescriptionFirstRep.hasIdentifier()) {
+            val medicationRequest = awsMedicationRequest.getMedicationRequest(newMedicationDispense.authorizingPrescriptionFirstRep.identifier)
+            if (medicationRequest != null) newMedicationDispense.authorizingPrescriptionFirstRep.reference =
+                "MedicationRequest/" + medicationRequest.idElement.idPart
+        }
+        if (newMedicationDispense.hasAuthorizingPrescription()
+            && newMedicationDispense.authorizingPrescriptionFirstRep.resource != null
+            && newMedicationDispense.authorizingPrescriptionFirstRep.resource is MedicationRequest) {
+            val domainResource = newMedicationDispense.authorizingPrescriptionFirstRep.resource as MedicationRequest
+            if (domainResource.hasIdentifier()) {
+                val medicationRequest =
+                    awsMedicationRequest.getMedicationRequest(domainResource.identifierFirstRep)
+                if (medicationRequest != null) newMedicationDispense.authorizingPrescriptionFirstRep.reference =
+                    "MedicationRequest/" + medicationRequest.idElement.idPart
+            }
+        }
 
         if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.hasResource()
