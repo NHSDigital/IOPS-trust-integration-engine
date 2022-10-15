@@ -23,6 +23,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
                   val fhirServerProperties: FHIRServerProperties,
                   val awsOrganization: AWSOrganization,
                   val awsPractitioner: AWSPractitioner,
+                  val awsBundle: AWSBundle,
                   val awsAuditEvent: AWSAuditEvent) {
 
 
@@ -65,9 +66,9 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         ) {
             val patient = awsBundle.entryFirstRep.resource as Patient
             // Dont update for now - just return aws Patient
-            updatePatient(patient, newPatient)!!.resource as Patient
+            return updatePatient(patient, newPatient)!!.resource as Patient
         } else {
-            createPatient(newPatient)!!.resource as Patient
+            return createPatient(newPatient)!!.resource as Patient
         }
     }
 
@@ -109,9 +110,9 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         var retry = 3
         while (retry > 0) {
             try {
-                response = awsClient!!.update().resource(patient).withId(patient.id).execute()
+                response = awsClient!!.update().resource(newPatient).withId(patient.id).execute()
                 log.info("AWS Patient updated " + response.resource.idElement.value)
-                val auditEvent = createAudit(patient, AuditEvent.AuditEventAction.C)
+                val auditEvent = awsAuditEvent.createAudit(patient, AuditEvent.AuditEventAction.C)
                 awsAuditEvent.writeAWS(auditEvent)
                 break
             } catch (ex: Exception) {
@@ -122,6 +123,51 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
             }
         }
         return response
+    }
+
+    public fun getPatient(identifier: Identifier): Patient? {
+        var bundle: Bundle? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = awsClient
+                    .search<IBaseBundle>()
+                    .forResource(Patient::class.java)
+                    .where(
+                        Patient.IDENTIFIER.exactly()
+                            .systemAndCode(identifier.system, identifier.value)
+                    )
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (bundle == null || !bundle.hasEntry()) return null
+        return bundle.entryFirstRep.resource as Patient
+    }
+    public fun getPatient(reference: Reference, bundle: Bundle): Patient? {
+        var awsPatient : Patient? = null
+        if (reference.hasReference()) {
+            val patient = awsBundle.findResource(bundle, "Patient", reference.reference) as Patient
+            for ( identifier in patient.identifier) {
+                if (identifier.system.equals(FhirSystems.NHS_NUMBER)) {
+                    awsPatient = getPatient(identifier)
+                    if (awsPatient == null) {
+                        return createPatient(patient)?.resource as Patient
+                    } else {
+                        return awsPatient
+                    }
+                }
+            }
+        } else if (reference.hasIdentifier()) {
+            return getPatient(reference.identifier)
+        }
+        return null
     }
 
     fun createPatient(newPatient: Patient): MethodOutcome? {
@@ -145,7 +191,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
                     .resource(newPatient)
                     .execute()
                 val patient = response.resource as Patient
-                val auditEvent = createAudit(patient, AuditEvent.AuditEventAction.C)
+                val auditEvent = awsAuditEvent.createAudit(patient, AuditEvent.AuditEventAction.C)
                 awsAuditEvent.writeAWS(auditEvent)
                 break
             } catch (ex: Exception) {
@@ -156,43 +202,6 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
             }
         }
         return response
-    }
-
-
-
-    fun createAudit(patient: Patient, auditEventAction: AuditEvent.AuditEventAction?): AuditEvent {
-        val auditEvent = AuditEvent()
-        auditEvent.recorded = Date()
-        auditEvent.action = auditEventAction
-
-        // Entity
-        val entityComponent = auditEvent.addEntity()
-        var path: String? = messageProperties.getCdrFhirServer()
-        path += "/Patient"
-        auditEvent.outcome = AuditEvent.AuditEventOutcome._0
-        entityComponent.addDetail().setType("query").value = StringType(path)
-        auditEvent.type = Coding().setSystem(FhirSystems.ISO_EHR_EVENTS).setCode("transmit")
-        entityComponent.addDetail().setType("resource").value = StringType("Patient")
-        entityComponent.type = Coding().setSystem(FhirSystems.FHIR_RESOURCE_TYPE).setCode("Patient")
-        auditEvent.source.observer = Reference()
-            .setIdentifier(Identifier().setValue(fhirServerProperties.server.baseUrl))
-            .setDisplay((fhirServerProperties.server.name + " " + fhirServerProperties.server.version).toString() + " " + fhirServerProperties.server.baseUrl)
-            .setType("Device")
-
-
-        // Agent Application
-        val agentComponent = auditEvent.addAgent()
-        agentComponent.requestor = true
-        agentComponent.type = CodeableConcept(Coding().setSystem(FhirSystems.DICOM_AUDIT_ROLES).setCode("110150"))
-
-        /// Agent Patient about
-        val patientAgent = auditEvent.addAgent()
-        patientAgent.requestor = false
-        patientAgent.type =
-            CodeableConcept(Coding().setSystem(FhirSystems.V3_ROLE_CLASS).setCode("PAT"))
-        patientAgent.who = Reference().setType("Patient")
-            .setReference("Patient/" + patient.idElement.idPart)
-        return auditEvent
     }
 
 

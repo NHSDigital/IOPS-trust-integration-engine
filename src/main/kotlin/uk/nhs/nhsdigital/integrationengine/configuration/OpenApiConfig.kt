@@ -22,6 +22,8 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 open class OpenApiConfig {
+
+    var FHIRSERVER = "FHIR Orchestration Engine"
     @Bean
     open fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
@@ -40,6 +42,46 @@ open class OpenApiConfig {
                     .termsOfService("http://swagger.io/terms/")
                     .license(License().name("Apache 2.0").url("http://springdoc.org"))
             )
+
+        oas.path("/FHIR/R4/metadata",PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(FHIRSERVER)
+                    .summary("server-capabilities: Fetch the server FHIR CapabilityStatement").responses(getApiResponses())))
+
+        val processMessageItem = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem(FHIRSERVER)
+                    .summary("Send a predefined collection of FHIR resources for processing")
+                    .description("[process-message](https://simplifier.net/guide/nhsdigital/Home/FHIRAssets/AllAssets/OperationDefinition/process-message)")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("Accept")
+                        .`in`("header")
+                        .required(true)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Select response format")
+                        .schema(StringSchema()._enum(listOf("application/fhir+json","application/fhir+xml"))))
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType().schema(StringSchema()._default("{\"resourceType\":\"Bundle\"}")))
+                        .addMediaType("application/fhir+xml",MediaType().schema(StringSchema()))
+                    )))
+
+
+        oas.path("/FHIR/R4/\$process-message",processMessageItem)
+
         return oas
+    }
+    fun getApiResponses() : ApiResponses {
+
+        val response200 = ApiResponse()
+        response200.description = "OK"
+        val exampleList = mutableListOf<Example>()
+        exampleList.add(Example().value("{}"))
+        response200.content = Content().addMediaType("application/fhir+json", MediaType().schema(StringSchema()._default("{}")))
+        val apiResponses = ApiResponses().addApiResponse("200",response200)
+        return apiResponses
     }
 }

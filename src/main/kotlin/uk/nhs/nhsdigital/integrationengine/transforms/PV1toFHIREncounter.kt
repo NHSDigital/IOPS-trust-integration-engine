@@ -11,10 +11,44 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
 
     override fun transform(pv1: PV1): Encounter {
         var encounter = Encounter()
+        var odsCode :String? = null
+        if (pv1.assignedPatientLocation != null ) {
+            if (!pv1.assignedPatientLocation.pointOfCare.isEmpty) {
+                encounter.setServiceProvider(
+                    Reference().setIdentifier(Identifier().setSystem(FhirSystems.ODS_CODE).setValue(pv1.assignedPatientLocation.pointOfCare.value))
+                )
+                odsCode = pv1.assignedPatientLocation.pointOfCare.value
+            }
+            if (!pv1.assignedPatientLocation.facility.isEmpty) {
+                val location =Encounter.EncounterLocationComponent().setLocation(
+                    Reference().setIdentifier(Identifier()
+                        .setSystem(FhirSystems.ODS_SITE_CODE)
+                        .setValue(pv1.assignedPatientLocation.facility.namespaceID.value)))
+                if (pv1.admitDateTime != null) {
+                    try {
+                        location.period.start = pv1.admitDateTime.timeOfAnEvent.valueAsDate
+                    } catch (ex: Exception) {}
+                }
+                if (pv1.dischargeDateTime != null) {
+                    for (ts in pv1.dischargeDateTime) {
 
+                        try {
+                            location.period.end = ts.timeOfAnEvent.valueAsDate
+                        } catch (ex: Exception) {
+                        }
+                    }
+                }
+                encounter.addLocation(location)
+            }
+        }
         if (pv1.visitNumber != null) {
-            encounter.addIdentifier().setValue(pv1.visitNumber.id.value).system =
-                "http://terminology.hl7.org/CodeSystem/v2-0203"
+            if (odsCode == null) {
+                encounter.addIdentifier().setValue(pv1.visitNumber.id.value).system =
+                    "http://terminology.hl7.org/CodeSystem/v2-0203"
+            } else {
+                encounter.addIdentifier().setValue(pv1.visitNumber.id.value).system =
+                    "https://fhir.nhs.uk/" + odsCode + "/Id/Encounter"
+            }
         }
         if (pv1.alternateVisitID != null) {
             encounter.addIdentifier().value = pv1.alternateVisitID.id.value
@@ -140,18 +174,6 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                     .setSystem("https://fhir.nhs.uk/R4/CodeSystem/UKCore-DischargeMethod")
                     .setCode(pv1.getDischargedToLocation().getDischargeLocation().getValue());
         }*/
-        if (pv1.assignedPatientLocation != null ) {
-            if (!pv1.assignedPatientLocation.pointOfCare.isEmpty) {
-                encounter.setServiceProvider(
-                    Reference().setIdentifier(Identifier().setSystem(FhirSystems.ODS_CODE).setValue(pv1.assignedPatientLocation.pointOfCare.value))
-                )
-            }
-            if (!pv1.assignedPatientLocation.facility.isEmpty) {
-                encounter.addLocation(Encounter.EncounterLocationComponent().setLocation(
-                    Reference().setIdentifier(Identifier().setSystem(FhirSystems.ODS_SITE_CODE).setValue(pv1.assignedPatientLocation.facility.namespaceID.value))
-                ))
-            }
-        }
 
         return encounter
     }
