@@ -173,9 +173,10 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
     fun createPatient(newPatient: Patient): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
+        /*
         if (!newPatient.hasGeneralPractitioner() || !newPatient.generalPractitionerFirstRep.hasIdentifier()) throw UnprocessableEntityException(
             "Practitioner is required"
-        )
+        )*/
         for (practitioner in newPatient.generalPractitioner) {
             if (practitioner.hasIdentifier() && practitioner.identifier.system.equals(FhirSystems.ODS_CODE)) {
                 val surgery = awsOrganization.getOrganization(practitioner.identifier)

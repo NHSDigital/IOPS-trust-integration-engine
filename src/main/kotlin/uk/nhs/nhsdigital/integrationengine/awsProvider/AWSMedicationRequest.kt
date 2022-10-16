@@ -20,6 +20,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
                            @Qualifier("R4") val ctx: FhirContext,
                            val fhirServerProperties: FHIRServerProperties,
                            val awsOrganization: AWSOrganization,
+                           val awsBundleProvider : AWSBundle,
                            val awsPractitionerRole: AWSPractitionerRole,
                            val awsPatient: AWSPatient,
                            val awsAuditEvent: AWSAuditEvent) {
@@ -58,16 +59,16 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
         if (newMedicationRequest.hasSubject()) {
             if (newMedicationRequest.subject.hasReference() && bundle != null) {
                 val patient = awsPatient.getPatient(newMedicationRequest.subject, bundle)
-                if (patient != null) newMedicationRequest.subject.reference = "Patient/" + patient.idElement.idPart
+                if (patient != null) awsBundleProvider.updateReference(newMedicationRequest.subject, patient.identifierFirstRep,patient)
             } else
                 if (newMedicationRequest.subject.hasIdentifier()) {
                     val patient = awsPatient.getPatient(newMedicationRequest.subject.identifier)
-                    if (patient != null) newMedicationRequest.subject.reference = "Patient/" + patient.idElement.idPart
+                    if (patient != null) awsBundleProvider.updateReference(newMedicationRequest.subject, patient.identifierFirstRep,patient)
                 }
         }
         if (newMedicationRequest.hasRequester() && bundle != null) {
                 val practitionerRole = awsPractitionerRole.getPractitionerRole(newMedicationRequest.requester,bundle)
-                if (practitionerRole != null) newMedicationRequest.requester.reference = "PractitionerRole/" + practitionerRole.idElement.idPart
+                if (practitionerRole != null) awsBundleProvider.updateReference(newMedicationRequest.requester, practitionerRole.identifierFirstRep, practitionerRole)
         }
         // This v3esquw data should have been processed into propoer resources so remove
         newMedicationRequest.contained = ArrayList()
@@ -151,7 +152,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
     }
 
     private fun createMedicationRequest(newMedicationRequest: MedicationRequest): MethodOutcome? {
-        val awsBundle: Bundle? = null
+
         var response: MethodOutcome? = null
 
         var retry = 3

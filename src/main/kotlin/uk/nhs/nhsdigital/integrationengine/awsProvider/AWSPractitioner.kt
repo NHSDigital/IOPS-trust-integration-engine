@@ -59,7 +59,7 @@ class AWSPractitioner(val messageProperties: MessageProperties, val awsClient: I
                     }
                 }
                 if (awsPractitioner == null) {
-                    createPractitioner(practitioner,bundle)
+                    return createPractitioner(practitioner,bundle)?.resource as Practitioner
                 } else return awsPractitioner
             }
         } else if (reference.hasIdentifier()) {

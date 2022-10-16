@@ -14,7 +14,7 @@ management:
 
 fhir:
   server:
-    name: TIE Demonstration
+    name: Orchestration Engine Demo
     baseUrl: https://test.validation.fhir.nhs.uk
     version: 1.0.0
 

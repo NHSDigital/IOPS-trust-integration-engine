@@ -20,6 +20,7 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
                             @Qualifier("R4") val ctx: FhirContext,
                             val fhirServerProperties: FHIRServerProperties,
                             val awsOrganization: AWSOrganization,
+                            val awsBundleProvider : AWSBundle,
                             val awsPractitionerRole: AWSPractitionerRole,
                             val awsPatient: AWSPatient,
                             val awsMedicationRequest: AWSMedicationRequest,
@@ -59,11 +60,15 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
         if (newMedicationDispense.hasSubject()) {
             if (newMedicationDispense.subject.hasReference() && bundle != null) {
                 val patient = awsPatient.getPatient(newMedicationDispense.subject, bundle)
-                if (patient != null) newMedicationDispense.subject.reference = "Patient/" + patient.idElement.idPart
+                if (patient != null) awsBundleProvider.updateReference(newMedicationDispense.subject,
+                    patient.identifierFirstRep,patient)
             } else
                 if (newMedicationDispense.subject.hasIdentifier()) {
                     val patient = awsPatient.getPatient(newMedicationDispense.subject.identifier)
-                    if (patient != null) newMedicationDispense.subject.reference = "Patient/" + patient.idElement.idPart
+                    if (patient != null)
+                        awsBundleProvider.updateReference(newMedicationDispense.subject,
+                            patient.identifierFirstRep,patient)
+
                 }
         }
         if (newMedicationDispense.hasPerformer() && bundle != null) {
@@ -71,8 +76,8 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
                 if (performer.hasActor()) {
                     val practitionerRole = awsPractitionerRole.getPractitionerRole(performer.actor, bundle)
                     if (practitionerRole != null) {
-                        performer.actor.reference =
-                            "PractitionerRole/" + practitionerRole.idElement.idPart
+                        awsBundleProvider.updateReference(performer.actor,
+                            practitionerRole.identifierFirstRep,practitionerRole)
                         performer.actor.resource = null
                     }
                 }
@@ -81,8 +86,9 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
         if (newMedicationDispense.hasAuthorizingPrescription() && newMedicationDispense.authorizingPrescriptionFirstRep.hasIdentifier()) {
             val medicationRequest = awsMedicationRequest.getMedicationRequest(newMedicationDispense.authorizingPrescriptionFirstRep.identifier)
             if (medicationRequest != null) {
-                newMedicationDispense.authorizingPrescriptionFirstRep.reference =
-                    "MedicationRequest/" + medicationRequest.idElement.idPart
+                awsBundleProvider.updateReference(newMedicationDispense.authorizingPrescriptionFirstRep,
+                    medicationRequest.identifierFirstRep,medicationRequest)
+
             }
         }
         if (newMedicationDispense.hasAuthorizingPrescription()
@@ -93,9 +99,8 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
                 val medicationRequest =
                     awsMedicationRequest.getMedicationRequest(domainResource.identifierFirstRep)
                 if (medicationRequest != null) {
-                    newMedicationDispense.authorizingPrescriptionFirstRep.reference =
-                        "MedicationRequest/" + medicationRequest.idElement.idPart
-                    newMedicationDispense.authorizingPrescriptionFirstRep.resource = null
+                    awsBundleProvider.updateReference(newMedicationDispense.authorizingPrescriptionFirstRep,
+                        medicationRequest.identifierFirstRep,medicationRequest)
                 }
             }
 

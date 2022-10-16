@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+
 import uk.nhs.nhsdigital.integrationengine.awsProvider.AWSEncounter
 import uk.nhs.nhsdigital.integrationengine.awsProvider.AWSPatient
 import uk.nhs.nhsdigital.integrationengine.transforms.PD1toFHIRPractitionerRole
@@ -31,7 +32,8 @@ import java.util.*
 
 
 @RestController
-@RequestMapping("/HL7v2")
+@RequestMapping("/V2/ITK")
+@io.swagger.v3.oas.annotations.tags.Tag(name="HL7 v2 Orchestration Engine")
 class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                      val awsPatient : AWSPatient,
                       val awsEncounter : AWSEncounter) {

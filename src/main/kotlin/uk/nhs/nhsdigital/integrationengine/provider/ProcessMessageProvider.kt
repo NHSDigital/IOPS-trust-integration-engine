@@ -10,6 +10,7 @@ import uk.nhs.nhsdigital.integrationengine.util.FhirSystems
 @Component
 class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                              val awsMedicationDispense: AWSMedicationDispense,
+                             val awsServiceRequest: AWSServiceRequest,
                              val awsTask : AWSTask,
                              val awsBundle: AWSBundle) {
 
@@ -31,7 +32,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                         focusType = "MedicationDispense"
 
                     }
-                    "dispense-notification", "dispense-notification-update" -> {
+                    "servicerequest-request" -> {
                         focusType = "ServiceRequest"
                     }
                 }
@@ -73,10 +74,21 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                                                 .addLocation(medicationDispense.id))
                                     }
                                 }
+                                "ServiceRequest" -> {
+                                    val serviceRequest = awsServiceRequest.createUpdateAWSServiceRequest(workerResource as ServiceRequest,bundle)
+                                    if (serviceRequest != null) {
+                                        operationOutcome.issue.add(
+                                            OperationOutcome.OperationOutcomeIssueComponent()
+                                                .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+                                                .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+                                                .addLocation(serviceRequest.id))
+                                    }
+                                }
                             }
                         }
                     }
                 }
+                // Task processing for requests, n/a for event resource/messages
                 when (messageHeader.eventCoding.code) {
                     "prescription-order" -> {
 
@@ -96,8 +108,8 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                             if (id != null) {
                                 if (id.value is Identifier) {
                                     prescriptionOrder.addIdentifier(Identifier()
-                                        .setSystem((id as Identifier).system)
-                                        .setValue((id as Identifier).value)
+                                        .setSystem((id.value as Identifier).system)
+                                        .setValue((id.value as Identifier).value)
                                     )
                                 }
                             }

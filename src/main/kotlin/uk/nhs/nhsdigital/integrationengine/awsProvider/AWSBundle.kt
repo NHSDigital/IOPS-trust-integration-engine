@@ -2,6 +2,9 @@ package uk.nhs.nhsdigital.integrationengine.awsProvider
 
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.DomainResource
+import org.hl7.fhir.r4.model.Extension
+import org.hl7.fhir.r4.model.Identifier
+import org.hl7.fhir.r4.model.Reference
 import org.hl7.fhir.r4.model.Resource
 import org.springframework.stereotype.Component
 
@@ -39,5 +42,15 @@ class AWSBundle {
             }
         }
         return null
+    }
+
+    fun updateReference(reference : Reference, identifier: Identifier?, resource : DomainResource) {
+        // Ensure contained resource is removed
+        if (reference.resource != null) reference.resource = null
+        reference.reference = resource.javaClass.simpleName + "/" + resource.idElement.idPart
+        if (!reference.hasIdentifier() && identifier != null) {
+            identifier.extension = ArrayList<Extension>() // Get rid of extensions
+            reference.identifier = identifier
+        }
     }
 }

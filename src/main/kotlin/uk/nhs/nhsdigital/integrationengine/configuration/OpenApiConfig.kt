@@ -1,5 +1,6 @@
 package uk.nhs.nhsdigital.integrationengine.configuration
 
+import ca.uhn.fhir.context.FhirContext
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.PathItem
@@ -15,15 +16,16 @@ import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.parameters.RequestBody
 import io.swagger.v3.oas.models.responses.ApiResponse
 import io.swagger.v3.oas.models.responses.ApiResponses
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-
+import uk.nhs.nhsdigital.integrationengine.util.FHIRExamples
 
 
 @Configuration
-open class OpenApiConfig {
+open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
-    var FHIRSERVER = "FHIR Orchestration Engine"
+    var FHIRSERVER = "HL7 FHIR Orchestration Engine"
     @Bean
     open fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
@@ -49,6 +51,19 @@ open class OpenApiConfig {
                     .addTagsItem(FHIRSERVER)
                     .summary("server-capabilities: Fetch the server FHIR CapabilityStatement").responses(getApiResponses())))
 
+
+        val examples = LinkedHashMap<String,Example?>()
+
+        examples.put("BARS - Making a referral request",
+                Example().value(FHIRExamples().loadExample("Making a referral request.json",ctx))
+            )
+        examples.put("EPS - Prescription Order",
+            Example().value(FHIRExamples().loadExample("prescription-order.json",ctx))
+        )
+        examples.put("EPS - Dispense Notification",
+            Example().value(FHIRExamples().loadExample("dispense-notification.json",ctx))
+        )
+
         val processMessageItem = PathItem()
             .post(
                 Operation()
@@ -56,19 +71,12 @@ open class OpenApiConfig {
                     .summary("Send a predefined collection of FHIR resources for processing")
                     .description("[process-message](https://simplifier.net/guide/nhsdigital/Home/FHIRAssets/AllAssets/OperationDefinition/process-message)")
                     .responses(getApiResponses())
-                    .addParametersItem(Parameter()
-                        .name("Accept")
-                        .`in`("header")
-                        .required(true)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("Select response format")
-                        .schema(StringSchema()._enum(listOf("application/fhir+json","application/fhir+xml"))))
                     .requestBody(RequestBody().content(Content()
                         .addMediaType("application/fhir+json",
-                            MediaType().schema(StringSchema()._default("{\"resourceType\":\"Bundle\"}")))
-                        .addMediaType("application/fhir+xml",MediaType().schema(StringSchema()))
+                            MediaType()
+                                .examples(examples)
+                                .schema(StringSchema()))
                     )))
-
 
         oas.path("/FHIR/R4/\$process-message",processMessageItem)
 
