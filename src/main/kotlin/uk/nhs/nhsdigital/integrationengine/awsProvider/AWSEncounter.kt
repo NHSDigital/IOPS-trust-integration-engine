@@ -22,6 +22,7 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
                    val awsOrganization: AWSOrganization,
                    val awsPractitioner: AWSPractitioner,
                    val awsPatient: AWSPatient,
+                   val awsBundleProvider: AWSBundle,
                    val awsAuditEvent: AWSAuditEvent) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
@@ -56,11 +57,11 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
         }
         if (newEncounter.hasServiceProvider() && newEncounter.getServiceProvider().hasIdentifier()) {
             val organisation = awsOrganization.getOrganization(newEncounter.serviceProvider.identifier)
-            if (organisation != null) newEncounter.serviceProvider.reference = "Organization/" + organisation.idElement.idPart
+            if (organisation != null) awsBundleProvider.updateReference(newEncounter.serviceProvider, organisation.identifierFirstRep, organisation)
         }
         if (newEncounter.hasSubject() && newEncounter.subject.hasIdentifier()) {
             val patient = awsPatient.getPatient(newEncounter.subject.identifier)
-            if (patient != null) newEncounter.subject.reference = "Patient/" + patient.idElement.idPart
+            if (patient != null) awsBundleProvider.updateReference(newEncounter.subject, patient.identifierFirstRep, patient)
         }
         for (participant in newEncounter.participant) {
             if (participant.hasIndividual() && participant.individual.hasIdentifier()) {
@@ -68,7 +69,7 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
                     participant.individual.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
                     val dr = awsPractitioner.getPractitioner(participant.individual.identifier)
                     if (dr != null) {
-                        participant.individual.reference = "Practitioner/"+dr.idElement.idPart
+                        awsBundleProvider.updateReference(participant.individual,dr.identifierFirstRep,dr)
                     }
                 }
             }

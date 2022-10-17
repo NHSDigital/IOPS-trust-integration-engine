@@ -23,7 +23,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
                   val fhirServerProperties: FHIRServerProperties,
                   val awsOrganization: AWSOrganization,
                   val awsPractitioner: AWSPractitioner,
-                  val awsBundle: AWSBundle,
+                  val awsBundleProvider: AWSBundle,
                   val awsAuditEvent: AWSAuditEvent) {
 
 
@@ -94,11 +94,11 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
                 if (generalPractitioner.hasIdentifier() ) {
                     if (generalPractitioner.identifier.system.equals(FhirSystems.ODS_CODE)) {
                         surgery = awsOrganization.getOrganization(generalPractitioner.identifier)
-                        if (surgery != null) generalPractitioner.reference = "Organization/" + surgery.idElement.idPart
+                        if (surgery != null) awsBundleProvider.updateReference(generalPractitioner, surgery.identifierFirstRep, surgery)
                     }
                     if (generalPractitioner.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER) || generalPractitioner.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
                         practitioner = awsPractitioner.getPractitioner(generalPractitioner.identifier)
-                        if (practitioner != null) generalPractitioner.reference = "Practitioner/" + practitioner.idElement.idPart
+                        if (practitioner != null) awsBundleProvider.updateReference(generalPractitioner, practitioner.identifierFirstRep, practitioner)
                     }
                 }
             }
@@ -153,7 +153,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
     public fun getPatient(reference: Reference, bundle: Bundle): Patient? {
         var awsPatient : Patient? = null
         if (reference.hasReference()) {
-            val patient = awsBundle.findResource(bundle, "Patient", reference.reference) as Patient
+            val patient = awsBundleProvider.findResource(bundle, "Patient", reference.reference) as Patient
             for ( identifier in patient.identifier) {
                 if (identifier.system.equals(FhirSystems.NHS_NUMBER)) {
                     awsPatient = getPatient(identifier)
@@ -180,7 +180,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         for (practitioner in newPatient.generalPractitioner) {
             if (practitioner.hasIdentifier() && practitioner.identifier.system.equals(FhirSystems.ODS_CODE)) {
                 val surgery = awsOrganization.getOrganization(practitioner.identifier)
-                if (surgery != null) practitioner.reference = "Organization/" + surgery.idElement.idPart
+                if (surgery != null) awsBundleProvider.updateReference(practitioner, surgery.identifierFirstRep,surgery)
             }
         }
 
