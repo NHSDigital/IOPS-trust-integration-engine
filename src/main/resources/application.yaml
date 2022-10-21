@@ -14,9 +14,9 @@ management:
 
 fhir:
   server:
-    name: Orchestration Engine Demo
+    name: Event and Message Notifications
     baseUrl: https://test.validation.fhir.nhs.uk
-    version: 1.0.0
+    version: 1.0.1
 
 ###Remote terminology validation:
 

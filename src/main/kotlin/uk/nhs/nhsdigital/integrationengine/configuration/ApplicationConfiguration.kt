@@ -45,8 +45,8 @@ open class ApplicationConfiguration {
     }
 
     @Bean
-    fun getCognitoService(messageProperties: MessageProperties): CognitoAuthInterceptor? {
-        return CognitoAuthInterceptor(messageProperties)
+    fun getCognitoService(messageProperties: MessageProperties, @Qualifier("R4") ctx : FhirContext): CognitoAuthInterceptor? {
+        return CognitoAuthInterceptor(messageProperties, ctx)
     }
 
     @Bean

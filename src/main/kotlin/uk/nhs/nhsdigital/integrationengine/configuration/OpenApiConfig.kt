@@ -25,7 +25,7 @@ import uk.nhs.nhsdigital.integrationengine.util.FHIRExamples
 @Configuration
 open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
-    var FHIRSERVER = "HL7 FHIR Orchestration Engine"
+    var FHIRSERVER = "HL7 FHIR Message Notifications"
     @Bean
     open fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
@@ -35,7 +35,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val oas = OpenAPI()
             .info(
                 Info()
-                    .title("NHS Digital Interoperability Standards -"+fhirServerProperties.server.name)
+                    .title(fhirServerProperties.server.name)
                     .version(fhirServerProperties.server.version)
                     .description(
                                 "\n [UK Core Implementation Guide (0.5.1)](https://simplifier.net/guide/ukcoreimplementationguide0.5.0-stu1/home?version=current)"
@@ -44,6 +44,14 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .termsOfService("http://swagger.io/terms/")
                     .license(License().name("Apache 2.0").url("http://springdoc.org"))
             )
+
+
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
+                .name("HL7 FHIR Events - Patient Identifier Cross-referencing")
+                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
+                        + " [IHE PIXm ITI-104](https://profiles.ihe.net/ITI/PIXm/ITI-104.html)")
+        )
 
         oas.path("/FHIR/R4/metadata",PathItem()
             .get(
@@ -69,7 +77,13 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 Operation()
                     .addTagsItem(FHIRSERVER)
                     .summary("Send a predefined collection of FHIR resources for processing")
-                    .description("[process-message](https://simplifier.net/guide/nhsdigital/Home/FHIRAssets/AllAssets/OperationDefinition/process-message)")
+                    .description( "See [process-message](https://simplifier.net/guide/nhsdigital/Home/FHIRAssets/AllAssets/OperationDefinition/process-message) \n\n"+
+                            " | Supported Messages | \n" +
+                            " |-------| \n" +
+                            " | [prescription-order](https://simplifier.net/guide/nhsdigital/Home/FHIRAssets/AllAssets/MessageDefinitions/prescription-order) |" +
+                            " | [dispense-notification](https://simplifier.net/guide/nhsdigital/Home/FHIRAssets/AllAssets/MessageDefinitions/dispense-notification) |" +
+                            " | [servicerequest-request](https://simplifier.net/guide/nhsbookingandreferralstandard/Home/FHIRAssets/AllAssets/AllProfiles/BARS-MessageDefinition-ServiceRequest-RequestReferral.page.md?version=current) |"
+                    )
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
                         .addMediaType("application/fhir+json",
@@ -79,6 +93,38 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
 
         oas.path("/FHIR/R4/\$process-message",processMessageItem)
+
+        val examplesPatient = LinkedHashMap<String,Example?>()
+
+        examplesPatient.put("Add or revise Patient",
+            Example().value(FHIRExamples().loadExample("patient-pds.json",ctx))
+        )
+
+
+        val patientItem = PathItem()
+            .put(
+                Operation()
+                    .addTagsItem("HL7 FHIR Events - Patient Identifier Cross-referencing")
+                    .summary("Add or Revise Patient")
+                    .description("This message is implemented as an HTTP conditional update operation from the Patient Identity Source to the Patient Identifier Cross-reference Manager")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Conditional Update")
+                        .schema(StringSchema())
+                        .example("identifier=https://fhir.nhs.uk/Id/nhs-number|9000000009")
+                    )
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesPatient)
+                                .schema(StringSchema()))
+                    )))
+
+        oas.path("/FHIR/R4/Patient",patientItem)
 
         return oas
     }

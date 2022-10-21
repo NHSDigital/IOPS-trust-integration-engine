@@ -16,7 +16,8 @@ import javax.servlet.annotation.WebServlet
 class FHIRR4RestfulServer(
     @Qualifier("R4") fhirContext: FhirContext,
     public val fhirServerProperties: FHIRServerProperties,
-    public val processMessageProvider: ProcessMessageProvider
+    public val processMessageProvider: ProcessMessageProvider,
+    val patientProvider: PatientProvider
 ) : RestfulServer(fhirContext) {
 
     override fun initialize() {
@@ -25,6 +26,7 @@ class FHIRR4RestfulServer(
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
         registerProvider(processMessageProvider)
+        registerProvider(patientProvider)
 
         val awsAuditEventLoggingInterceptor =
             AWSAuditEventLoggingInterceptor(

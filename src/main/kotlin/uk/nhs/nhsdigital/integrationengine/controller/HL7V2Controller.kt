@@ -33,7 +33,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/V2/ITK")
-@io.swagger.v3.oas.annotations.tags.Tag(name="HL7 v2 Orchestration Engine")
+@io.swagger.v3.oas.annotations.tags.Tag(name="HL7 v2 Events - ADT", description = "Includes [IHE PIX](https://profiles.ihe.net/ITI/TF/Volume1/ch-5.html)")
 class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                      val awsPatient : AWSPatient,
                       val awsEncounter : AWSEncounter) {
