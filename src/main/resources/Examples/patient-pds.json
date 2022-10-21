@@ -37,7 +37,7 @@
             "coding": [
               {
                 "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-DeathNotificationStatus",
-                "version": "1.0.1",
+                "version": "1.0.2",
                 "code": "2",
                 "display": "Formal - death notice received from Registrar of Deaths"
               }
@@ -59,7 +59,7 @@
             "coding": [
               {
                 "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-HumanLanguage",
-                "version": "1.0.1",
+                "version": "1.0.2",
                 "code": "fr",
                 "display": "French"
               }

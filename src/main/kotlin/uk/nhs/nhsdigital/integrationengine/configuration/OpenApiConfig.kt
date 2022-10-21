@@ -52,6 +52,12 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE PIXm ITI-104](https://profiles.ihe.net/ITI/PIXm/ITI-104.html)")
         )
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
+                .name("HL7 FHIR Events - Patient Identity Feed")
+                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
+                        + " [IHE PMIR ITI-93](https://build.fhir.org/ig/IHE/ITI.PMIR/ITI-93.html)")
+        )
 
         oas.path("/FHIR/R4/metadata",PathItem()
             .get(
@@ -123,11 +129,24 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .examples(examplesPatient)
                                 .schema(StringSchema()))
                     )))
+            .post(
+                Operation()
+                    .addTagsItem("HL7 FHIR Events - Patient Identity Feed")
+                    .summary("Add Patient")
+                    .description("Note: PMIR suggests a transaction Bundle")
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesPatient)
+                                .schema(StringSchema()))
+                    )))
 
         oas.path("/FHIR/R4/Patient",patientItem)
 
         return oas
     }
+
     fun getApiResponses() : ApiResponses {
 
         val response200 = ApiResponse()
