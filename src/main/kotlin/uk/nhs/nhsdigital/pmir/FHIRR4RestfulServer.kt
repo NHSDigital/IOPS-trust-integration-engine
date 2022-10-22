@@ -16,7 +16,9 @@ class FHIRR4RestfulServer(
     public val fhirServerProperties: FHIRServerProperties,
     public val processMessageProvider: ProcessMessageProvider,
     val patientProvider: PatientProvider,
-    val subscriptionProvider: SubscriptionProvider
+    val subscriptionProvider: SubscriptionProvider,
+    val encounterProvider: EncounterProvider,
+    val communicationRequestProvider: CommunicationRequestProvider
 ) : RestfulServer(fhirContext) {
 
     override fun initialize() {
@@ -27,6 +29,8 @@ class FHIRR4RestfulServer(
         registerProvider(processMessageProvider)
         registerProvider(patientProvider)
         registerProvider(subscriptionProvider)
+        registerProvider(encounterProvider)
+        registerProvider(communicationRequestProvider)
 
         val awsAuditEventLoggingInterceptor =
             AWSAuditEventLoggingInterceptor(

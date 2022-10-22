@@ -1,0 +1,137 @@
+{
+  "resourceType": "Encounter",
+  "extension": [
+    {
+      "url": "https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-AdmissionMethod",
+      "valueCodeableConcept": {
+        "coding": [
+          {
+            "system": "https://fhir.hl7.org.uk/CodeSystem/UKCore-AdmissionMethodEngland",
+            "code": "13"
+          }
+        ]
+      }
+    }
+  ],
+  "identifier": [
+    {
+      "system": "https://fhir.nhs.uk/RCB/Id/Encounter",
+      "value": "2139"
+    }
+  ],
+  "status": "arrived",
+  "class": {
+    "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+    "code": "IMP",
+    "display": "inpatient encounter"
+  },
+  "serviceType": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "32485007",
+        "display": "Hospital admission"
+      }
+    ]
+  },
+  "subject": {
+    "identifier": {
+      "system": "https://fhir.nhs.uk/Id/nhs-number",
+      "value": "9000000009"
+    }
+  },
+  "participant": [
+    {
+      "type": [
+        {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+              "code": "ATND",
+              "display": "attender"
+            }
+          ]
+        }
+      ],
+      "individual": {
+        "identifier": {
+          "system": "https://fhir.hl7.org.uk/Id/gmc-number",
+          "value": "C3456789"
+        },
+        "display": "Dr Samuel Darwin"
+      }
+    },
+    {
+      "type": [
+        {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+              "code": "CON",
+              "display": "consultant"
+            }
+          ]
+        }
+      ],
+      "individual": {
+        "identifier": {
+          "system": "https://fhir.hl7.org.uk/Id/gmc-number",
+          "value": "C3456789"
+        },
+        "display": "Dr Samuel Darwin"
+      }
+    },
+    {
+      "type": [
+        {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+              "code": "REF",
+              "display": "referrer"
+            }
+          ]
+        }
+      ],
+      "individual": {
+        "identifier": {
+          "system": "https://fhir.hl7.org.uk/Id/gmp-number",
+          "value": "G5612908"
+        },
+        "display": "Dr Gregory Townley"
+      }
+    }
+  ],
+  "period": {
+    "start": "2010-10-20T17:16:00+00:00"
+  },
+  "hospitalization": {
+    "admitSource": {
+      "coding": [
+        {
+          "system": "https://fhir.nhs.uk/CodeSystem/UKCore-SourceOfAdmission",
+          "code": "19"
+        }
+      ]
+    }
+  },
+  "location": [
+    {
+      "location": {
+        "identifier": {
+          "system": "https://fhir.nhs.uk/Id/ods-site-code",
+          "value": "RCB55"
+        }
+      },
+      "period": {
+        "start": "2010-10-20T17:16:00+00:00"
+      }
+    }
+  ],
+  "serviceProvider": {
+    "identifier": {
+      "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+      "value": "RCB"
+    }
+  }
+}

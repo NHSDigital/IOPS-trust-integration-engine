@@ -53,6 +53,18 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         )
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
+                .name("HL7 FHIR Events - ADT")
+                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
+                       )
+        )
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
+                .name("HL7 FHIR Events - Alert Communication Management")
+                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
+                        + " [IHE mACM ITI-84](https://www.ihe.net/uploadedFiles/Documents/ITI/IHE_ITI_Suppl_mACM.pdf)")
+        )
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
                 .name("HL7 FHIR Events - Patient Identity Feed")
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE PMIR ITI-93](https://build.fhir.org/ig/IHE/ITI.PMIR/ITI-93.html)" +
@@ -172,6 +184,50 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
 
         oas.path("/FHIR/R4/Patient",patientItem)
+
+        val examplesEncounter = LinkedHashMap<String,Example?>()
+        examplesEncounter.put("Hospital admission",
+            Example().value(FHIRExamples().loadExample("Encounter.json",ctx))
+        )
+
+        val encounterItem = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem("HL7 FHIR Events - ADT")
+                    .summary("Encounter Event")
+                    .description("Note: PMIR suggests using a urn:ihe:iti:pmir:2019:patient-feed FHIR Message. This message contains a FHIR Bundle which holds the http method POST/PUT/DEL and a Patient resource. \n"
+                            + "This example API is only showing a FHIR RESTful version")
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesEncounter)
+                                .schema(StringSchema()))
+                    )))
+
+        oas.path("/FHIR/R4/Encounter",encounterItem)
+
+        val examplesCommunicationRequest = LinkedHashMap<String,Example?>()
+        examplesCommunicationRequest.put("ITI-84 Appointment Reminder",
+            Example().value(FHIRExamples().loadExample("CommunicationRequest.json",ctx))
+        )
+
+        val communicationRequestItem = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem("HL7 FHIR Events - Alert Communication Management")
+                    .summary("Communication Request")
+                    .description("This doesn't send the actual text message, that is down to system format (e.g. SMS, email, FHIR Communication, etc)")
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesCommunicationRequest)
+                                .schema(StringSchema()))
+                    )))
+
+        oas.path("/FHIR/R4/CommunicationRequest",communicationRequestItem)
+
         val examplesSubscriptionCreate = LinkedHashMap<String,Example?>()
         examplesSubscriptionCreate.put("Add PMIR Patient Subscription",
             Example().value(FHIRExamples().loadExample("subscription-pmir-create.json",ctx))
