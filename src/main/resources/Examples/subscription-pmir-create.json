@@ -1,0 +1,17 @@
+{
+  "resourceType" : "Subscription",
+  "status" : "active",
+  "contact" : [
+    {
+      "system" : "phone",
+      "value" : "+44-113-555-1212"
+    }
+  ],
+  "reason" : "To receive Patient changes.",
+  "criteria" : "Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|9000000025",
+  "channel" : {
+    "type" : "message",
+    "endpoint" : "http://example.org/pmir-message",
+    "payload" : "application/fhir+json"
+  }
+}

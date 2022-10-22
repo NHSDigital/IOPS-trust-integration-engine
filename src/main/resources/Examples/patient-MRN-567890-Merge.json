@@ -1,0 +1,56 @@
+{
+  "resourceType": "Patient",
+  "identifier": [
+    {
+      "system": "https://fhir.nhs.uk/Id/MRN/RR8",
+      "value": "567890"
+    }
+  ],
+  "meta": {
+    "security": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
+        "code": "R",
+        "display": "restricted"
+      }
+    ]
+  },
+  "name": [
+    {
+      "use": "usual",
+      "given": [
+        "Janet"
+      ],
+      "family": "Smith",
+      "prefix": [
+        "Ms"
+      ],
+      "suffix": [
+        "MBE"
+      ]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "2010-10-22",
+  "active" : false,
+  "link" : [
+    {
+      "other" : {
+        "identifier" : {
+          "system": "https://fhir.nhs.uk/Id/MRN/RR8",
+          "value": "567892"
+        }
+      },
+      "type" : "replaced-by"
+    }
+  ],
+  "generalPractitioner": [
+    {
+      "type": "Organization",
+      "identifier": {
+        "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+        "value": "Y12345"
+      }
+    }
+  ]
+}
