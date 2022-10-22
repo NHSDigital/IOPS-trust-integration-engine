@@ -16,7 +16,7 @@ fhir:
   server:
     name: Event and Message Notifications
     baseUrl: https://test.validation.fhir.nhs.uk
-    version: 1.0.2
+    version: 1.0.3
 
 ###Remote terminology validation:
 
