@@ -25,6 +25,7 @@ import uk.nhs.nhsdigital.pmir.awsProvider.AWSEncounter
 import uk.nhs.nhsdigital.pmir.awsProvider.AWSPatient
 import uk.nhs.nhsdigital.pmir.transforms.PD1toFHIRPractitionerRole
 import uk.nhs.nhsdigital.pmir.transforms.PIDtoFHIRPatient
+import uk.nhs.nhsdigital.pmir.transforms.PV1toFHIRAppointment
 import uk.nhs.nhsdigital.pmir.transforms.PV1toFHIREncounter
 import uk.nhs.nhsdigital.pmir.util.FhirSystems
 import java.text.SimpleDateFormat
@@ -49,8 +50,11 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     var context: HapiContext = DefaultHapiContext()
 
     var pV1toFHIREncounter = PV1toFHIREncounter();
+    var pV1toFHIRAppointment = PV1toFHIRAppointment();
     var piDtoFHIRPatient = PIDtoFHIRPatient();
     var pD1toFHIRPractitionerRole = PD1toFHIRPractitionerRole()
+
+
 
 
     init {
@@ -68,50 +72,73 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
         required = true,
         content = [ Content(mediaType = "x-application/hl7-v2+er7" ,
             examples = [
-                ExampleObject(
-                    name = "HL7 v2.4 ADT_A01 Admit Inpatient",
-                    value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201010101418||ADT^A01^ADT_A01|1391320453338055|P|2.4|1|20101010141857|||GBR|UNICODE|EN||iTKv1.0\n" +
-                            "EVN||201010101400|||111111111^Cortana^Emily^^^Miss^^RCB55|201010101400\n" +
-                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|||GBR||DEU\n" +
-                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
-                            "NK1|1|SMITH^ALBERT^J^^MR^^L|1|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
-                            "PV1|1|I|RCB^OBS1^BAY2-6^RCB55|13|||C3456789^Darwin^Samuel^^^Dr^^^GMC|G5612908^Townley^Gregory^^^Dr^^^GMP|C3456789^Darwin^Samuel^^^Dr^^^GMC|300||||19|||||2139^^^VISITID|||||||||||||||||||||||||201010201716\n" +
-                            "PV2||||||||||||||||||||||||||||||||||||||C\n" +
-                            "ZU1|201010071234|1|C|201010091300||500|||||||||201010081200|201010081156|02|Y|0\n" +
-                            "ZU3|004|03|5|||||Normal|8b||1|1\n" +
-                            "ZU4||201010081756|201010090000\n" +
-                            "ZU8|Z|1|No",
-                    summary = "Admission Notification"),
-                ExampleObject(
-                    name = "HL7 v2.4 ADT_A03 Discharge Patient (Inpatient or Outpatient)",
-                    value = "MSH|^~\\&|MATSYSTEM|RCB|PAS|RCB|201003311730||ADT^A03^ADT_A03|13403891320453338089|P|2.4|0|20100331173057|||GBR|UNICODE|EN||iTKv1.0\n" +
-                            "EVN||201003311720|||111111111^Cortana^Emily^^Miss^^RCB55|201003311725\n" +
-                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
-                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
-                            "PV1|61|O|RCB^MATWRD^Bed 3^RCB55|82|||C3456789^Darwin^Samuel^^^Dr^^^GMC||C3456789^Darwin^Samuel^^^Dr^^^GMC|500||||79|B6||C3456789^Darwin^Samuel^^^Dr^^^GMC|Pregnant|11554^^^VISITID|||||||||||||||||19||||||||201003301100|201003311715\n" +
-                            "PV2|||Labour||||||||||||||||||||||2|||||||||||||C",
-                    summary = "Discharge Notification"),
-                ExampleObject(
-                    name = "HL7 v2.4 ADT_A28 Create New Patient",
-                    value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201001021215||ADT^A28^ADT_A05|13403891320453338075|P|2.4|0|20100102121557|||GBR|UNICODE|EN||iTKv1.0\n" +
-                            "EVN||201001021213|||111111111^Cortana^Emily^^Miss^^RCB55|201001021213\n" +
-                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196513121515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
-                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
-                            "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
-                            "AL1|1|DA|Z88.5|5||199807011755\n" +
-                            "ZU8|U|1|Yes|",
-                    summary = "Create Patient"),
-                ExampleObject(
-                    name = "HL7 v2.4 ADT_A31 Update Patient Information",
-                    value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201001021236||ADT^A31^ADT_A05|134039113204538055|P|2.4|0|20100102123657|||GBR|UNICODE|EN||iTKv1.0\n" +
-                            "EVN||201001021237|||111111111^Cortana^Emily^^Miss^^RCB55|201001021230\n" +
-                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196513121515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
-                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
-                            "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
-                            "AL1|1|DA|Z88.5|5||199807011755\n" +
-                            "AL1|2|DA|T63.0|7||199306050000\n" +
-                            "ZU8|U|1|Yes",
-                    summary = "Update Patient")])])
+                    ExampleObject(
+                        name = "HL7 v2.4 ADT_A28 Create New Patient",
+                        value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201001021215||ADT^A28^ADT_A05|13403891320453338075|P|2.4|0|20100102121557|||GBR|UNICODE|EN||iTKv1.0\n" +
+                                "EVN||201001021213|||111111111^Cortana^Emily^^Miss^^RCB55|201001021213\n" +
+                                "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196513121515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
+                                "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
+                                "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                                "AL1|1|DA|Z88.5|5||199807011755\n" +
+                                "ZU8|U|1|Yes|",
+                        summary = "Create Patient"),
+                    ExampleObject(
+                        name = "HL7 v2.4 ADT_A31 Update Patient",
+                        value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201001021236||ADT^A31^ADT_A05|134039113204538055|P|2.4|0|20100102123657|||GBR|UNICODE|EN||iTKv1.0\n" +
+                                "EVN||201001021237|||111111111^Cortana^Emily^^Miss^^RCB55|201001021230\n" +
+                                "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196513121515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
+                                "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
+                                "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                                "AL1|1|DA|Z88.5|5||199807011755\n" +
+                                "AL1|2|DA|T63.0|7||199306050000\n" +
+                                "ZU8|U|1|Yes",
+                        summary = "Update Patient"),
+                    ExampleObject(
+                        name = "HL7 v2.4 ADT_A01 Admit Inpatient",
+                        value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201010101418||ADT^A01^ADT_A01|1391320453338055|P|2.4|1|20101010141857|||GBR|UNICODE|EN||iTKv1.0\n" +
+                                "EVN||201010101400|||111111111^Cortana^Emily^^^Miss^^RCB55|201010101400\n" +
+                                "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|||GBR||DEU\n" +
+                                "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMP\n" +
+                                "NK1|1|SMITH^ALBERT^J^^MR^^L|1|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                                "PV1|1|I|RCB^OBS1^BAY2-6^RCB55|13|||C3456789^Darwin^Samuel^^^Dr^^^GMC|G5612908^Townley^Gregory^^^Dr^^^GMP|C3456789^Darwin^Samuel^^^Dr^^^GMC|300||||19|||||2139^^^VISITID|||||||||||||||||||||||||201010201716\n" +
+                                "PV2||||||||||||||||||||||||||||||||||||||C\n" +
+                                "ZU1|201010071234|1|C|201010091300||500|||||||||201010081200|201010081156|02|Y|0\n" +
+                                "ZU3|004|03|5|||||Normal|8b||1|1\n" +
+                                "ZU4||201010081756|201010090000\n" +
+                                "ZU8|Z|1|No",
+                        summary = "Admission Notification"),
+                    ExampleObject(
+                        name = "HL7 v2.4 ADT_A03 Discharge a Patient.",
+                        value = "MSH|^~\\&|MATSYSTEM|RCB|PAS|RCB|201003311730||ADT^A03^ADT_A03|13403891320453338089|P|2.4|0|20100331173057|||GBR|UNICODE|EN||iTKv1.0\n" +
+                                "EVN||201003311720|||111111111^Cortana^Emily^^Miss^^RCB55|201003311725\n" +
+                                "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
+                                "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
+                                "PV1|61|O|RCB^MATWRD^Bed 3^RCB55|82|||C3456789^Darwin^Samuel^^^Dr^^^GMC||C3456789^Darwin^Samuel^^^Dr^^^GMC|500||||79|B6||C3456789^Darwin^Samuel^^^Dr^^^GMC|Pregnant|11554^^^VISITID|||||||||||||||||19||||||||201003301100|201003311715\n" +
+                                "PV2|||Labour||||||||||||||||||||||2|||||||||||||C",
+                        summary = "Discharge Notification"),
+                    ExampleObject(
+                        name = "HL7 v2.4 ADT_A04 Register Outpatient Update.",
+                        value = "MSH|^~\\&|KIOSK|RCB|PAS|RCB|201011011512||ADT^A04^ADT_A01|14038913245354|P|2.4||201011011512|||GBR|UNICODE|EN||iTKv1.0\n" +
+                                "EVN||201011011512|||111111111^Cortana^Emily^^Miss^^RCB55|201001111512\n" +
+                                "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|||GBR||DEU\n" +
+                                "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
+                                "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                                "PV1|57|O|West Wing^RCB-AWRD^BED2^RCB55|13|||C3456789^Darwin^Samuel^^^Dr^^^GMC|G5612908^Townley^Gregory^^^Dr^^^GMC|C3456789^Darwin^Samuel^^^Dr^^^GMC|300||||19|||C3456789^Darwin^Samuel^^^Dr^^^GMC|OUTPATIENT|2141^^^VISITID|||||||||||||||||||||||||201011011600\n" +
+                                "AL1|1|DA|Z88.5|5||199807011755\n" +
+                                "PR1|56||U19.2^24 hour ambulatory electrocardiography^OPCS4||201011011512|D|1440|||||C3456789^Darwin^Samuel^^^Dr^^^GMC|C3\n" +
+                                "ZU1||2|C|201011011530||300||||1|||GP|2|201011011624|201011011620|02|Y|0",
+                        summary = "Register Outpatient Update"),
+                    ExampleObject(
+                        name = "HL7 v2.4 ADT_A05 Pre Admit Patient",
+                        value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201011011512||ADT^A05^ADT_A05|14038913245354|P|2.4|A05|201011011512|||GBR|UNICODE|EN||iTKv1.0\n" +
+                                "EVN||201011011512|||111111111^Cortana^Emily^^Miss^^RCB55|201001111512\n" +
+                                "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|||GBR||DEU\n" +
+                                "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
+                                "NK1|1|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                                "PV1|1|P|West Wing^RCB-AWRD^BED2^RCB55|13|||C3456789^Darwin^Samuel^^^Dr^^^GMC|G5612908^Townley^Gregory^^^Dr^^^GMC|C3456789^Darwin^Samuel^^^Dr^^^GMC|300||||19|||C3456789^Darwin^Samuel^^^Dr^^^GMC|PREADMIT|2131^^^VISITID|||||||||||||||||||||||||201011011600\n" +
+                                "AL1|1|DA|Z88.5|5||199807011755\n" +
+                                "ZU1||2|C|201011011530||300||||1|||GP|2|201011011624|201011011620|02|Y|0",
+                        summary = "Pre Admit Patient")])])
     fun convertFHIR(@org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
 
         var resource = convertADT(v2Message)
@@ -150,6 +177,17 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                             "ZU8|U|1|Yes|",
                     summary = "Create Patient"),
                 ExampleObject(
+                    name = "HL7 v2.4 ADT_A31 Update Patient",
+                    value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201001021236||ADT^A31^ADT_A05|134039113204538055|P|2.4|0|20100102123657|||GBR|UNICODE|EN||iTKv1.0\n" +
+                            "EVN||201001021237|||111111111^Cortana^Emily^^Miss^^RCB55|201001021230\n" +
+                            "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196513121515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|N||GBR||DEU||||ED\n" +
+                            "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
+                            "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                            "AL1|1|DA|Z88.5|5||199807011755\n" +
+                            "AL1|2|DA|T63.0|7||199306050000\n" +
+                            "ZU8|U|1|Yes",
+                    summary = "Update Patient"),
+                ExampleObject(
                     name = "HL7 v2.4 ADT_A01 Admit Inpatient",
                     value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201010101418||ADT^A01^ADT_A01|1391320453338055|P|2.4|1|20101010141857|||GBR|UNICODE|EN||iTKv1.0\n" +
                             "EVN||201010101400|||111111111^Cortana^Emily^^^Miss^^RCB55|201010101400\n" +
@@ -171,7 +209,31 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                         "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
                         "PV1|61|O|RCB^MATWRD^Bed 3^RCB55|82|||C3456789^Darwin^Samuel^^^Dr^^^GMC||C3456789^Darwin^Samuel^^^Dr^^^GMC|500||||79|B6||C3456789^Darwin^Samuel^^^Dr^^^GMC|Pregnant|11554^^^VISITID|||||||||||||||||19||||||||201003301100|201003311715\n" +
                         "PV2|||Labour||||||||||||||||||||||2|||||||||||||C",
-                summary = "Discharge Notification")])])
+                summary = "Discharge Notification"),
+            ExampleObject(
+                    name = "HL7 v2.4 ADT_A04 Register Outpatient Update.",
+                value = "MSH|^~\\&|KIOSK|RCB|PAS|RCB|201011011512||ADT^A04^ADT_A01|14038913245354|P|2.4||201011011512|||GBR|UNICODE|EN||iTKv1.0\n" +
+                        "EVN||201011011512|||111111111^Cortana^Emily^^Miss^^RCB55|201001111512\n" +
+                        "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|||GBR||DEU\n" +
+                        "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
+                        "NK1|2|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                        "PV1|57|O|West Wing^RCB-AWRD^BED2^RCB55|13|||C3456789^Darwin^Samuel^^^Dr^^^GMC|G5612908^Townley^Gregory^^^Dr^^^GMC|C3456789^Darwin^Samuel^^^Dr^^^GMC|300||||19|||C3456789^Darwin^Samuel^^^Dr^^^GMC|OUTPATIENT|2141^^^VISITID|||||||||||||||||||||||||201011011600\n" +
+                        "AL1|1|DA|Z88.5|5||199807011755\n" +
+                        "PR1|56||U19.2^24 hour ambulatory electrocardiography^OPCS4||201011011512|D|1440|||||C3456789^Darwin^Samuel^^^Dr^^^GMC|C3\n" +
+                        "ZU1||2|C|201011011530||300||||1|||GP|2|201011011624|201011011620|02|Y|0",
+                summary = "Register Outpatient Update"),
+            ExampleObject(
+                    name = "HL7 v2.4 ADT_A05 Pre Admit Patient",
+                value = "MSH|^~\\&|PAS|RCB|ROUTE|ROUTE|201011011512||ADT^A05^ADT_A05|14038913245354|P|2.4|A05|201011011512|||GBR|UNICODE|EN||iTKv1.0\n" +
+                        "EVN||201011011512|||111111111^Cortana^Emily^^Miss^^RCB55|201001111512\n" +
+                        "PID|1||3333333333^^^NHS||SMITH^FREDRICA^J^^MRS^^L|SCHMIDT^HELGAR^Y|196512131515|2|||29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H||+441234567890||EN|M|C22|||||A|Berlin|||GBR||DEU\n" +
+                        "PD1|||MALTON GP PRACTICE^^Y06601|G5612908^Townley^Gregory^^^Dr^^^GMC\n" +
+                        "NK1|1|SMITH^FRANCESCA^^^MRS^^L|16|29 WEST AVENUE^BURYTHORPE^MALTON^NORTH YORKSHIRE^YO32 5TT^GBR^H|+441234567890||||||||||1|196311111513||||EN\n" +
+                        "PV1|1|P|West Wing^RCB-AWRD^BED2^RCB55|13|||C3456789^Darwin^Samuel^^^Dr^^^GMC|G5612908^Townley^Gregory^^^Dr^^^GMC|C3456789^Darwin^Samuel^^^Dr^^^GMC|300||||19|||C3456789^Darwin^Samuel^^^Dr^^^GMC|PREADMIT|2131^^^VISITID|||||||||||||||||||||||||201011011600\n" +
+                        "AL1|1|DA|Z88.5|5||199807011755\n" +
+                        "ZU1||2|C|201011011530||300||||1|||GP|2|201011011624|201011011620|02|Y|0",
+                summary = "Pre Admit Patient")
+            ])])
     fun processEvent(
         @org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
         var resource = convertADT(v2Message)
@@ -212,6 +274,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 val adt03: ADT_A03 = v2message
                 pid = adt03.pid
                 pv1 = adt03.pV1
+                msh= adt03.msh
                 encounterType = CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
                     .setCode("58000006")
@@ -220,6 +283,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
             if (v2message is ADT_A01) {
                 pid = v2message.pid
                 pv1 = v2message.pV1
+                msh = v2message.msh
 
                 encounterType = CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
@@ -229,6 +293,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
             if (v2message is ADT_A02) {
                 pid = v2message.pid
                 pv1 = v2message.pV1
+                msh = v2message.msh
                 encounterType = CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
                     .setCode("107724000")
@@ -237,17 +302,43 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
             if (v2message is ADT_A05) {
                 pid = v2message.pid
                 pd1 = v2message.pD1
+                pv1 = v2message.pV1
+                msh = v2message.msh
             }
             if (pv1 != null && pid != null) {
-                var encounter = pV1toFHIREncounter.transform(pv1)
-                // Need to double check this is correct - does admit mean arrived`
-                if (v2message is ADT_A01 && encounter != null) encounter.status = Encounter.EncounterStatus.ARRIVED
-                var patient = piDtoFHIRPatient.transform(pid)
-                if (encounterType != null) encounter.serviceType = encounterType
-                for ( identifier in patient.identifier) {
-                    if (identifier.system.equals(FhirSystems.NHS_NUMBER)) encounter.subject = Reference().setIdentifier(identifier)
+                if (msh != null) {
+                    if (msh.messageType.triggerEvent.value.equals("A05")) {
+
+                        var appointment = pV1toFHIRAppointment.transform(pv1)
+                        // Need to double check this is correct - does admit mean arrived`
+                        var patient = piDtoFHIRPatient.transform(pid)
+
+                        for (identifier in patient.identifier) {
+                            if (identifier.system.equals(FhirSystems.NHS_NUMBER)) appointment.addParticipant(Appointment.AppointmentParticipantComponent()
+                                .setActor(Reference().setIdentifier(identifier)))
+                        }
+                        return appointment
+                    } else {
+                        if (msh.messageType.triggerEvent.value.equals("A04")) {
+                            encounterType = CodeableConcept().addCoding(Coding()
+                                .setSystem(FhirSystems.SNOMED_CT)
+                                .setCode("11429006")
+                                .setDisplay("Consultation"))
+                        }
+                        var encounter = pV1toFHIREncounter.transform(pv1)
+                        // Need to double check this is correct - does admit mean arrived`
+                        if (v2message is ADT_A01 && encounter != null) encounter.status =
+                            Encounter.EncounterStatus.ARRIVED
+                        var patient = piDtoFHIRPatient.transform(pid)
+                        if (encounterType != null) encounter.serviceType = encounterType
+                        for (identifier in patient.identifier) {
+                            if (identifier.system.equals(FhirSystems.NHS_NUMBER)) encounter.subject =
+                                Reference().setIdentifier(identifier)
+                        }
+                        return encounter
+                    }
+
                 }
-                return encounter
 
             } else if (pid != null) {
                 var patient = piDtoFHIRPatient.transform(pid)
