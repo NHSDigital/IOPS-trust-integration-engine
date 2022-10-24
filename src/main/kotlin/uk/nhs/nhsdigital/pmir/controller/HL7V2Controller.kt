@@ -3,6 +3,7 @@ package uk.nhs.nhsdigital.pmir.controller
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.hl7v2.DefaultHapiContext
 import ca.uhn.hl7v2.HapiContext
+import ca.uhn.hl7v2.model.Segment
 import ca.uhn.hl7v2.model.v24.message.ADT_A01
 import ca.uhn.hl7v2.model.v24.message.ADT_A02
 import ca.uhn.hl7v2.model.v24.message.ADT_A03
@@ -162,7 +163,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     @PostMapping
         (path = ["/\$process-event"], consumes = ["x-application/hl7-v2+er7"], produces = ["x-application/hl7-v2+er7"])
     @RequestBody(
-        description = "HL7 v2 event to be processed. Message must be formatted according to the [HSCIC HL7 v2 Message Specification](https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/blob/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf)",
+        description = "HL7 v2 event to be processed. Message must be formatted according to the [HSCIC HL7 v2 Message Specification](https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/raw/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf)",
         required = true,
         content = [ Content(mediaType = "x-application/hl7-v2+er7" ,
             examples = [
@@ -261,6 +262,8 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
         var dg1: List<DG1>? = null
         var encounterType : CodeableConcept? = null;
 
+        var zu1: Segment? = null
+
         var message2 = message.replace("\n","\r")
 
         var parser :PipeParser  = context.getPipeParser();
@@ -275,6 +278,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 pid = adt03.pid
                 pv1 = adt03.pV1
                 msh= adt03.msh
+                zu1 = adt03.get("ZU1") as Segment
                 encounterType = CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
                     .setCode("58000006")
@@ -284,6 +288,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 pid = v2message.pid
                 pv1 = v2message.pV1
                 msh = v2message.msh
+                zu1 = v2message.get("ZU1") as Segment
 
                 encounterType = CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
@@ -294,6 +299,8 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 pid = v2message.pid
                 pv1 = v2message.pV1
                 msh = v2message.msh
+                zu1 = v2message.get("ZU1") as Segment
+
                 encounterType = CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
                     .setCode("107724000")
@@ -304,40 +311,62 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 pd1 = v2message.pD1
                 pv1 = v2message.pV1
                 msh = v2message.msh
+                zu1 = v2message.get("ZU1") as Segment
             }
             if (pv1 != null && pid != null) {
                 if (msh != null) {
-                    if (msh.messageType.triggerEvent.value.equals("A05")) {
 
-                        var appointment = pV1toFHIRAppointment.transform(pv1)
-                        // Need to double check this is correct - does admit mean arrived`
-                        var patient = piDtoFHIRPatient.transform(pid)
-
-                        for (identifier in patient.identifier) {
-                            if (identifier.system.equals(FhirSystems.NHS_NUMBER)) appointment.addParticipant(Appointment.AppointmentParticipantComponent()
-                                .setActor(Reference().setIdentifier(identifier)))
+                    if (msh.messageType.triggerEvent.value.equals("A04")) {
+                        encounterType = CodeableConcept().addCoding(Coding()
+                            .setSystem(FhirSystems.SNOMED_CT)
+                            .setCode("11429006")
+                            .setDisplay("Consultation"))
+                    }
+                    var encounter = pV1toFHIREncounter.transform(pv1)
+                    // Need to double check this is correct - does admit mean arrived`
+                    if (v2message is ADT_A01 && encounter != null) encounter.status =
+                        Encounter.EncounterStatus.INPROGRESS
+                    when (msh.messageType.triggerEvent.value) {
+                        "A01" -> {
+                            encounter.status =
+                                Encounter.EncounterStatus.INPROGRESS
                         }
-                        return appointment
-                    } else {
-                        if (msh.messageType.triggerEvent.value.equals("A04")) {
-                            encounterType = CodeableConcept().addCoding(Coding()
-                                .setSystem(FhirSystems.SNOMED_CT)
-                                .setCode("11429006")
-                                .setDisplay("Consultation"))
+                        "A03" -> {
+                            encounter.status =
+                                Encounter.EncounterStatus.FINISHED
                         }
-                        var encounter = pV1toFHIREncounter.transform(pv1)
-                        // Need to double check this is correct - does admit mean arrived`
-                        if (v2message is ADT_A01 && encounter != null) encounter.status =
-                            Encounter.EncounterStatus.ARRIVED
-                        var patient = piDtoFHIRPatient.transform(pid)
-                        if (encounterType != null) encounter.serviceType = encounterType
-                        for (identifier in patient.identifier) {
-                            if (identifier.system.equals(FhirSystems.NHS_NUMBER)) encounter.subject =
-                                Reference().setIdentifier(identifier)
+                        "A05" -> {
+                            encounter.status =
+                                Encounter.EncounterStatus.PLANNED
                         }
-                        return encounter
+                    }
+                    if (zu1 != null) {
+                      //  System.out.println(zu1.name)
+                    }
+                    // Provider fix
+                    if (encounter.hasIdentifier()) {
+                        val odsCode = msh.sendingFacility.namespaceID.value
+                        if (odsCode == null) {
+                            encounter.identifierFirstRep.setValue(pv1.visitNumber.id.value).system =
+                                "http://terminology.hl7.org/CodeSystem/v2-0203"
+                        } else {
+                            encounter.identifierFirstRep.setValue(pv1.visitNumber.id.value).system =
+                                "https://fhir.nhs.uk/" + odsCode + "/Id/Encounter"
+                            encounter.serviceProvider = Reference().setIdentifier(
+                                Identifier()
+                                    .setSystem(FhirSystems.ODS_CODE)
+                                    .setValue(odsCode)
+                            )
+                        }
                     }
 
+                    var patient = piDtoFHIRPatient.transform(pid)
+                    if (encounterType != null) encounter.serviceType = encounterType
+                    for (identifier in patient.identifier) {
+                        if (identifier.system.equals(FhirSystems.NHS_NUMBER)) encounter.subject =
+                            Reference().setIdentifier(identifier)
+                    }
+                    return encounter
                 }
 
             } else if (pid != null) {
