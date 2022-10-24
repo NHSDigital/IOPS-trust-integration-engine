@@ -113,6 +113,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         examples.put("EPS - Dispense Notification",
             Example().value(FHIRExamples().loadExample("dispense-notification.json",ctx))
         )
+        examples.put("Pathology - Unsolicited Observations",
+            Example().value(FHIRExamples().loadExample("pathology-report.json",ctx))
+        )
 
         val processMessageItem = PathItem()
             .post(

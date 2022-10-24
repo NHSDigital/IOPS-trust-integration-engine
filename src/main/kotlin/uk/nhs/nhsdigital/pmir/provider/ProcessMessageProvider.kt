@@ -12,6 +12,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                              val awsMedicationDispense: AWSMedicationDispense,
                              val awsServiceRequest: AWSServiceRequest,
                              val awsObservation: AWSObservation,
+                             val awsDiagnosticReport: AWSDiagnosticReport,
                              val awsPatient: AWSPatient,
                              val awsRelatedPerson: AWSRelatedPerson,
                              val awsTask : AWSTask,
@@ -41,6 +42,9 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                     "dispense-notification", "dispense-notification-update" -> {
                         focusType = "MedicationDispense"
 
+                    }
+                    "unsolicited-observations"-> {
+                        focusType = "DiagnosticReport"
                     }
                     "servicerequest-request" -> {
                         focusType = "ServiceRequest"
@@ -166,6 +170,16 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                     }
                     "Observation" -> {
                         val observation = awsObservation.createUpdateAWSObservation(workerResource as Observation,bundle)
+                        if (observation != null) {
+                            operationOutcome.issue.add(
+                                OperationOutcome.OperationOutcomeIssueComponent()
+                                    .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+                                    .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+                                    .addLocation(observation.id))
+                        }
+                    }
+                    "DiagnosticReport" -> {
+                        val observation = awsDiagnosticReport.createUpdateAWSDiagnosticReport(workerResource as DiagnosticReport,bundle, operationOutcome)
                         if (observation != null) {
                             operationOutcome.issue.add(
                                 OperationOutcome.OperationOutcomeIssueComponent()
