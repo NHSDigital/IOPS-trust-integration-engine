@@ -36,9 +36,11 @@ import java.util.*
 @RestController
 @RequestMapping("/V2/ITK")
 @io.swagger.v3.oas.annotations.tags.Tag(name="HL7 v2 Events - ADT", description =
-"[NHS Digital ITK HL7 v2.4](https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/blob/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf) \n"
+"[NHS Digital ITK HL7 v2 Message Specification](" +
+        "https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/raw/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf) \n"
 + "[IHE PIX](https://profiles.ihe.net/ITI/TF/Volume1/ch-5.html) \n"
 )
+
 class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                      val awsPatient : AWSPatient,
                       val awsEncounter : AWSEncounter) {
@@ -69,7 +71,8 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     @PostMapping(path = ["/\$convertFHIRR4"], consumes = ["x-application/hl7-v2+er7"]
     , produces = ["application/fhir+json"])
     @RequestBody(
-        description = "HL7 v2 event to be processed. Message must be formatted according to the [HSCIC HL7 v2 Message Specification](https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/blob/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf)",
+        description = "HL7 v2 event to be processed.",
+                ///Message must be formatted according to the [HSCIC HL7 v2 Message Specification](https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/blob/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf)",
         required = true,
         content = [ Content(mediaType = "x-application/hl7-v2+er7" ,
             examples = [
@@ -163,7 +166,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     @PostMapping
         (path = ["/\$process-event"], consumes = ["x-application/hl7-v2+er7"], produces = ["x-application/hl7-v2+er7"])
     @RequestBody(
-        description = "HL7 v2 event to be processed. Message must be formatted according to the [HSCIC HL7 v2 Message Specification](https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/raw/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf)",
+        description = "HL7 v2 event to be processed.",
         required = true,
         content = [ Content(mediaType = "x-application/hl7-v2+er7" ,
             examples = [
