@@ -16,6 +16,8 @@ import org.apache.commons.io.IOUtils
 import org.hl7.fhir.dstu3.model.OperationOutcome
 import org.hl7.fhir.r4.model.Bundle
 import org.hl7.fhir.r4.model.Resource
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.stereotype.Component
 import uk.nhs.nhsdigital.pmir.configuration.MessageProperties
 import uk.nhs.nhsdigital.mcsd.model.ResponseObject
 import java.io.BufferedReader
@@ -26,8 +28,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import javax.servlet.http.HttpServletRequest
 
+
 class CognitoAuthInterceptor(val messageProperties: MessageProperties,
-                             val ctx : FhirContext
+                             @Qualifier("R4") val ctx : FhirContext
 ) : IClientInterceptor {
 
     var authenticationResult: AuthenticationResultType? = null

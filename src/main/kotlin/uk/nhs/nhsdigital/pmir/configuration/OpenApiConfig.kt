@@ -67,7 +67,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         )
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name("HL7 FHIR Events - Alert Communication Management")
+                .name("UKCore Alert Communication Management")
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE mACM ITI-84](https://www.ihe.net/uploadedFiles/Documents/ITI/IHE_ITI_Suppl_mACM.pdf)")
         )
@@ -226,9 +226,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val communicationRequestItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem("HL7 FHIR Events - Alert Communication Management")
-                    .summary("Communication Request")
-                    .description("This doesn't send the actual text message, that is down to system format (e.g. SMS, email, FHIR Communication, etc)")
+                    .addTagsItem("UKCore Alert Communication Management")
+                    .summary("Mobile Report Alert")
+                    .description("This doesn't send the actual text message, that is down to system format (e.g. SMS, email, etc)")
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
                         .addMediaType("application/fhir+json",
@@ -238,6 +238,128 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
 
         oas.path("/FHIR/R4/CommunicationRequest",communicationRequestItem)
+
+        val communicationItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem("UKCore Alert Communication Management")
+                    .summary("Query Report Alert")
+                    .description("This allows querying results of a CommunicationRequest")
+                    .addParametersItem(Parameter()
+                        .name("recipient")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Message recipient")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("sender")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Message sender")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("status")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Message status")
+                        .schema(StringSchema())
+                    )
+                    .responses(getApiResponses())
+            )
+
+        oas.path("/FHIR/R4/Communication",communicationItem)
+
+        val examplesQuestionnaireResponse = LinkedHashMap<String,Example?>()
+        examplesQuestionnaireResponse .put("Patient Registration",
+            Example().value(FHIRExamples().loadExample("QuestionnaireResponse-patient-registration-completed.json",ctx))
+        )
+        examplesQuestionnaireResponse .put("Simple Blood Pressure",
+            Example().value(FHIRExamples().loadExample("QuestionnaireResponse-patient-simple-blood-pressure.json",ctx))
+        )
+        val questionnaireResponseItem = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem("UKCore Alert Communication Management")
+                    .summary("Send Completed Form")
+                    .description("The results of a completed form")
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesQuestionnaireResponse )
+                                .schema(StringSchema()))
+                    )))
+            .get(
+                Operation()
+                    .addTagsItem("UKCore Alert Communication Management")
+                    .summary("Query Form Results")
+                    .description("This allows querying results of a QuestionnaireResponse")
+                    .addParametersItem(Parameter()
+                        .name("patient")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The patient that is the subject of the questionnaire response")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("questionnaire")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The questionnaire the answers are provided for")
+                        .schema(StringSchema())
+                        .example("https://example.fhir.nhs.uk/Questionnaire/Simple-Blood-Pressure")
+                    )
+                    .responses(getApiResponses())
+            )
+
+        oas.path("/FHIR/R4/QuestionnaireResponse",questionnaireResponseItem)
+
+        val examplesQuestionnaire = LinkedHashMap<String,Example?>()
+        examplesQuestionnaire .put("Patient Blood Pressure Form Definition",
+            Example().value(FHIRExamples().loadExample("Questionnaire-Simple-Blood-Pressure.json",ctx))
+        )
+        examplesQuestionnaire .put("Patient Registration Form Definition",
+            Example().value(FHIRExamples().loadExample("Questionnaire-Patient-Registration.json",ctx))
+        )
+
+        val questionnaireItem = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem("UKCore Alert Communication Management")
+                    .summary("Create Form Definition")
+
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesQuestionnaire )
+                                .schema(StringSchema()))
+                    )))
+            .get(
+                Operation()
+                    .addTagsItem("UKCore Alert Communication Management")
+                    .summary("Query Form Definitions")
+
+                    .addParametersItem(Parameter()
+                        .name("url")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The uri that identifies the questionnaire")
+                        .schema(StringSchema())
+                        .example("https://example.fhir.nhs.uk/Questionnaire/Simple-Blood-Pressure")
+                    )
+                    .responses(getApiResponses())
+            )
+
+        oas.path("/FHIR/R4/Questionnaire",questionnaireItem)
 
         val examplesSubscriptionCreate = LinkedHashMap<String,Example?>()
         examplesSubscriptionCreate.put("Add PMIR Patient Subscription",
