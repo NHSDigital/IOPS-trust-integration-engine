@@ -27,7 +27,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSMedicationRequest(newMedicationRequest: MedicationRequest, bundle: Bundle?): MedicationRequest? {
+    fun createUpdate(newMedicationRequest: MedicationRequest, bundle: Bundle?): MedicationRequest? {
         var awsBundle: Bundle? = null
         if (!newMedicationRequest.hasIdentifier()) throw UnprocessableEntityException("MedicationRequest has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -66,7 +66,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
                 }
         }
         if (newMedicationRequest.hasRequester() && bundle != null) {
-                val practitionerRole = awsPractitionerRole.getPractitionerRole(newMedicationRequest.requester,bundle)
+                val practitionerRole = awsPractitionerRole.get(newMedicationRequest.requester,bundle)
                 if (practitionerRole != null) awsBundleProvider.updateReference(newMedicationRequest.requester, practitionerRole.identifierFirstRep, practitionerRole)
         }
         // This v3esquw data should have been processed into propoer resources so remove

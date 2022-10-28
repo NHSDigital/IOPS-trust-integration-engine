@@ -7,12 +7,10 @@ import ca.uhn.fhir.rest.server.IResourceProvider
 import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
 import uk.nhs.nhsdigital.pmir.awsProvider.AWSPatient
-import uk.nhs.nhsdigital.pmir.interceptor.CognitoAuthInterceptor
 import javax.servlet.http.HttpServletRequest
 
 @Component
-class PatientProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
-var awsPatient: AWSPatient) : IResourceProvider {
+class PatientProvider(var awsPatient: AWSPatient) : IResourceProvider {
     override fun getResourceType(): Class<Patient> {
         return Patient::class.java
     }
@@ -25,15 +23,15 @@ var awsPatient: AWSPatient) : IResourceProvider {
         theRequestDetails: RequestDetails?
     ): MethodOutcome? {
 
-        var method = MethodOutcome().setCreated(true)
-        method.resource = awsPatient.createUpdateAWSPatient(patient, null)
+        val method = MethodOutcome().setCreated(true)
+        method.resource = awsPatient.createUpdate(patient, null)
         return method
     }
     @Create
     fun create(theRequest: HttpServletRequest, @ResourceParam patient: Patient): MethodOutcome? {
 
-        var method = MethodOutcome().setCreated(true)
-        method.resource = awsPatient.createUpdateAWSPatient(patient, null)
+        val method = MethodOutcome().setCreated(true)
+        method.resource = awsPatient.createUpdate(patient, null)
         return method
     }
 

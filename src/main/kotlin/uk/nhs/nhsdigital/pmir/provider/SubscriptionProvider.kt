@@ -11,7 +11,7 @@ import uk.nhs.nhsdigital.pmir.interceptor.CognitoAuthInterceptor
 import javax.servlet.http.HttpServletRequest
 
 @Component
-class SubscriptionProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
+class SubscriptionProvider(
                            var awsSubscription: AWSSubscription) : IResourceProvider {
     override fun getResourceType(): Class<Subscription> {
         return Subscription::class.java

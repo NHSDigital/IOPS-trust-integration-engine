@@ -2,30 +2,32 @@ package uk.nhs.nhsdigital.pmir.provider
 
 import ca.uhn.fhir.rest.annotation.*
 import ca.uhn.fhir.rest.api.MethodOutcome
-import ca.uhn.fhir.rest.api.server.RequestDetails
+
 import ca.uhn.fhir.rest.param.ReferenceParam
 import ca.uhn.fhir.rest.param.TokenParam
 import ca.uhn.fhir.rest.server.IResourceProvider
 import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
 import uk.nhs.nhsdigital.pmir.awsProvider.AWSQuestionnaireResponse
-import uk.nhs.nhsdigital.pmir.interceptor.CognitoAuthInterceptor
+
 
 import javax.servlet.http.HttpServletRequest
 
 @Component
 class QuestionnaireResponseProvider(
-                                   var awsQuestionnaireResponse: AWSQuestionnaireResponse,
-                                   var cognitoAuthInterceptor: CognitoAuthInterceptor
+                                   var awsQuestionnaireResponse: AWSQuestionnaireResponse
+
 ) : IResourceProvider {
     override fun getResourceType(): Class<QuestionnaireResponse> {
         return QuestionnaireResponse::class.java
     }
-   
+
     @Create
-    fun create(theRequest: HttpServletRequest, @ResourceParam questionnaireResponse: QuestionnaireResponse): MethodOutcome? {
-       val outcome = awsQuestionnaireResponse.create(questionnaireResponse)
-        return outcome
+    fun create(
+        theRequest: HttpServletRequest,
+        @ResourceParam questionnaireResponse: QuestionnaireResponse
+    ): MethodOutcome? {
+        return awsQuestionnaireResponse.create(questionnaireResponse)
     }
 
     @Search

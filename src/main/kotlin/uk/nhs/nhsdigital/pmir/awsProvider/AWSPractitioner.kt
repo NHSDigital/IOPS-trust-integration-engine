@@ -21,7 +21,7 @@ class AWSPractitioner(val messageProperties: MessageProperties, val awsClient: I
 ) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
-    public fun getPractitioner(identifier: Identifier): Practitioner? {
+    public fun get(identifier: Identifier): Practitioner? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -47,13 +47,13 @@ class AWSPractitioner(val messageProperties: MessageProperties, val awsClient: I
         return bundle.entryFirstRep.resource as Practitioner
     }
 
-    public fun getPractitioner(reference: Reference, bundle: Bundle): Practitioner? {
+    public fun get(reference: Reference, bundle: Bundle): Practitioner? {
         var awsPractitioner : Practitioner? = null
         if (reference.hasReference()) {
             val practitioner = awsBundle.findResource(bundle, "Practitioner", reference.reference) as Practitioner
             if (practitioner != null) {
                 for ( identifier in practitioner.identifier) {
-                    awsPractitioner = getPractitioner(identifier)
+                    awsPractitioner = get(identifier)
                     if (awsPractitioner != null) {
                         break;
                     }
@@ -63,7 +63,7 @@ class AWSPractitioner(val messageProperties: MessageProperties, val awsClient: I
                 } else return awsPractitioner
             }
         } else if (reference.hasIdentifier()) {
-            return getPractitioner(reference.identifier)
+            return get(reference.identifier)
         }
         return null
     }

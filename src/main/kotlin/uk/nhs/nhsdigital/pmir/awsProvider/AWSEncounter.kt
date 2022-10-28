@@ -28,7 +28,7 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSEncounter(newEncounter: Encounter): Encounter? {
+    fun createUpdate(newEncounter: Encounter): Encounter? {
         var awsBundle: Bundle? = null
         if (!newEncounter.hasIdentifier()) throw UnprocessableEntityException("Encounter has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -56,7 +56,7 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
             }
         }
         if (newEncounter.hasServiceProvider() && newEncounter.getServiceProvider().hasIdentifier()) {
-            val organisation = awsOrganization.getOrganization(newEncounter.serviceProvider.identifier)
+            val organisation = awsOrganization.get(newEncounter.serviceProvider.identifier)
             if (organisation != null) awsBundleProvider.updateReference(newEncounter.serviceProvider, organisation.identifierFirstRep, organisation)
         }
         if (newEncounter.hasSubject() && newEncounter.subject.hasIdentifier()) {
@@ -67,7 +67,7 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
             if (participant.hasIndividual() && participant.individual.hasIdentifier()) {
                 if (participant.individual.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
                     participant.individual.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
-                    val dr = awsPractitioner.getPractitioner(participant.individual.identifier)
+                    val dr = awsPractitioner.get(participant.individual.identifier)
                     if (dr != null) {
                         awsBundleProvider.updateReference(participant.individual,dr.identifierFirstRep,dr)
                     }

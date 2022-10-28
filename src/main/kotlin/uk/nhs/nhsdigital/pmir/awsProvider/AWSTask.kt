@@ -18,12 +18,16 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
     //sqs: AmazonSQS?,
               @Qualifier("R4") val ctx: FhirContext,
               val fhirServerProperties: FHIRServerProperties,
+              val awsPatient: AWSPatient,
+              val awsOrganization: AWSOrganization,
+              val awsPractitioner: AWSPractitioner,
+              val awsBundleProvider: AWSBundle,
               val awsAuditEvent: AWSAuditEvent) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSTask(newTask: Task): Task? {
+    fun createUpdate(newTask: Task): MethodOutcome? {
         var awsBundle: Bundle? = null
         if (!newTask.hasIdentifier()) throw UnprocessableEntityException("Task has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -51,17 +55,62 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
             }
         }
 
+        if (newTask.hasRequester()) {
+            if (newTask.requester.hasIdentifier()) {
+                val awsOrganization = awsOrganization.get(newTask.requester.identifier)
+                if (awsOrganization != null)   awsBundleProvider.updateReference(newTask.requester,awsOrganization.identifierFirstRep,awsOrganization)
+
+            }
+        }
+        if (newTask.hasFor()) {
+            val reference = newTask.`for`
+            if (reference.hasIdentifier()) {
+                val awsPatient = awsPatient.getPatient(reference.identifier)
+                if (awsPatient != null) {
+                    awsBundleProvider.updateReference(reference,awsPatient.identifierFirstRep,awsPatient)
+                } else {
+                    val awsOrganization = awsOrganization.get(reference.identifier)
+                    if (awsOrganization != null) {
+                        awsBundleProvider.updateReference(reference,awsOrganization.identifierFirstRep,awsOrganization)
+                    } else {
+                        val awsPractitioner = awsPractitioner.get(reference.identifier)
+                        if (awsPractitioner != null) {
+                            awsBundleProvider.updateReference(reference,awsPractitioner.identifierFirstRep,awsPractitioner)
+                        }
+                    }
+                }
+            }
+        }
+        if (newTask.hasOwner()) {
+            val reference = newTask.owner
+            if (reference.hasIdentifier()) {
+                val awsPatient = awsPatient.getPatient(reference.identifier)
+                if (awsPatient != null) {
+                    awsBundleProvider.updateReference(reference,awsPatient.identifierFirstRep,awsPatient)
+                } else {
+                    val awsOrganization = awsOrganization.get(reference.identifier)
+                    if (awsOrganization != null) {
+                        awsBundleProvider.updateReference(reference,awsOrganization.identifierFirstRep,awsOrganization)
+                    } else {
+                        val awsPractitioner = awsPractitioner.get(reference.identifier)
+                        if (awsPractitioner != null) {
+                            awsBundleProvider.updateReference(reference,awsPractitioner.identifierFirstRep,awsPractitioner)
+                        }
+                    }
+                }
+            }
+        }
+
+
 
         if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.resource is Task
         ) {
-            val task = awsBundle.entryFirstRep.resource as Task
-            // Dont update for now - just return aws Task
-           // updateTask(task, newTask)!!.resource as Task
+           return updateTask(awsBundle.entryFirstRep.resource as Task, newTask)
             return null
         } else {
-            return createTask(newTask)!!.resource as Task
+            return createTask(newTask)
         }
     }
 

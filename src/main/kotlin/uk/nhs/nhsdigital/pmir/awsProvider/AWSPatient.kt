@@ -30,7 +30,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSPatient(newPatient: Patient, bundle: Bundle?): Patient? {
+    fun createUpdate(newPatient: Patient, bundle: Bundle?): Patient? {
         var awsBundle: Bundle? = null
         if (!newPatient.hasIdentifier()) throw UnprocessableEntityException("Patient has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -68,11 +68,11 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
             for (generalPractitioner in newPatient.generalPractitioner) {
                 if (generalPractitioner.hasIdentifier() ) {
                     if (generalPractitioner.identifier.system.equals(FhirSystems.ODS_CODE)) {
-                        surgery = awsOrganization.getOrganization(generalPractitioner.identifier)
+                        surgery = awsOrganization.get(generalPractitioner.identifier)
                         if (surgery != null) awsBundleProvider.updateReference(generalPractitioner, surgery.identifierFirstRep, surgery)
                     }
                     if (generalPractitioner.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER) || generalPractitioner.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
-                        practitioner = awsPractitioner.getPractitioner(generalPractitioner.identifier)
+                        practitioner = awsPractitioner.get(generalPractitioner.identifier)
                         if (practitioner != null) awsBundleProvider.updateReference(generalPractitioner, practitioner.identifierFirstRep, practitioner)
                     }
                 }

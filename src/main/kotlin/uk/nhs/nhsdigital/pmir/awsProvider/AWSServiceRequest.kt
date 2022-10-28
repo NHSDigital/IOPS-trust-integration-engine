@@ -70,10 +70,10 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
         if (newServiceRequest.hasRequester() && bundle != null) {
             if (newServiceRequest.requester.resource != null)
                 if (newServiceRequest.requester.resource is PractitionerRole) {
-                    val practitionerRole = awsPractitionerRole.getPractitionerRole(newServiceRequest.requester, bundle)
+                    val practitionerRole = awsPractitionerRole.get(newServiceRequest.requester, bundle)
                     if (practitionerRole != null) awsBundleProvider.updateReference(newServiceRequest.requester, practitionerRole.identifierFirstRep,practitionerRole )
                 } else if ((newServiceRequest.requester.resource is Practitioner)) {
-                    val practitioner = awsPractitioner.getPractitioner(newServiceRequest.requester, bundle)
+                    val practitioner = awsPractitioner.get(newServiceRequest.requester, bundle)
                     if (practitioner != null) awsBundleProvider.updateReference(newServiceRequest.requester, practitioner.identifierFirstRep,practitioner )
                 }
         }
@@ -81,21 +81,21 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
             for (performer in newServiceRequest.performer) {
                 if (performer.resource != null)
                     if (performer.resource is PractitionerRole) {
-                        val practitionerRole = awsPractitionerRole.getPractitionerRole(performer, bundle)
+                        val practitionerRole = awsPractitionerRole.get(performer, bundle)
                         if (practitionerRole != null) awsBundleProvider.updateReference(performer, practitionerRole.identifierFirstRep,practitionerRole )
                     } else if ((performer.resource is Practitioner)) {
-                        val practitioner = awsPractitioner.getPractitioner(performer, bundle)
+                        val practitioner = awsPractitioner.get(performer, bundle)
                         if (practitioner != null) awsBundleProvider.updateReference(performer, practitioner.identifierFirstRep,practitioner )
                     }
                     else if ((performer.resource is Organization)) {
-                        val organization = awsOrganization.getOrganization(performer, bundle)
+                        val organization = awsOrganization.get(performer, bundle)
                         if (organization != null) awsBundleProvider.updateReference(performer, organization.identifierFirstRep,organization )
                     }
             }
         }
         if (newServiceRequest.hasEncounter() && newServiceRequest.encounter.resource != null) {
             val encounter = newServiceRequest.encounter.resource as Encounter
-            val awsEncounter = awsEncounter.createUpdateAWSEncounter(encounter)
+            val awsEncounter = awsEncounter.createUpdate(encounter)
             if (awsEncounter != null) awsBundleProvider.updateReference(newServiceRequest.encounter, awsEncounter.identifierFirstRep ,awsEncounter)
         }
         // This v3esquw data should have been processed into propoer resources so remove

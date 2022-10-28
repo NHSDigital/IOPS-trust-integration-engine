@@ -23,7 +23,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
              ): OperationOutcome? {
         val filterMessageHeaders = awsBundle.filterResources(bundle,"MessageHeader")
 
-        var operationOutcome = OperationOutcome();
+        val operationOutcome = OperationOutcome()
         var focusType : String? = null
         if (filterMessageHeaders.size > 0) {
             val messageHeader = filterMessageHeaders[0] as MessageHeader
@@ -35,7 +35,6 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                     "pds-change-of-address-1" ,
                     "pds-birth-notification-1",
                     "pds-death-notification-1",
-                    "pds-change-of-address-1",
                     "pds-change-of-gp-1" -> {
                         focusType = "Patient"
                     }
@@ -51,7 +50,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                     }
                 }
                 var medicationRequest : MedicationRequest? = null
-                var prescriptionOrder = Task().setCode(CodeableConcept().addCoding(Coding()
+                val prescriptionOrder = Task().setCode(CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
                     .setCode("16076005")
                     .setDisplay("Prescription")
@@ -91,7 +90,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                             prescriptionOrder.setStatus(Task.TaskStatus.REQUESTED)
                             prescriptionOrder.setIntent(Task.TaskIntent.ORDER)
                             prescriptionOrder.setAuthoredOn(medicationRequest.authoredOn)
-                            awsTask.createUpdateAWSTask(prescriptionOrder)
+                            awsTask.createUpdate(prescriptionOrder)
                         }
 
                     }
@@ -105,7 +104,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
 
     fun processFocusResource(bundle: Bundle, focusType : String, prescriptionOrder : Task, operationOutcome: OperationOutcome)
     : MedicationRequest?{
-        var focusResources = ArrayList<Resource>()
+        val focusResources = ArrayList<Resource>()
         var medicationRequest: MedicationRequest? = null
         focusResources.addAll(awsBundle.filterResources(bundle,focusType))
 
@@ -113,7 +112,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
             for (workerResource in focusResources) {
                 when (focusType) {
                     "MedicationRequest" -> {
-                        medicationRequest = awsMedicationRequest.createUpdateAWSMedicationRequest(workerResource as MedicationRequest,bundle)
+                        medicationRequest = awsMedicationRequest.createUpdate(workerResource as MedicationRequest,bundle)
                         if (medicationRequest != null) {
                             operationOutcome.issue.add(
                                 OperationOutcome.OperationOutcomeIssueComponent()
@@ -129,7 +128,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                         }
                     }
                     "MedicationDispense" -> {
-                        val medicationDispense = awsMedicationDispense.createUpdateAWSMedicationDispense(workerResource as MedicationDispense,bundle)
+                        val medicationDispense = awsMedicationDispense.createUpdate(workerResource as MedicationDispense,bundle)
                         if (medicationDispense != null) {
                             operationOutcome.issue.add(
                                 OperationOutcome.OperationOutcomeIssueComponent()
@@ -149,7 +148,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                         }
                     }
                     "Patient" -> {
-                        val patient = awsPatient.createUpdateAWSPatient(workerResource as Patient,bundle)
+                        val patient = awsPatient.createUpdate(workerResource as Patient,bundle)
                         if (patient != null) {
                             operationOutcome.issue.add(
                                 OperationOutcome.OperationOutcomeIssueComponent()
@@ -159,7 +158,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                         }
                     }
                     "RelatedPerson" -> {
-                        val person = awsRelatedPerson.createUpdateAWSRelatedPerson(workerResource as RelatedPerson,bundle)
+                        val person = awsRelatedPerson.createUpdate(workerResource as RelatedPerson,bundle)
                         if (person != null) {
                             operationOutcome.issue.add(
                                 OperationOutcome.OperationOutcomeIssueComponent()
@@ -169,7 +168,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                         }
                     }
                     "Observation" -> {
-                        val observation = awsObservation.createUpdateAWSObservation(workerResource as Observation,bundle)
+                        val observation = awsObservation.createUpdate(workerResource as Observation,bundle)
                         if (observation != null) {
                             operationOutcome.issue.add(
                                 OperationOutcome.OperationOutcomeIssueComponent()
@@ -179,7 +178,7 @@ class ProcessMessageProvider(val awsMedicationRequest: AWSMedicationRequest,
                         }
                     }
                     "DiagnosticReport" -> {
-                        val observation = awsDiagnosticReport.createUpdateAWSDiagnosticReport(workerResource as DiagnosticReport,bundle, operationOutcome)
+                        val observation = awsDiagnosticReport.createUpdate(workerResource as DiagnosticReport,bundle, operationOutcome)
                         if (observation != null) {
                             operationOutcome.issue.add(
                                 OperationOutcome.OperationOutcomeIssueComponent()

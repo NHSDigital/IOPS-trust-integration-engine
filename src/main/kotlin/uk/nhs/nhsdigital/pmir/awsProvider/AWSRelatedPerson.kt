@@ -25,7 +25,7 @@ class AWSRelatedPerson(val messageProperties: MessageProperties, val awsClient: 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSRelatedPerson(newRelatedPerson: RelatedPerson, bundle: Bundle?): RelatedPerson? {
+    fun createUpdate(newRelatedPerson: RelatedPerson, bundle: Bundle?): RelatedPerson? {
         var awsBundle: Bundle? = null
         if (!newRelatedPerson.hasIdentifier()) throw UnprocessableEntityException("RelatedPerson has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -73,13 +73,13 @@ class AWSRelatedPerson(val messageProperties: MessageProperties, val awsClient: 
         ) {
             val relatedPerson = awsBundle.entryFirstRep.resource as RelatedPerson
             // Dont update for now - just return aws RelatedPerson
-            return updateRelatedPerson(relatedPerson, newRelatedPerson)!!.resource as RelatedPerson
+            return update(relatedPerson, newRelatedPerson)!!.resource as RelatedPerson
         } else {
             return createRelatedPerson(newRelatedPerson)!!.resource as RelatedPerson
         }
     }
 
-    public fun getRelatedPerson(identifier: Identifier): RelatedPerson? {
+    public fun get(identifier: Identifier): RelatedPerson? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -105,7 +105,7 @@ class AWSRelatedPerson(val messageProperties: MessageProperties, val awsClient: 
         return bundle.entryFirstRep.resource as RelatedPerson
     }
 
-    private fun updateRelatedPerson(relatedPerson: RelatedPerson, newRelatedPerson: RelatedPerson): MethodOutcome? {
+    private fun update(relatedPerson: RelatedPerson, newRelatedPerson: RelatedPerson): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
         for (identifier in newRelatedPerson.identifier) {

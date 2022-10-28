@@ -21,7 +21,7 @@ class AWSOrganization(val messageProperties: MessageProperties, val awsClient: I
 ) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
-    public fun getOrganization(identifier: Identifier): Organization? {
+    public fun get(identifier: Identifier): Organization? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -47,27 +47,27 @@ class AWSOrganization(val messageProperties: MessageProperties, val awsClient: I
         return bundle.entryFirstRep.resource as Organization
     }
 
-    public fun getOrganization(reference: Reference, bundle: Bundle): Organization? {
+    public fun get(reference: Reference, bundle: Bundle): Organization? {
         var awsOrganization : Organization? = null
         if (reference.hasReference()) {
             val organization = awsBundle.findResource(bundle, "Organization", reference.reference) as Organization
             if (organization != null) {
                 for ( identifier in organization.identifier) {
-                    awsOrganization = getOrganization(identifier)
+                    awsOrganization = get(identifier)
                     if (awsOrganization != null) {
                         break;
                     }
                 }
                 if (awsOrganization == null) {
-                    createOrganization(organization,bundle)
+                    create(organization,bundle)
                 } else return awsOrganization
             }
         } else if (reference.hasIdentifier()) {
-            return getOrganization(reference.identifier)
+            return get(reference.identifier)
         }
         return null
     }
-    fun createOrganization(newOrganization: Organization, bundle: Bundle): MethodOutcome? {
+    fun create(newOrganization: Organization, bundle: Bundle): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
 

@@ -28,7 +28,7 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSObservation(newObservation: Observation, bundle: Bundle?): Observation? {
+    fun createUpdate(newObservation: Observation, bundle: Bundle?): Observation? {
         var awsBundle: Bundle? = null
         if (!newObservation.hasIdentifier()) throw UnprocessableEntityException("Observation has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -70,15 +70,15 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
             for (performer in newObservation.performer) {
                 if (performer.resource != null) {
                     if (performer.resource is PractitionerRole) {
-                        val practitionerRole = awsPractitionerRole.getPractitionerRole(performer,bundle)
+                        val practitionerRole = awsPractitionerRole.get(performer,bundle)
                         if (practitionerRole != null) awsBundleProvider.updateReference(performer, practitionerRole.identifierFirstRep, practitionerRole)
                     }
                     if (performer.resource is Practitioner) {
-                        val practitioner = awsPractitioner.getPractitioner(performer,bundle)
+                        val practitioner = awsPractitioner.get(performer,bundle)
                         if (practitioner != null) awsBundleProvider.updateReference(performer, practitioner.identifierFirstRep, practitioner)
                     }
                     if (performer.resource is Organization) {
-                        val organisation = awsOrganization.getOrganization(performer,bundle)
+                        val organisation = awsOrganization.get(performer,bundle)
                         if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
                     }
                 }

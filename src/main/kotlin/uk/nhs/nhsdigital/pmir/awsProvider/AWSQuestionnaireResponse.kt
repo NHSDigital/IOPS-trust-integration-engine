@@ -12,14 +12,13 @@ import ca.uhn.fhir.rest.param.UriParam
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
-import org.hl7.fhir.r4.model.Organization
+
 import org.hl7.fhir.r4.model.QuestionnaireResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.nhsdigital.pmir.configuration.FHIRServerProperties
 import uk.nhs.nhsdigital.pmir.configuration.MessageProperties
-import uk.nhs.nhsdigital.pmir.util.FhirSystems
 import java.nio.charset.StandardCharsets
 import java.util.*
 
@@ -53,6 +52,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
 
                 var criteria1 :ICriterion<ReferenceClientParam>? = null
                 var criteria2 :ICriterion<ReferenceClientParam>? = null
+
                 if (questionnaire != null) {
                     // Need to search registry for Questionnaire id
                     val listQ = awsQuestionnaire.seach(UriParam().setValue(questionnaire.value))
@@ -115,12 +115,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
         var response: MethodOutcome? = null
         if (!newQuestionnaireResponse.hasIdentifier()) throw UnprocessableEntityException("QuestionnaireResponse has no identifier")
 
-        if (newQuestionnaireResponse.hasQuestionnaire()) {
-            val listQ = awsQuestionnaire.seach(UriParam().setValue(newQuestionnaireResponse.questionnaire))
-            if (listQ != null && listQ.size>0) {
-                newQuestionnaireResponse.questionnaire = listQ[0].id
-            }
-        }
+
         var retry = 3
         while (retry > 0) {
             try {
@@ -146,6 +141,15 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
             }
         }
 
+        /*
+       if (newQuestionnaireResponse.hasQuestionnaire()) {
+           val listQ = awsQuestionnaire.seach(UriParam().setValue(newQuestionnaireResponse.questionnaire))
+           if (listQ != null && listQ.size>0) {
+               newQuestionnaireResponse.questionnaire = listQ[0].id
+           }
+       }
+
+        */
         if (newQuestionnaireResponse.hasSource()) {
 
             // Bit crude refactor?
@@ -155,11 +159,11 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
                 if (awsPatient != null)  {
                     awsBundleProvider.updateReference(newQuestionnaireResponse.source,awsPatient.identifierFirstRep,awsPatient)
                 } else {
-                    val awsOrganization = awsOrganization.getOrganization(newQuestionnaireResponse.source.identifier)
+                    val awsOrganization = awsOrganization.get(newQuestionnaireResponse.source.identifier)
                     if (awsOrganization != null) {
                         awsBundleProvider.updateReference(newQuestionnaireResponse.source,awsOrganization.identifierFirstRep,awsOrganization)
                     } else {
-                        val awsPractitioner = awsPractitioner.getPractitioner(newQuestionnaireResponse.source.identifier)
+                        val awsPractitioner = awsPractitioner.get(newQuestionnaireResponse.source.identifier)
                         if (awsPractitioner != null) {
                             awsBundleProvider.updateReference(newQuestionnaireResponse.source,awsPractitioner.identifierFirstRep,awsPractitioner)
                         }

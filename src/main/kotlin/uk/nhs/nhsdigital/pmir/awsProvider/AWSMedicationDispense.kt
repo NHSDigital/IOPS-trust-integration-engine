@@ -28,7 +28,7 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSMedicationDispense(newMedicationDispense: MedicationDispense, bundle: Bundle?): MedicationDispense? {
+    fun createUpdate(newMedicationDispense: MedicationDispense, bundle: Bundle?): MedicationDispense? {
         var awsBundle: Bundle? = null
         if (!newMedicationDispense.hasIdentifier()) throw UnprocessableEntityException("MedicationDispense has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -73,7 +73,7 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
         if (newMedicationDispense.hasPerformer() && bundle != null) {
             for (performer in newMedicationDispense.performer) {
                 if (performer.hasActor()) {
-                    val practitionerRole = awsPractitionerRole.getPractitionerRole(performer.actor, bundle)
+                    val practitionerRole = awsPractitionerRole.get(performer.actor, bundle)
                     if (practitionerRole != null) {
                         awsBundleProvider.updateReference(performer.actor,
                             practitionerRole.identifierFirstRep,practitionerRole)

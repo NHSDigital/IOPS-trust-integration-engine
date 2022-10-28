@@ -21,7 +21,8 @@ class FHIRR4RestfulServer(
     val communicationRequestProvider: CommunicationRequestProvider,
     val communicationProvider: CommunicationProvider,
     val questionnaireResponseProvider: QuestionnaireResponseProvider,
-    val questionnaireProvider: QuestionnaireProvider
+    val questionnaireProvider: QuestionnaireProvider,
+    val taskProvider: TaskProvider
 ) : RestfulServer(fhirContext) {
 
     override fun initialize() {
@@ -37,6 +38,7 @@ class FHIRR4RestfulServer(
         registerProvider(communicationProvider)
         registerProvider(questionnaireResponseProvider)
         registerProvider(questionnaireProvider)
+        registerProvider(taskProvider)
 
         val awsAuditEventLoggingInterceptor =
             AWSAuditEventLoggingInterceptor(

@@ -24,7 +24,7 @@ class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClien
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
-    public fun getPractitionerRole(identifier: Identifier): PractitionerRole? {
+    public fun get(identifier: Identifier): PractitionerRole? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -50,13 +50,13 @@ class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClien
         return bundle.entryFirstRep.resource as PractitionerRole
     }
 
-    public fun getPractitionerRole(reference: Reference, bundle: Bundle): PractitionerRole? {
+    public fun get(reference: Reference, bundle: Bundle): PractitionerRole? {
         var awsPractitionerRole : PractitionerRole? = null
         if (reference.hasReference()) {
             val practitionerRole = awsBundle.findResource(bundle, "PractitionerRole", reference.reference) as PractitionerRole
             if (practitionerRole != null) {
                 for ( identifier in practitionerRole.identifier) {
-                        awsPractitionerRole = getPractitionerRole(identifier)
+                        awsPractitionerRole = get(identifier)
                         if (awsPractitionerRole != null) {
                             break;
                     }
@@ -66,7 +66,7 @@ class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClien
                 } else return awsPractitionerRole
             }
         } else if (reference.hasIdentifier()) {
-            return getPractitionerRole(reference.identifier)
+            return get(reference.identifier)
         }
         return null
     }
@@ -74,11 +74,11 @@ class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClien
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
         if (newPractitionerRole.hasPractitioner()) {
-            val practitioner = awsPractitioner.getPractitioner(newPractitionerRole.practitioner,bundle)
+            val practitioner = awsPractitioner.get(newPractitionerRole.practitioner,bundle)
             if (practitioner != null) newPractitionerRole.practitioner.reference = "Practitioner/" + practitioner.idElement.idPart
         }
         if (newPractitionerRole.hasOrganization()) {
-            val organization = awsOrganization.getOrganization(newPractitionerRole.organization,bundle)
+            val organization = awsOrganization.get(newPractitionerRole.organization,bundle)
             if (organization != null) newPractitionerRole.organization.reference = "Organization/" + organization.idElement.idPart
         }
         var retry = 3

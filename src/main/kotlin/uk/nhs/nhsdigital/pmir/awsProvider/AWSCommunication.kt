@@ -29,7 +29,7 @@ class AWSCommunication (val messageProperties: MessageProperties, val awsClient:
 
 
    
-    fun createCommunication(newCommunicationRequest: CommunicationRequest): MethodOutcome? {
+    fun create(newCommunicationRequest: CommunicationRequest): MethodOutcome? {
 
         var response: MethodOutcome? = null
         var newCommunication = Communication()

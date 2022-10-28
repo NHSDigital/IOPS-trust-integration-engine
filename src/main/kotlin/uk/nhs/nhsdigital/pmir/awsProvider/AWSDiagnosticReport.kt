@@ -29,7 +29,7 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSDiagnosticReport(newDiagnosticReport: DiagnosticReport, bundle: Bundle?, operationOutcome: OperationOutcome): DiagnosticReport? {
+    fun createUpdate(newDiagnosticReport: DiagnosticReport, bundle: Bundle?, operationOutcome: OperationOutcome): DiagnosticReport? {
         var awsBundle: Bundle? = null
         if (!newDiagnosticReport.hasIdentifier()) throw UnprocessableEntityException("DiagnosticReport has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -71,15 +71,15 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
             for (performer in newDiagnosticReport.performer) {
                 if (performer.resource != null) {
                     if (performer.resource is PractitionerRole) {
-                        val practitionerRole = awsPractitionerRole.getPractitionerRole(performer,bundle)
+                        val practitionerRole = awsPractitionerRole.get(performer,bundle)
                         if (practitionerRole != null) awsBundleProvider.updateReference(performer, practitionerRole.identifierFirstRep, practitionerRole)
                     }
                     if (performer.resource is Practitioner) {
-                        val practitioner = awsPractitioner.getPractitioner(performer,bundle)
+                        val practitioner = awsPractitioner.get(performer,bundle)
                         if (practitioner != null) awsBundleProvider.updateReference(performer, practitioner.identifierFirstRep, practitioner)
                     }
                     if (performer.resource is Organization) {
-                        val organisation = awsOrganization.getOrganization(performer,bundle)
+                        val organisation = awsOrganization.get(performer,bundle)
                         if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
                     }
                 }
@@ -89,7 +89,7 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
         if (newDiagnosticReport.hasResult()) {
             for (result in newDiagnosticReport.result) {
                 if (result.resource is Observation) {
-                    val observation = awsObservation.createUpdateAWSObservation(result.resource as Observation,bundle)
+                    val observation = awsObservation.createUpdate(result.resource as Observation,bundle)
                     if (observation != null) {
                         awsBundleProvider.updateReference(result, observation.identifierFirstRep, observation)
                         // is also storing observations so return them
@@ -145,7 +145,7 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
 
     private fun updateDiagnosticReport(diagnosticReport: DiagnosticReport, newDiagnosticReport: DiagnosticReport): MethodOutcome? {
         var response: MethodOutcome? = null
-        var changed = false
+        var changed: Boolean
         for (identifier in newDiagnosticReport.identifier) {
             var found = false
             for (awsidentifier in diagnosticReport.identifier) {
@@ -155,12 +155,11 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
             }
             if (!found) {
                 diagnosticReport.addIdentifier(identifier)
-                changed = true
             }
         }
 
         // TODO do change detection
-        changed = true;
+        changed = true
 
         if (!changed) return MethodOutcome().setResource(diagnosticReport)
         var retry = 3

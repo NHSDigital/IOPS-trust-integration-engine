@@ -3,17 +3,17 @@ package uk.nhs.nhsdigital.pmir.awsProvider
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.client.api.IGenericClient
-import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
-import org.hl7.fhir.instance.model.api.IBaseBundle
+
+
 import org.hl7.fhir.r4.model.*
-import org.hl7.fhir.r4.model.Organization
+
 import org.hl7.fhir.r4.model.CommunicationRequest
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.nhsdigital.pmir.configuration.FHIRServerProperties
 import uk.nhs.nhsdigital.pmir.configuration.MessageProperties
-import uk.nhs.nhsdigital.pmir.util.FhirSystems
+
 import java.util.*
 
 @Component
@@ -32,13 +32,12 @@ class AWSCommunicationRequest (val messageProperties: MessageProperties, val aws
 
 
    
-    fun createCommunicationRequest(newCommunicationRequest: CommunicationRequest): MethodOutcome? {
-        val awsBundle: Bundle? = null
+    fun create(newCommunicationRequest: CommunicationRequest): MethodOutcome? {
         var response: MethodOutcome? = null
 
         if (newCommunicationRequest.hasRequester()) {
             if (newCommunicationRequest.requester.hasIdentifier()) {
-                val awsOrganization = awsOrganization.getOrganization(newCommunicationRequest.requester.identifier)
+                val awsOrganization = awsOrganization.get(newCommunicationRequest.requester.identifier)
                 if (awsOrganization != null)   awsBundleProvider.updateReference(newCommunicationRequest.requester,awsOrganization.identifierFirstRep,awsOrganization)
 
             }
@@ -50,11 +49,11 @@ class AWSCommunicationRequest (val messageProperties: MessageProperties, val aws
                 if (awsPatient != null) {
                     awsBundleProvider.updateReference(reference,awsPatient.identifierFirstRep,awsPatient)
                 } else {
-                    val awsOrganization = awsOrganization.getOrganization(reference.identifier)
+                    val awsOrganization = awsOrganization.get(reference.identifier)
                     if (awsOrganization != null) {
                         awsBundleProvider.updateReference(reference,awsOrganization.identifierFirstRep,awsOrganization)
                     } else {
-                        val awsPractitioner = awsPractitioner.getPractitioner(reference.identifier)
+                        val awsPractitioner = awsPractitioner.get(reference.identifier)
                         if (awsPractitioner != null) {
                             awsBundleProvider.updateReference(reference,awsPractitioner.identifierFirstRep,awsPractitioner)
                         }
