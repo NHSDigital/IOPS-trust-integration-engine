@@ -240,12 +240,12 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
             ])])
     fun processEvent(
         @org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
-        var resource = convertADT(v2Message)
+        val resource = convertADT(v2Message)
         var newResource : Resource? = null
         if (resource is Patient) {
-            newResource = awsPatient.createUpdateAWSPatient(resource, null) as Resource
+            newResource = awsPatient.createUpdate(resource, null) as Resource
         } else if (resource is Encounter) {
-            newResource = awsEncounter.createUpdateAWSEncounter(resource) as Resource
+            newResource = awsEncounter.createUpdate(resource) as Resource
         }
         if (newResource != null) {
             if (newResource.idElement != null) return "MSH|^~\\&|TIE|NHS_TRUST|PAS|RCB|"+timestamp.format(Date())+"||ACK|9B38584D|P|2.4|0|"+timestampSS.format(Date())+"|||GBR|UNICODE|EN||iTKv1.0\n" +
@@ -267,9 +267,9 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
 
         var zu1: Segment? = null
 
-        var message2 = message.replace("\n","\r")
+        val message2 = message.replace("\n","\r")
 
-        var parser :PipeParser  = context.getPipeParser();
+        val parser :PipeParser  = context.getPipeParser()
         parser.parserConfiguration.isValidating = false
         val v2message = parser.parse(message2)
 
@@ -325,7 +325,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                             .setCode("11429006")
                             .setDisplay("Consultation"))
                     }
-                    var encounter = pV1toFHIREncounter.transform(pv1)
+                    val encounter = pV1toFHIREncounter.transform(pv1)
                     // Need to double check this is correct - does admit mean arrived`
                     if (v2message is ADT_A01 && encounter != null) encounter.status =
                         Encounter.EncounterStatus.INPROGRESS

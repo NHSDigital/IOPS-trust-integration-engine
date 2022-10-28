@@ -3,6 +3,7 @@ package uk.nhs.nhsdigital.pmir.awsProvider
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.client.api.IGenericClient
+import ca.uhn.fhir.rest.param.UriParam
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
@@ -20,6 +21,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
               val fhirServerProperties: FHIRServerProperties,
               val awsPatient: AWSPatient,
               val awsOrganization: AWSOrganization,
+              val awsQuestionnaire: AWSQuestionnaire,
               val awsPractitioner: AWSPractitioner,
               val awsBundleProvider: AWSBundle,
               val awsAuditEvent: AWSAuditEvent) {
@@ -60,6 +62,16 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
                 val awsOrganization = awsOrganization.get(newTask.requester.identifier)
                 if (awsOrganization != null)   awsBundleProvider.updateReference(newTask.requester,awsOrganization.identifierFirstRep,awsOrganization)
 
+            }
+        }
+        if (newTask.hasFocus()) {
+            if (newTask.focus.hasReference() && newTask.focus.reference.contains("Questionnaire")) {
+                val questionnaire = awsQuestionnaire.seach(UriParam().setValue(newTask.focus.reference))
+                if (questionnaire != null && questionnaire.size>0) {
+                    val canonical = newTask.focus.reference
+                    awsBundleProvider.updateReference(newTask.focus,questionnaire[0].identifierFirstRep,questionnaire[0])
+                    newTask.focus.display = canonical
+                }
             }
         }
         if (newTask.hasFor()) {
@@ -122,7 +134,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
         // TODO do change detection
         changed = true;
 
-        if (!changed) return MethodOutcome().setResource(task)
+       // if (!changed) return MethodOutcome().setResource(task)
         var retry = 3
         while (retry > 0) {
             try {
