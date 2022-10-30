@@ -57,7 +57,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             io.swagger.v3.oas.models.tags.Tag()
                 .name("HL7 FHIR Events - Patient Identifier Cross-referencing")
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
-                        + " [IHE PIXm ITI-104](https://profiles.ihe.net/ITI/PIXm/ITI-104.html)")
+                        + " [IHE PIXm](https://profiles.ihe.net/ITI/PIXm/)")
         )
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
@@ -69,13 +69,19 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             io.swagger.v3.oas.models.tags.Tag()
                 .name("UKCore Alert Communication Management")
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
-                        + " [IHE mACM ITI-84](https://www.ihe.net/uploadedFiles/Documents/ITI/IHE_ITI_Suppl_mACM.pdf)")
+                        + " [IHE mACM](https://www.ihe.net/uploadedFiles/Documents/ITI/IHE_ITI_Suppl_mACM.pdf)")
+        )
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
+                .name("UKCore Structured Data Capture")
+                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
+                        + " [IHE SDC](https://wiki.ihe.net/index.php/Structured_Data_Capture)")
         )
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
                 .name("HL7 FHIR Events - Patient Identity Feed")
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
-                        + " [IHE PMIR ITI-93](https://build.fhir.org/ig/IHE/ITI.PMIR/ITI-93.html)" +
+                        + " [IHE PMIR](https://build.fhir.org/ig/IHE/ITI.PMIR/)" +
                         "")
         )
 
@@ -162,7 +168,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             .put(
                 Operation()
                     .addTagsItem("HL7 FHIR Events - Patient Identifier Cross-referencing")
-                    .summary("Add or Revise Patient")
+                    .summary("Add or Revise Patient (IHE ITI-104)")
                     .description("This message is implemented as an HTTP conditional update operation from the Patient Identity Source to the Patient Identifier Cross-reference Manager")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
@@ -183,7 +189,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             .post(
                 Operation()
                     .addTagsItem("HL7 FHIR Events - Patient Identity Feed")
-                    .summary("Add/Update/Merge Patient")
+                    .summary("Add/Update/Merge Patient (IHE ITI-93)")
                     .description("Note: PMIR suggests using a urn:ihe:iti:pmir:2019:patient-feed FHIR Message. This message contains a FHIR Bundle which holds the http method POST/PUT/DEL and a Patient resource. \n"
                     + "This example API is only showing a FHIR RESTful version")
                     .responses(getApiResponses())
@@ -227,7 +233,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             .post(
                 Operation()
                     .addTagsItem("UKCore Alert Communication Management")
-                    .summary("Mobile Report Alert")
+                    .summary("Mobile Report Alert (IHE ITI-84)")
                     .description("This doesn't send the actual text message, that is down to system format (e.g. SMS, email, etc)")
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
@@ -243,7 +249,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             .get(
                 Operation()
                     .addTagsItem("UKCore Alert Communication Management")
-                    .summary("Query Report Alert")
+                    .summary("Query Report Alert (IHE ITI-85)")
                     .description("This allows querying results of a CommunicationRequest")
                     .addParametersItem(Parameter()
                         .name("recipient")
@@ -284,8 +290,8 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val questionnaireResponseItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem("UKCore Alert Communication Management")
-                    .summary("Send Completed Form")
+                    .addTagsItem("UKCore Structured Data Capture")
+                    .summary("Submit Completed Form (IHE ITI-35)")
                     .description("The results of a completed form")
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
@@ -296,7 +302,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
             .get(
                 Operation()
-                    .addTagsItem("UKCore Alert Communication Management")
+                    .addTagsItem("UKCore Structured Data Capture")
                     .summary("Query Form Results")
                     .description("This allows querying results of a QuestionnaireResponse")
                     .addParametersItem(Parameter()
@@ -332,7 +338,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val questionnaireItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem("UKCore Alert Communication Management")
+                    .addTagsItem("UKCore Structured Data Capture")
                     .summary("Create Form Definition")
 
                     .responses(getApiResponses())
@@ -344,8 +350,8 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
             .get(
                 Operation()
-                    .addTagsItem("UKCore Alert Communication Management")
-                    .summary("Query Form Definitions")
+                    .addTagsItem("UKCore Structured Data Capture")
+                    .summary("Retrieve Form (Definition) (IHE ITI-34)")
 
                     .addParametersItem(Parameter()
                         .name("url")
