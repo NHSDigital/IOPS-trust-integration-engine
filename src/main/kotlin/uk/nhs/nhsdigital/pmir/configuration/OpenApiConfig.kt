@@ -51,17 +51,24 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .termsOfService("http://swagger.io/terms/")
                     .license(License().name("Apache 2.0").url("http://springdoc.org"))
             )
-
-
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name("HL7 FHIR Events - Patient Identifier Cross-referencing")
+                .name("UKCore Demographics - Events")
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
-                        + " [IHE PIXm](https://profiles.ihe.net/ITI/PIXm/)")
-        )
+                        + " [IHE PIXm](https://profiles.ihe.net/ITI/PIXm/) \n"
+                        + " [IHE PMIR](https://build.fhir.org/ig/IHE/ITI.PMIR/)")
+                       )
+
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name("HL7 FHIR Events - ADT")
+                .name("UKCore Demographics - Queries")
+                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
+                        + " [IHE Patient Demographics Query for mobile (PDQm)](https://profiles.ihe.net/ITI/PDQm/index.html)")
+        )
+
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
+                .name("UKCore ADT")
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                        )
         )
@@ -77,13 +84,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE SDC](https://wiki.ihe.net/index.php/Structured_Data_Capture)")
         )
-        oas.addTagsItem(
-            io.swagger.v3.oas.models.tags.Tag()
-                .name("HL7 FHIR Events - Patient Identity Feed")
-                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
-                        + " [IHE PMIR](https://build.fhir.org/ig/IHE/ITI.PMIR/)" +
-                        "")
-        )
+
 
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
@@ -163,11 +164,112 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             Example().value(FHIRExamples().loadExample("patient-MRN-567890-Merge.json",ctx))
         )
 
+        // Patient
 
-        val patientItem = PathItem()
+        var patientItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem("UKCore Demographics - Queries")
+                    .summary("Read Endpoint")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                    )
+            )
+
+        oas.path("/FHIR/R4/Patient/{id}",patientItem)
+
+
+        patientItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem("UKCore Demographics - Queries")
+                    .summary("Patient Option Search Parameters")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("_id")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("active")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Whether the patient record is active")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("family")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("A portion of the family name of the patient")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("given")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("A portion of the given name of the patient")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("A patient identifier")
+                        .schema(StringSchema())
+                        .example("https://fhir.nhs.uk/Id/nhs-number|9876543210")
+                    )
+                    .addParametersItem(Parameter()
+                        .name("telecom")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The value in any kind of telecom details of the patient")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("birthdate")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The patient's date of birth")
+                        .schema(StringSchema())
+                    )
+
+                    .addParametersItem(Parameter()
+                        .name("address-postalcode")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("A postalCode specified in an address")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("gender")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Gender of the patient")
+                        .schema(StringSchema())
+                    )
+
+            )
             .put(
                 Operation()
-                    .addTagsItem("HL7 FHIR Events - Patient Identifier Cross-referencing")
+                    .addTagsItem("UKCore Demographics - Events")
                     .summary("Add or Revise Patient (IHE ITI-104)")
                     .description("This message is implemented as an HTTP conditional update operation from the Patient Identity Source to the Patient Identifier Cross-reference Manager")
                     .responses(getApiResponses())
@@ -188,7 +290,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
             .post(
                 Operation()
-                    .addTagsItem("HL7 FHIR Events - Patient Identity Feed")
+                    .addTagsItem("UKCore Demographics - Events")
                     .summary("Add/Update/Merge Patient (IHE ITI-93)")
                     .description("Note: PMIR suggests using a urn:ihe:iti:pmir:2019:patient-feed FHIR Message. This message contains a FHIR Bundle which holds the http method POST/PUT/DEL and a Patient resource. \n"
                     + "This example API is only showing a FHIR RESTful version")
@@ -210,7 +312,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val encounterItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem("HL7 FHIR Events - ADT")
+                    .addTagsItem("UKCore ADT")
                     .summary("Encounter Event")
                     .description("Note: PMIR suggests using a urn:ihe:iti:pmir:2019:patient-feed FHIR Message. This message contains a FHIR Bundle which holds the http method POST/PUT/DEL and a Patient resource. \n"
                             + "This example API is only showing a FHIR RESTful version")

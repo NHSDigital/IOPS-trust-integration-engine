@@ -35,7 +35,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/V2/ITK")
-@io.swagger.v3.oas.annotations.tags.Tag(name="HL7 v2 Events - ADT", description =
+@io.swagger.v3.oas.annotations.tags.Tag(name="ITK HL7 v2 Events - ADT", description =
 "[NHS Digital ITK HL7 v2 Message Specification](" +
         "https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/raw/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf) \n"
 + "[IHE PIX](https://profiles.ihe.net/ITI/TF/Volume1/ch-5.html) \n"
