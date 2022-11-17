@@ -3,7 +3,9 @@ package uk.nhs.nhsdigital.pmir
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.EncodingEnum
 import ca.uhn.fhir.rest.server.RestfulServer
+import ca.uhn.fhir.rest.server.interceptor.CorsInterceptor
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.web.cors.CorsConfiguration
 import uk.nhs.nhsdigital.pmir.configuration.FHIRServerProperties
 import uk.nhs.nhsdigital.pmir.provider.*
 import uk.nhs.nhsdigital.pmir.interceptor.AWSAuditEventLoggingInterceptor
@@ -47,6 +49,22 @@ class FHIRR4RestfulServer(
             )
         interceptorService.registerInterceptor(awsAuditEventLoggingInterceptor)
 
+        val config = CorsConfiguration()
+        config.addAllowedHeader("x-fhir-starter")
+        config.addAllowedHeader("Origin")
+        config.addAllowedHeader("Accept")
+        config.addAllowedHeader("X-Requested-With")
+        config.addAllowedHeader("Content-Type")
+        config.addAllowedHeader("Authorization")
+        config.addAllowedHeader("x-api-key")
+
+        config.addAllowedOrigin("*")
+
+        config.addExposedHeader("Location")
+        config.addExposedHeader("Content-Location")
+        config.allowedMethods = Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+        // Create the interceptor and register it
+        interceptorService.registerInterceptor(CorsInterceptor(config))
 
         isDefaultPrettyPrint = true
         defaultResponseEncoding = EncodingEnum.JSON
