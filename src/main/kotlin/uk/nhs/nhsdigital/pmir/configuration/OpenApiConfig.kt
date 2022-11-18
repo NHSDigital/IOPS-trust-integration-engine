@@ -15,6 +15,7 @@ import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.parameters.RequestBody
 import io.swagger.v3.oas.models.responses.ApiResponse
 import io.swagger.v3.oas.models.responses.ApiResponses
+import io.swagger.v3.oas.models.servers.Server
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -25,6 +26,9 @@ import uk.nhs.nhsdigital.pmir.util.FHIRExamples
 open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
     var FHIRSERVER = "HL7 FHIR Message Notifications"
+    var PDQ = "Patient Demographic Queries"
+    var PIX = "Patient Demographics Events"
+    var ADT = "Admission and Discharge (ADT)"
     @Bean
     open fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
@@ -37,12 +41,14 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .title(fhirServerProperties.server.name)
                     .version(fhirServerProperties.server.version)
                     .description(
+                        /*
                         "\n\n The results of events or notifications posted from this OAS can be viewed on [Query for Existing Patient Data](http://lb-fhir-facade-926707562.eu-west-2.elb.amazonaws.com/)"
                         + "\n\n To view example patients (with example NHS Numbers), see **Patient Demographics Query** section of [Query for Existing Patient Data](http://lb-fhir-facade-926707562.eu-west-2.elb.amazonaws.com/)"
 
                                 + "\n\n For ODS, GMP and GMP codes, see [Care Services Directory](http://lb-fhir-mcsd-1736981144.eu-west-2.elb.amazonaws.com/). This OAS also includes **Care Teams Management**"
                                 + "\n\n For Document Notifications, see [Access to Health Documents](http://lb-fhir-mhd-1617422145.eu-west-2.elb.amazonaws.com/)."
-                                + "\n\n ## FHIR Implementation Guides"
+                                */
+                                 "## FHIR Implementation Guides"
                                 + "\n\n [UK Core Implementation Guide (0.5.1)](https://simplifier.net/guide/ukcoreimplementationguide0.5.0-stu1/home?version=current)"
                                 + "\n\n [NHS Digital Implementation Guide (2.6.0)](https://simplifier.net/guide/nhsdigital?version=2.6.0)"
 
@@ -51,9 +57,13 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .termsOfService("http://swagger.io/terms/")
                     .license(License().name("Apache 2.0").url("http://springdoc.org"))
             )
+
+        oas.addServersItem(
+            Server().description(fhirServerProperties.server.name).url(fhirServerProperties.server.baseUrl)
+        )
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name("UKCore Demographics - Events")
+                .name(PIX)
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE PIXm](https://profiles.ihe.net/ITI/PIXm/) \n"
                         + " [IHE PMIR](https://build.fhir.org/ig/IHE/ITI.PMIR/)")
@@ -61,17 +71,18 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name("UKCore Demographics - Queries")
+                .name(PDQ)
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE Patient Demographics Query for mobile (PDQm)](https://profiles.ihe.net/ITI/PDQm/index.html)")
         )
 
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name("UKCore ADT")
+                .name(ADT)
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                        )
         )
+        /*
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
                 .name("UKCore Alert Communication Management")
@@ -84,7 +95,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE SDC](https://wiki.ihe.net/index.php/Structured_Data_Capture)")
         )
-
+*/
 
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
@@ -169,7 +180,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         var patientItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem("UKCore Demographics - Queries")
+                    .addTagsItem(PDQ)
                     .summary("Read Endpoint")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
@@ -188,7 +199,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         patientItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem("UKCore Demographics - Queries")
+                    .addTagsItem(PDQ)
                     .summary("Patient Option Search Parameters")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
@@ -269,7 +280,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             )
             .put(
                 Operation()
-                    .addTagsItem("UKCore Demographics - Events")
+                    .addTagsItem(PIX)
                     .summary("Add or Revise Patient (IHE ITI-104)")
                     .description("This message is implemented as an HTTP conditional update operation from the Patient Identity Source to the Patient Identifier Cross-reference Manager")
                     .responses(getApiResponses())
@@ -290,7 +301,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
             .post(
                 Operation()
-                    .addTagsItem("UKCore Demographics - Events")
+                    .addTagsItem(PIX)
                     .summary("Add/Update/Merge Patient (IHE ITI-93)")
                     .description("Note: PMIR suggests using a urn:ihe:iti:pmir:2019:patient-feed FHIR Message. This message contains a FHIR Bundle which holds the http method POST/PUT/DEL and a Patient resource. \n"
                     + "This example API is only showing a FHIR RESTful version")
@@ -312,7 +323,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val encounterItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem("UKCore ADT")
+                    .addTagsItem(ADT)
                     .summary("Encounter Event")
                     .description("Note: PMIR suggests using a urn:ihe:iti:pmir:2019:patient-feed FHIR Message. This message contains a FHIR Bundle which holds the http method POST/PUT/DEL and a Patient resource. \n"
                             + "This example API is only showing a FHIR RESTful version")
@@ -331,6 +342,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             Example().value(FHIRExamples().loadExample("CommunicationRequest.json",ctx))
         )
 
+        /*
         val communicationRequestItem = PathItem()
             .post(
                 Operation()
@@ -536,7 +548,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             )
 
         oas.path("/FHIR/R4/Task",taskItem)
-
+*/
         val examplesSubscriptionCreate = LinkedHashMap<String,Example?>()
         examplesSubscriptionCreate.put("Add PMIR Patient Subscription",
             Example().value(FHIRExamples().loadExample("subscription-pmir-create.json",ctx))

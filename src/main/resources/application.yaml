@@ -14,9 +14,9 @@ management:
 
 fhir:
   server:
-    name: Event Notifications and Subscriptions
-    baseUrl: https://test.validation.fhir.nhs.uk
-    version: 1.0.10
+    name: Event Notifications, Health Administration and Subscriptions
+    baseUrl: https://3cdzg7kbj4.execute-api.eu-west-2.amazonaws.com/poc/events
+    version: 1.0.11
 
 ###Remote terminology validation:
 

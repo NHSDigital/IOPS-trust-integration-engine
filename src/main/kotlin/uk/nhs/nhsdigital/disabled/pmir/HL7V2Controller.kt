@@ -1,4 +1,4 @@
-package uk.nhs.nhsdigital.pmir.controller
+package uk.nhs.nhsdigital.disabled.pmir
 
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.hl7v2.DefaultHapiContext
