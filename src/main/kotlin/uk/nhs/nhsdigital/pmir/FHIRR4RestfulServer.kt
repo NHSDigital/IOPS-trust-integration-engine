@@ -9,6 +9,7 @@ import org.springframework.web.cors.CorsConfiguration
 import uk.nhs.nhsdigital.pmir.configuration.FHIRServerProperties
 import uk.nhs.nhsdigital.pmir.provider.*
 import uk.nhs.nhsdigital.pmir.interceptor.AWSAuditEventLoggingInterceptor
+import uk.nhs.nhsdigital.pmir.interceptor.CapabilityStatementInterceptor
 import java.util.*
 import javax.servlet.annotation.WebServlet
 
@@ -41,6 +42,9 @@ class FHIRR4RestfulServer(
         registerProvider(questionnaireResponseProvider)
         registerProvider(questionnaireProvider)
         registerProvider(taskProvider)
+
+        registerInterceptor(CapabilityStatementInterceptor(this.fhirContext,fhirServerProperties))
+
 
         val awsAuditEventLoggingInterceptor =
             AWSAuditEventLoggingInterceptor(
