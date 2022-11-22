@@ -10,7 +10,7 @@
     </parent>
     <groupId>uk.nhs.nhsdigital</groupId>
     <artifactId>iops-integration-engine</artifactId>
-    <version>1.0.11</version>
+    <version>1.0.12</version>
     <name>iops-integration-engine</name>
     <description>IOPS Integration Engine</description>
 
