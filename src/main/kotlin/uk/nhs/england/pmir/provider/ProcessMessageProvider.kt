@@ -23,6 +23,7 @@ class ProcessMessageProvider(
     val awsTask : AWSTask,
     val awsBinary: AWSBinary,
     val awsDocumentReference: AWSDocumentReference,
+    val awsAppointment: AWSAppointment,
     val awsBundle: AWSBundle) {
 
     @Operation(name = "\$process-message", idempotent = true)
@@ -165,7 +166,7 @@ class ProcessMessageProvider(
                         }
                     }
                     "ServiceRequest" -> {
-                        val serviceRequest = awsServiceRequest.createUpdateAWSServiceRequest(workerResource as ServiceRequest,bundle)
+                        val serviceRequest = awsServiceRequest.createUpdate(workerResource as ServiceRequest,bundle)
                         if (serviceRequest != null) {
                             operationOutcome.issue.add(
                                 OperationOutcome.OperationOutcomeIssueComponent()
@@ -247,6 +248,24 @@ class ProcessMessageProvider(
                             workerResource as DocumentReference, bundle)
                         if (documentReference != null) {
                             returnBundle.add(documentReference)
+                        }
+                    }
+                    if (workerResource is ServiceRequest) {
+                        val serviceRequest = awsServiceRequest.createUpdate(workerResource as ServiceRequest,bundle)
+                        if (serviceRequest != null) {
+                            returnBundle.add(serviceRequest)
+                        }
+                    }
+                    if (workerResource is Task) {
+                        val task = awsTask.createUpdate(workerResource as Task,bundle)
+                        if (task != null) {
+                            returnBundle.add(task)
+                        }
+                    }
+                    if (workerResource is Appointment) {
+                        val appointment = awsAppointment.createUpdate(workerResource as Appointment)
+                        if (appointment != null) {
+                            returnBundle.add(appointment)
                         }
                     }
                 }

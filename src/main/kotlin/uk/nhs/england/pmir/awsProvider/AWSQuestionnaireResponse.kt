@@ -154,7 +154,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
             // Bit crude refactor?
 
             if (newQuestionnaireResponse.source.hasIdentifier()) {
-                val awsPatient = awsPatient.getPatient(newQuestionnaireResponse.source.identifier)
+                val awsPatient = awsPatient.get(newQuestionnaireResponse.source.identifier)
                 if (awsPatient != null)  {
                     awsBundleProvider.updateReference(newQuestionnaireResponse.source,awsPatient.identifierFirstRep,awsPatient)
                 } else {
@@ -174,7 +174,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
 
         if (newQuestionnaireResponse.hasSubject()) {
             if (newQuestionnaireResponse.subject.hasIdentifier()) {
-                val awsPatient = awsPatient.getPatient(newQuestionnaireResponse.subject.identifier)
+                val awsPatient = awsPatient.get(newQuestionnaireResponse.subject.identifier)
                 if (awsPatient != null)  awsBundleProvider.updateReference(newQuestionnaireResponse.subject,awsPatient.identifierFirstRep,awsPatient)
             }
         }

@@ -55,11 +55,11 @@ class AWSRelatedPerson(val messageProperties: MessageProperties, val awsClient: 
 
         if (newRelatedPerson.hasPatient()) {
             if (newRelatedPerson.patient.hasReference() && bundle != null) {
-                val patient = awsPatient.getPatient(newRelatedPerson.patient, bundle)
+                val patient = awsPatient.get(newRelatedPerson.patient, bundle)
                 if (patient != null) awsBundleProvider.updateReference(newRelatedPerson.patient, patient.identifierFirstRep,patient)
             } else
                 if (newRelatedPerson.patient.hasIdentifier()) {
-                    val patient = awsPatient.getPatient(newRelatedPerson.patient.identifier)
+                    val patient = awsPatient.get(newRelatedPerson.patient.identifier)
                     if (patient != null) awsBundleProvider.updateReference(newRelatedPerson.patient, patient.identifierFirstRep,patient)
                 }
         }

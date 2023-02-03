@@ -45,7 +45,7 @@ class AWSCommunicationRequest (val messageProperties: MessageProperties, val aws
         if (newCommunicationRequest.hasRecipient()) {
             for (reference in newCommunicationRequest.recipient)
             if (reference.hasIdentifier()) {
-                val awsPatient = awsPatient.getPatient(reference.identifier)
+                val awsPatient = awsPatient.get(reference.identifier)
                 if (awsPatient != null) {
                     awsBundleProvider.updateReference(reference,awsPatient.identifierFirstRep,awsPatient)
                 } else {

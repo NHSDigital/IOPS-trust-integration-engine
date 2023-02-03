@@ -58,12 +58,12 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
 
         if (newMedicationDispense.hasSubject()) {
             if (newMedicationDispense.subject.hasReference() && bundle != null) {
-                val patient = awsPatient.getPatient(newMedicationDispense.subject, bundle)
+                val patient = awsPatient.get(newMedicationDispense.subject, bundle)
                 if (patient != null) awsBundleProvider.updateReference(newMedicationDispense.subject,
                     patient.identifierFirstRep,patient)
             } else
                 if (newMedicationDispense.subject.hasIdentifier()) {
-                    val patient = awsPatient.getPatient(newMedicationDispense.subject.identifier)
+                    val patient = awsPatient.get(newMedicationDispense.subject.identifier)
                     if (patient != null)
                         awsBundleProvider.updateReference(newMedicationDispense.subject,
                             patient.identifierFirstRep,patient)

@@ -58,11 +58,11 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
 
         if (newObservation.hasSubject()) {
             if (newObservation.subject.hasReference() && bundle != null) {
-                val patient = awsPatient.getPatient(newObservation.subject, bundle)
+                val patient = awsPatient.get(newObservation.subject, bundle)
                 if (patient != null) awsBundleProvider.updateReference(newObservation.subject, patient.identifierFirstRep,patient)
             } else
                 if (newObservation.subject.hasIdentifier()) {
-                    val patient = awsPatient.getPatient(newObservation.subject.identifier)
+                    val patient = awsPatient.get(newObservation.subject.identifier)
                     if (patient != null) awsBundleProvider.updateReference(newObservation.subject, patient.identifierFirstRep,patient)
                 }
         }

@@ -81,7 +81,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         if (newPatient.hasLink()) {
             for(linkedPatient in newPatient.link) {
                 if (linkedPatient.hasOther() && linkedPatient.other.hasIdentifier()) {
-                    var awsPatient = getPatient(linkedPatient.other.identifier)
+                    var awsPatient = get(linkedPatient.other.identifier)
                     if (awsPatient != null) awsBundleProvider.updateReference(linkedPatient.other,linkedPatient.other.identifier,awsPatient)
                 }
             }
@@ -93,13 +93,13 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         ) {
             val patient = awsBundle.entryFirstRep.resource as Patient
             // Dont update for now - just return aws Patient
-            return updatePatient(patient, newPatient)!!.resource as Patient
+            return update(patient, newPatient)!!.resource as Patient
         } else {
-            return createPatient(newPatient)!!.resource as Patient
+            return create(newPatient)!!.resource as Patient
         }
     }
 
-    fun updatePatient(patient: Patient, newPatient: Patient): MethodOutcome? {
+    fun update(patient: Patient, newPatient: Patient): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
         for (identifier in newPatient.identifier) {
@@ -137,7 +137,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         return response
     }
 
-    public fun getPatient(identifier: Identifier): Patient? {
+    public fun get(identifier: Identifier): Patient? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -162,7 +162,7 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         if (bundle == null || !bundle.hasEntry()) return null
         return bundle.entryFirstRep.resource as Patient
     }
-    public fun getPatient(reference: Reference, bundle: Bundle): Patient? {
+    public fun get(reference: Reference, bundle: Bundle): Patient? {
         var awsPatient : Patient? = null
         if (reference.hasReference()) {
             val resource = awsBundleProvider.findResource(bundle, "Patient", reference.reference)
@@ -170,9 +170,9 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
                 val patient = resource
                 for (identifier in patient.identifier) {
                     if (identifier.system.equals(FhirSystems.NHS_NUMBER)) {
-                        awsPatient = getPatient(identifier)
+                        awsPatient = get(identifier)
                         if (awsPatient == null) {
-                            return createPatient(patient)?.resource as Patient
+                            return create(patient)?.resource as Patient
                         } else {
                             return awsPatient
                         }
@@ -180,12 +180,12 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
                 }
             }
         } else if (reference.hasIdentifier()) {
-            return getPatient(reference.identifier)
+            return get(reference.identifier)
         }
         return null
     }
 
-    fun createPatient(newPatient: Patient): MethodOutcome? {
+    fun create(newPatient: Patient): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
 

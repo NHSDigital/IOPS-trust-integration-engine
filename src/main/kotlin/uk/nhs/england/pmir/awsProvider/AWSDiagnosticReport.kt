@@ -59,11 +59,11 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
 
         if (newDiagnosticReport.hasSubject()) {
             if (newDiagnosticReport.subject.hasReference() && bundle != null) {
-                val patient = awsPatient.getPatient(newDiagnosticReport.subject, bundle)
+                val patient = awsPatient.get(newDiagnosticReport.subject, bundle)
                 if (patient != null) awsBundleProvider.updateReference(newDiagnosticReport.subject, patient.identifierFirstRep,patient)
             } else
                 if (newDiagnosticReport.subject.hasIdentifier()) {
-                    val patient = awsPatient.getPatient(newDiagnosticReport.subject.identifier)
+                    val patient = awsPatient.get(newDiagnosticReport.subject.identifier)
                     if (patient != null) awsBundleProvider.updateReference(newDiagnosticReport.subject, patient.identifierFirstRep,patient)
                 }
         }

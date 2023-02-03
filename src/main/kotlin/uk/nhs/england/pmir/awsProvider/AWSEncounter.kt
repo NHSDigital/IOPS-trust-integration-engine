@@ -60,7 +60,7 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
             if (organisation != null) awsBundleProvider.updateReference(newEncounter.serviceProvider, organisation.identifierFirstRep, organisation)
         }
         if (newEncounter.hasSubject() && newEncounter.subject.hasIdentifier()) {
-            val patient = awsPatient.getPatient(newEncounter.subject.identifier)
+            val patient = awsPatient.get(newEncounter.subject.identifier)
             if (patient != null) awsBundleProvider.updateReference(newEncounter.subject, patient.identifierFirstRep, patient)
         }
         for (participant in newEncounter.participant) {

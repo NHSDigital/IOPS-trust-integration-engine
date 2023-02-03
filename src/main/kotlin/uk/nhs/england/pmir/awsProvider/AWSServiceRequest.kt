@@ -29,7 +29,7 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
 
-    fun createUpdateAWSServiceRequest(newServiceRequest: ServiceRequest, bundle: Bundle?): ServiceRequest? {
+    fun createUpdate(newServiceRequest: ServiceRequest, bundle: Bundle?): ServiceRequest? {
         var awsBundle: Bundle? = null
         if (!newServiceRequest.hasIdentifier()) throw UnprocessableEntityException("ServiceRequest has no identifier")
         var nhsIdentifier: Identifier? = null
@@ -59,11 +59,11 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
 
         if (newServiceRequest.hasSubject()) {
             if (newServiceRequest.subject.hasReference() && bundle != null) {
-                val patient = awsPatient.getPatient(newServiceRequest.subject, bundle)
+                val patient = awsPatient.get(newServiceRequest.subject, bundle)
                 if (patient != null) awsBundleProvider.updateReference(newServiceRequest.subject, patient.identifierFirstRep, patient )
             } else
                 if (newServiceRequest.subject.hasIdentifier()) {
-                    val patient = awsPatient.getPatient(newServiceRequest.subject.identifier)
+                    val patient = awsPatient.get(newServiceRequest.subject.identifier)
                     if (patient != null) awsBundleProvider.updateReference(newServiceRequest.subject, patient.identifierFirstRep, patient )
                 }
         }
@@ -107,9 +107,9 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
         ) {
             val oldServiceRequest = awsBundle.entryFirstRep.resource as ServiceRequest
             // Dont update for now - just return aws ServiceRequest
-            return updateServiceRequest(oldServiceRequest, newServiceRequest)!!.resource as ServiceRequest
+            return update(oldServiceRequest, newServiceRequest)!!.resource as ServiceRequest
         } else {
-            return createServiceRequest(newServiceRequest)!!.resource as ServiceRequest
+            return create(newServiceRequest)!!.resource as ServiceRequest
         }
     }
 
@@ -139,7 +139,7 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
         return bundle.entryFirstRep.resource as ServiceRequest
     }
 
-    private fun updateServiceRequest(oldServiceRequest: ServiceRequest, newServiceRequest: ServiceRequest): MethodOutcome? {
+    private fun update(oldServiceRequest: ServiceRequest, newServiceRequest: ServiceRequest): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
         for (identifier in newServiceRequest.identifier) {
@@ -179,7 +179,7 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
 
     }
 
-    private fun createServiceRequest(newServiceRequest: ServiceRequest): MethodOutcome? {
+    private fun create(newServiceRequest: ServiceRequest): MethodOutcome? {
 
         var response: MethodOutcome? = null
 

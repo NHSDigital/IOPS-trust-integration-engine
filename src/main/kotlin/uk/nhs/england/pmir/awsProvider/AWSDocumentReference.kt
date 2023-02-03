@@ -65,11 +65,11 @@ class AWSDocumentReference(val messageProperties: MessageProperties, val awsClie
         // Patient
         if (newDocumentReference.hasSubject()) {
             if (newDocumentReference.subject.hasReference() && bundle != null) {
-                val patient = awsPatient.getPatient(newDocumentReference.subject, bundle)
+                val patient = awsPatient.get(newDocumentReference.subject, bundle)
                 if (patient != null) awsBundleProvider.updateReference(newDocumentReference.subject, patient.identifierFirstRep, patient )
             } else
                 if (newDocumentReference.subject.hasIdentifier()) {
-                    val patient = awsPatient.getPatient(newDocumentReference.subject.identifier)
+                    val patient = awsPatient.get(newDocumentReference.subject.identifier)
                     if (patient != null) awsBundleProvider.updateReference(newDocumentReference.subject, patient.identifierFirstRep, patient )
                 }
         }

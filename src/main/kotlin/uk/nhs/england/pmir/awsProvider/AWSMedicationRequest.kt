@@ -57,11 +57,11 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
 
         if (newMedicationRequest.hasSubject()) {
             if (newMedicationRequest.subject.hasReference() && bundle != null) {
-                val patient = awsPatient.getPatient(newMedicationRequest.subject, bundle)
+                val patient = awsPatient.get(newMedicationRequest.subject, bundle)
                 if (patient != null) awsBundleProvider.updateReference(newMedicationRequest.subject, patient.identifierFirstRep,patient)
             } else
                 if (newMedicationRequest.subject.hasIdentifier()) {
-                    val patient = awsPatient.getPatient(newMedicationRequest.subject.identifier)
+                    val patient = awsPatient.get(newMedicationRequest.subject.identifier)
                     if (patient != null) awsBundleProvider.updateReference(newMedicationRequest.subject, patient.identifierFirstRep,patient)
                 }
         }
