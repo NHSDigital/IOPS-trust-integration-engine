@@ -8,7 +8,7 @@
         <version>2.7.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>uk.nhs.nhsdigital</groupId>
+    <groupId>uk.nhs.england.pixm</groupId>
     <artifactId>iops-integration-engine</artifactId>
     <version>1.0.13</version>
     <name>iops-integration-engine</name>
@@ -17,7 +17,7 @@
     <properties>
         <java.version>1.8</java.version>
         <kotlin.version>1.5.10</kotlin.version>
-        <fhir.version>6.2.0</fhir.version>
+        <fhir.version>6.2.5</fhir.version>
         <swagger_version>2.1.12</swagger_version>
         <parser_version>2.0.30</parser_version>
     </properties>
@@ -219,6 +219,14 @@
                         <version>${kotlin.version}</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>9</source>
+                    <target>9</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
