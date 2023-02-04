@@ -15,7 +15,7 @@ management:
 fhir:
   server:
     name: Event Notifications, Health Administration and Subscriptions
-    baseUrl: https://3cdzg7kbj4.execute-api.eu-west-2.amazonaws.com/poc/events
+    baseUrl: http://localhost:9002
     version: 1.0.13
 
 ###Remote terminology validation:

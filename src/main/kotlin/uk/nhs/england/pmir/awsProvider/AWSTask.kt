@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.pmir.configuration.FHIRServerProperties
 import uk.nhs.england.pmir.configuration.MessageProperties
+import uk.nhs.england.pmir.util.FhirSystems
 import java.util.*
 
 @Component
@@ -24,6 +25,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
               val awsQuestionnaire: AWSQuestionnaire,
               val awsPractitioner: AWSPractitioner,
               val awsBundleProvider: AWSBundle,
+              val awsServiceRequest: AWSServiceRequest,
               val awsAuditEvent: AWSAuditEvent) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
@@ -65,11 +67,20 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
         }
         if (newTask.hasFocus()) {
             if (newTask.focus.hasReference() && newTask.focus.reference.contains("Questionnaire")) {
-                val questionnaire = awsQuestionnaire.seach(UriParam().setValue(newTask.focus.reference))
+                val questionnaire = awsQuestionnaire.search(UriParam().setValue(newTask.focus.reference))
                 if (questionnaire != null && questionnaire.size>0) {
                     val canonical = newTask.focus.reference
                     awsBundleProvider.updateReference(newTask.focus,questionnaire[0].identifierFirstRep,questionnaire[0])
                     newTask.focus.display = canonical
+                }
+            }
+            if (newTask.focus.hasIdentifier() && newTask.focus.identifier.hasSystem()) {
+                if (newTask.focus.identifier.system.equals(FhirSystems.UBRN)) {
+                    val serviceRequest = awsServiceRequest.search(newTask.focus.identifier)
+                    if (serviceRequest != null ) {
+                        val canonical = newTask.focus.reference
+                        awsBundleProvider.updateReference(newTask.focus,newTask.focus.identifier,serviceRequest)
+                    }
                 }
             }
         }
@@ -163,7 +174,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
         }
         if (newTask.hasFocus()) {
             if (newTask.focus.hasReference() && newTask.focus.reference.contains("Questionnaire")) {
-                val questionnaire = awsQuestionnaire.seach(UriParam().setValue(newTask.focus.reference))
+                val questionnaire = awsQuestionnaire.search(UriParam().setValue(newTask.focus.reference))
                 if (questionnaire != null && questionnaire.size>0) {
                     val canonical = newTask.focus.reference
                     awsBundleProvider.updateReference(newTask.focus,questionnaire[0].identifierFirstRep,questionnaire[0])

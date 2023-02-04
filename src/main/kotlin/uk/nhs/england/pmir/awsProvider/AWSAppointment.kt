@@ -22,6 +22,7 @@ class AWSAppointment(val messageProperties: MessageProperties, val awsClient: IG
                      val awsOrganization: AWSOrganization,
                      val awsPractitioner: AWSPractitioner,
                      val awsPatient: AWSPatient,
+                     val awsServiceRequest: AWSServiceRequest,
                      val awsBundleProvider: AWSBundle,
                      val awsAuditEvent: AWSAuditEvent) {
 
@@ -69,6 +70,17 @@ class AWSAppointment(val messageProperties: MessageProperties, val awsClient: IG
                     val patient = awsPatient.get(participant.actor.identifier)
                     if (patient != null) {
                         awsBundleProvider.updateReference(participant.actor,patient.identifierFirstRep,patient)
+                    }
+                }
+            }
+        }
+        for (basedOn in newAppointment.basedOn) {
+            if (basedOn.hasIdentifier() && basedOn.identifier.hasSystem()) {
+                if (basedOn.identifier.system.equals(FhirSystems.UBRN)) {
+                    val serviceRequest = awsServiceRequest.search(basedOn.identifier)
+                    if (serviceRequest != null) {
+                        val canonical = basedOn.identifier
+                        awsBundleProvider.updateReference(basedOn, basedOn.identifier, serviceRequest)
                     }
                 }
             }

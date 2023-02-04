@@ -30,7 +30,7 @@ class AWSQuestionnaire (val messageProperties: MessageProperties, val awsClient:
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
-    fun seach(uriParam: UriParam?): List<Questionnaire>? {
+    fun search(uriParam: UriParam?): List<Questionnaire>? {
         var awsBundle: Bundle? = null
         val list = mutableListOf<Questionnaire>()
         var response: MethodOutcome? = null

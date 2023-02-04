@@ -20,6 +20,8 @@ public final class FhirSystems {
 
     public static final String ODS_SITE_CODE ="https://fhir.nhs.uk/Id/ods-site-code";
 
+    public static final String UBRN = "https://fhir.nhs.uk/Id/UBRN";
+
     public static final String VIRTUALLY_CONNECTION_TYPE = "http://fhir.virtuallyhealthcare.co.uk/ConnectionType";
 
     public static final String AWS_LOCATION_IDENTIFIER = "https://fhir.virtually.healthcare/Id/Location";

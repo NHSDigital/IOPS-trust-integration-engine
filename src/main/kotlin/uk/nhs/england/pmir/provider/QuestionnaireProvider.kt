@@ -28,7 +28,7 @@ class QuestionnaireProvider(
     fun search(httpRequest : HttpServletRequest,
                @OptionalParam(name = Questionnaire.SP_URL) uriParam: UriParam?
     ): List<Questionnaire>? {
-        return awsQuestionnaire.seach(uriParam)
+        return awsQuestionnaire.search(uriParam)
     }
 
 }

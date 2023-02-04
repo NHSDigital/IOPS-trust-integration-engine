@@ -113,7 +113,7 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
         }
     }
 
-    public fun getServiceRequest(identifier: Identifier): ServiceRequest? {
+    public fun search(identifier: Identifier): ServiceRequest? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {

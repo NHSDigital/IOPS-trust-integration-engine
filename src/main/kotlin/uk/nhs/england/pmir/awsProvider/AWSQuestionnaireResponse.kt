@@ -54,7 +54,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
 
                 if (questionnaire != null) {
                     // Need to search registry for Questionnaire id
-                    val listQ = awsQuestionnaire.seach(UriParam().setValue(questionnaire.value))
+                    val listQ = awsQuestionnaire.search(UriParam().setValue(questionnaire.value))
                     if (listQ == null || listQ.size==0) return list
                     criteria1 = QuestionnaireResponse.QUESTIONNAIRE.hasId("Questionnaire/"+listQ[0].idElement.idPart)
                 }
