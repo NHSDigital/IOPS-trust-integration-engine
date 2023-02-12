@@ -23,6 +23,7 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
                         val awsPractitioner: AWSPractitioner,
                         val awsPatient: AWSPatient,
                         val awsEncounter: AWSEncounter,
+                        val awsDocumentReference: AWSDocumentReference,
                         val awsBundleProvider : AWSBundle,
                         val awsAuditEvent: AWSAuditEvent) {
 
@@ -97,6 +98,18 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
             val encounter = newServiceRequest.encounter.resource as Encounter
             val awsEncounter = awsEncounter.createUpdate(encounter)
             if (awsEncounter != null) awsBundleProvider.updateReference(newServiceRequest.encounter, awsEncounter.identifierFirstRep ,awsEncounter)
+        }
+        if (newServiceRequest.hasSupportingInfo()) {
+            for (reference in newServiceRequest.supportingInfo) {
+                if (reference.resource != null) {
+                    if (reference.resource is DocumentReference && (reference.resource as DocumentReference).hasIdentifier()) {
+                        val documentReference = reference.resource as DocumentReference
+                        // TODO should this be createEd
+                        val awsDocumentReference = awsDocumentReference.createUpdateAWSDocumentReference(documentReference,bundle)
+                        if (awsDocumentReference != null) awsBundleProvider.updateReference(reference, awsDocumentReference.identifierFirstRep ,awsDocumentReference)
+                    }
+                }
+            }
         }
         // This v3esquw data should have been processed into propoer resources so remove
         newServiceRequest.contained = ArrayList()
