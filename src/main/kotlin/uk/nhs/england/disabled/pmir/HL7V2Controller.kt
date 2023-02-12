@@ -22,13 +22,13 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-import uk.nhs.england.pmir.awsProvider.AWSEncounter
-import uk.nhs.england.pmir.awsProvider.AWSPatient
-import uk.nhs.england.pmir.transforms.PD1toFHIRPractitionerRole
-import uk.nhs.england.pmir.transforms.PIDtoFHIRPatient
-import uk.nhs.england.pmir.transforms.PV1toFHIRAppointment
-import uk.nhs.england.pmir.transforms.PV1toFHIREncounter
-import uk.nhs.england.pmir.util.FhirSystems
+import uk.nhs.england.tie.awsProvider.AWSEncounter
+import uk.nhs.england.tie.awsProvider.AWSPatient
+import uk.nhs.england.tie.transforms.PD1toFHIRPractitionerRole
+import uk.nhs.england.tie.transforms.PIDtoFHIRPatient
+import uk.nhs.england.tie.transforms.PV1toFHIRAppointment
+import uk.nhs.england.tie.transforms.PV1toFHIREncounter
+import uk.nhs.england.tie.util.FhirSystems
 import java.text.SimpleDateFormat
 import java.util.*
 
