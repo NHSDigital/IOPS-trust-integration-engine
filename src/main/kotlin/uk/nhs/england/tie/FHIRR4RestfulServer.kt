@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Qualifier
 import uk.nhs.england.tie.provider.BinaryProvider
 import uk.nhs.england.tie.provider.DocumentReferenceProvider
 import uk.nhs.england.tie.configuration.FHIRServerProperties
+import uk.nhs.england.tie.configuration.MessageProperties
 import uk.nhs.england.tie.provider.*
 import uk.nhs.england.tie.interceptor.AWSAuditEventLoggingInterceptor
 import uk.nhs.england.tie.interceptor.CapabilityStatementInterceptor
+import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import uk.nhs.england.tie.interceptor.ValidationInterceptor
 import java.util.*
 import javax.servlet.annotation.WebServlet
@@ -18,9 +20,10 @@ import javax.servlet.annotation.WebServlet
 class FHIRR4RestfulServer(
     @Qualifier("R4") fhirContext: FhirContext,
     public val fhirServerProperties: FHIRServerProperties,
+    val messageProperties: MessageProperties,
     public val processMessageProvider: ProcessMessageProvider,
     val patientProvider: PatientProvider,
-    val subscriptionProvider: SubscriptionProvider,
+   // val subscriptionProvider: SubscriptionProvider,
     val encounterProvider: EncounterProvider,
     val communicationRequestProvider: CommunicationRequestProvider,
     val communicationProvider: CommunicationProvider,
@@ -28,7 +31,8 @@ class FHIRR4RestfulServer(
     val questionnaireProvider: QuestionnaireProvider,
     val taskProvider: TaskProvider,
     val binaryProvider: BinaryProvider,
-    val documentReferenceProvider: DocumentReferenceProvider
+    val documentReferenceProvider: DocumentReferenceProvider,
+    var cognitoAuthInterceptor: CognitoAuthInterceptor
 ) : RestfulServer(fhirContext) {
 
     override fun initialize() {
@@ -59,7 +63,7 @@ class FHIRR4RestfulServer(
             )
         interceptorService.registerInterceptor(awsAuditEventLoggingInterceptor)
 
-        val validationInterceptor = ValidationInterceptor()
+        val validationInterceptor = ValidationInterceptor(fhirContext,messageProperties)
         interceptorService.registerInterceptor(validationInterceptor)
 
         isDefaultPrettyPrint = true

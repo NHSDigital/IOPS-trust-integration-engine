@@ -16,7 +16,7 @@ fhir:
   server:
     name: Health Administration Events and Documents
     baseUrl: http://localhost:9002
-    version: 1.0.13
+    version: 1.0.14
 
 ###Remote terminology validation:
 

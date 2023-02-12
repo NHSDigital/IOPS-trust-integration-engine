@@ -8,11 +8,11 @@
         <version>2.7.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>uk.nhs.england.pixm</groupId>
+    <groupId>uk.nhs.england.tie</groupId>
     <artifactId>iops-integration-engine</artifactId>
-    <version>1.0.13</version>
+    <version>1.0.14</version>
     <name>iops-integration-engine</name>
-    <description>IOPS Integration Engine</description>
+    <description>IOPS FHIR Integration Engine</description>
 
     <properties>
         <java.version>1.8</java.version>
