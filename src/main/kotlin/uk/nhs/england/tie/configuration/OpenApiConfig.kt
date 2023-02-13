@@ -41,20 +41,21 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 Info()
                     .title(fhirServerProperties.server.name)
                     .version(fhirServerProperties.server.version)
-                    .description(""
-                        /*
-                        "\n\n The results of events or notifications posted from this OAS can be viewed on [Query for Existing Patient Data](http://lb-fhir-facade-926707562.eu-west-2.elb.amazonaws.com/)"
-                        + "\n\n To view example patients (with example NHS Numbers), see **Patient Demographics Query** section of [Query for Existing Patient Data](http://lb-fhir-facade-926707562.eu-west-2.elb.amazonaws.com/)"
-
-                                + "\n\n For ODS, GMP and GMP codes, see [Care Services Directory](http://lb-fhir-mcsd-1736981144.eu-west-2.elb.amazonaws.com/). This OAS also includes **Care Teams Management**"
-                                + "\n\n For Document Notifications, see [Access to Health Documents](http://lb-fhir-mhd-1617422145.eu-west-2.elb.amazonaws.com/)."
-
-                                 "## FHIR Implementation Guides"
-                                + "\n\n [UK Core Implementation Guide (0.5.1)](https://simplifier.net/guide/ukcoreimplementationguide0.5.0-stu1/home?version=current)"
-                                + "\n\n [NHS Digital Implementation Guide (2.6.0)](https://simplifier.net/guide/nhsdigital?version=2.6.0)"
-*/
-
-                    )
+                    .description(
+                        "\n\n ## NHS England FHIR Messages"
+        + "\n\n | API | FHIR R4 | FHIR STU3 | FHIR Document | MESH | http | Notes | "
+        + "\n |---|---|---|---|---|---|---|"
+        + "\n | [Booking and Referral - FHIR API](https://digital.nhs.uk/developer/api-catalogue/booking-and-referral-fhir) | X | - | - | - | X | See `Process a message` |"
+        + "\n | [Electronic Prescription Service - FHIR API](https://digital.nhs.uk/developer/api-catalogue/electronic-prescription-service-fhir) | X | - | - |  - | X | See `Create a new prescription - Prescribing` and `Mark a prescription as dispensed - Dispensing`  | "
+        + "\n | [Virtual Wards](https://github.com/nhsengland/virtual-wards-draft-standards/blob/main/4_Data_Transfer_Mechanisms.md) | X | - | - | X | - |Work in progress. Expected to be a FHIR Message | "
+                                + "\n | [National Event Management Service - FHIR API](https://digital.nhs.uk/developer/api-catalogue/national-events-management-service-fhir) | - | X | - | - | X | This is sub divided into several individual message types. <ul><li>Blood Spot Test Outcome</li> <li>Newborn Hearing</li> <li>NIPE Outcome</li> <li>PDS Birth Notification</li> <li>PDS Change of Address</li> <li>PDS Change of GP</li> <li>PDS Death Notification</li> <li>PDS Record Change</li> <li>Professional Contacts</li> <li>Vaccinations</li> </ul> | "
+                                + "\n | [GP Connect Send Document - FHIR](https://digital.nhs.uk/developer/api-catalogue/gp-connect-send-document-fhir) | - | X | - | X | - | Limited to online consultation providers to GP Systems | "
+                                + "\n | [Transfer of Care Emergency Care Discharge - FHIR](https://digital.nhs.uk/developer/api-catalogue/transfer-of-care-emergency-care-discharge-fhir) | - | X | X | X | - | Limited to acute providers to GP Systems | "
+                                + "\n | [Transfer of Care Inpatient Discharge - FHIR](https://digital.nhs.uk/developer/api-catalogue/transfer-of-care-inpatient-discharge-fhir) | - | X | X | X | - | Limited to acute providers to GP Systems | "
+                                + "\n | [Transfer of Care Mental Health Discharge - FHIR](https://digital.nhs.uk/developer/api-catalogue/transfer-of-care-mental-health-discharge-fhir) | - | X | X | X | - | Limited to acute providers to GP Systems | "
+                                + "\n | [Transfer of Care Outpatient Clinic Letter - FHIR](https://digital.nhs.uk/developer/api-catalogue/transfer-of-care-outpatient-clinic-letter-fhir) | - | X | X | X | - | Limited to acute providers to GP Systems | "
+                                + "\n | [Digital Medicine - FHIR](https://digital.nhs.uk/developer/api-catalogue/digital-medicine-fhir) | - | X | X | X | - | Limited to pharmacy providers to GP Systems. Includes the following message types <ul><li>Immunisation</li><li>emergency medication dispensed without prescription</li><li>minor illness referral consultation</li> </ul> | "
+        )
                     .termsOfService("http://swagger.io/terms/")
                     .license(License().name("Apache 2.0").url("http://springdoc.org"))
             )
