@@ -152,6 +152,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             Example().value(FHIRExamples().loadExample("document-message-TOC.json",ctx))
         )
 
+
         val processMessageItem = PathItem()
             .post(
                 Operation()
@@ -260,6 +261,12 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         examples2.put("Provide Document Bundle with Comprehensive metadata of one document",
             Example().value(FHIRExamples().loadExample("MHD-transaction.json",ctx))
+        )
+        examples2.put("UKCore-Bundle-MichaelJonesSpecimen-Example",
+            Example().value(FHIRExamples().loadExample("UKCore-Bundle-MichaelJonesSpecimen-Example.json",ctx))
+        )
+        examples2.put("UKCore-Bundle-MichaelJonesRequest-Example_v3_message",
+            Example().value(FHIRExamples().loadExample("UKCore-Bundle-MichaelJonesRequest-Example_v3_message.json",ctx))
         )
         val transactionItem = PathItem()
             .post(

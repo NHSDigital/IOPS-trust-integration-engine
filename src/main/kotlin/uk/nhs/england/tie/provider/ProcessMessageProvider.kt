@@ -21,9 +21,6 @@ class ProcessMessageProvider(
     val awsPatient: AWSPatient,
     val awsRelatedPerson: AWSRelatedPerson,
     val awsTask : AWSTask,
-    val awsBinary: AWSBinary,
-    val awsDocumentReference: AWSDocumentReference,
-    val awsAppointment: AWSAppointment,
     val awsBundle: AWSBundle) {
 
     @Operation(name = "\$process-message", idempotent = true)
@@ -110,24 +107,7 @@ class ProcessMessageProvider(
         return operationOutcome
     }
 
-    @Transaction
-    fun transaction(@TransactionParam bundle:Bundle,
-    ): Bundle {
-        // only process document metadata
-        val list = processTransaction(bundle,"DocumentReference")
-        val bundle = Bundle()
-        bundle.type = Bundle.BundleType.TRANSACTIONRESPONSE
-        for (resource in list) {
-            bundle.entry.add(Bundle.BundleEntryComponent()
-                //.setResource(resource)
-                .setResponse(Bundle.BundleEntryResponseComponent()
-                    .setStatus("200 OK")
-                    .setLocation(resource.id)
-                )
-            )
-        }
-        return bundle
-    }
+
 
 
     fun processFocusResource(bundle: Bundle, focusType : String, prescriptionOrder : Task, operationOutcome: OperationOutcome)
@@ -221,58 +201,6 @@ class ProcessMessageProvider(
         return medicationRequest
     }
 
-    fun processTransaction(bundle: Bundle, focusType : String) : List<Resource>
-    {
-        val returnBundle = ArrayList<Resource>()
-        if (bundle.hasEntry()) {
-            for (entry in bundle.entry) {
-                if (entry.hasResource()) {
-                    val workerResource = entry.resource
-                    if (workerResource is DocumentReference) {
-                        val document = workerResource as DocumentReference
-                        if (document.hasContent()) {
-                            for(content in document.content) {
-                                if (content.hasAttachment()) {
-                                    val attachment = content.attachment
-                                    if (attachment.hasUrl()) {
-                                        val entry = awsBundle.findResource(bundle, "Binary", attachment.url)
-                                        if (entry != null && entry is Binary) {
-                                            val outcome = awsBinary.create(entry)
-                                            if (outcome != null && outcome.resource != null && outcome.resource is Binary)  content.attachment.url = fhirServerProperties.server.baseUrl + "/Binary/" +(outcome.resource as Binary).id
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        val documentReference = awsDocumentReference.createUpdateAWSDocumentReference(
-                            workerResource as DocumentReference, bundle)
-                        if (documentReference != null) {
-                            returnBundle.add(documentReference)
-                        }
-                    }
-                    if (workerResource is ServiceRequest) {
-                        val serviceRequest = awsServiceRequest.createUpdate(workerResource as ServiceRequest,bundle)
-                        if (serviceRequest != null) {
-                            returnBundle.add(serviceRequest)
-                        }
-                    }
-                    if (workerResource is Task) {
-                        val task = awsTask.createUpdate(workerResource as Task,bundle)
-                        if (task != null) {
-                            returnBundle.add(task)
-                        }
-                    }
-                    if (workerResource is Appointment) {
-                        val appointment = awsAppointment.createUpdate(workerResource as Appointment)
-                        if (appointment != null) {
-                            returnBundle.add(appointment)
-                        }
-                    }
-                }
-            }
-        }
-        return returnBundle
-    }
 
 
 }

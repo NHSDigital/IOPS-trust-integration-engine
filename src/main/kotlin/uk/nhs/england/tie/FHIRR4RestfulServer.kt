@@ -22,6 +22,7 @@ class FHIRR4RestfulServer(
     public val fhirServerProperties: FHIRServerProperties,
     val messageProperties: MessageProperties,
     public val processMessageProvider: ProcessMessageProvider,
+    val transactionProvider: TransactionProvider,
     val patientProvider: PatientProvider,
    // val subscriptionProvider: SubscriptionProvider,
     val encounterProvider: EncounterProvider,
@@ -41,6 +42,7 @@ class FHIRR4RestfulServer(
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
         registerProvider(processMessageProvider)
+        registerProvider(transactionProvider)
         registerProvider(patientProvider)
        // registerProvider(subscriptionProvider)
         registerProvider(encounterProvider)
