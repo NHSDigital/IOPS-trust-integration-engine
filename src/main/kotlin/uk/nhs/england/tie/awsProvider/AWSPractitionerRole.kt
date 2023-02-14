@@ -3,6 +3,7 @@ package uk.nhs.england.tie.awsProvider
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.client.api.IGenericClient
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
 import org.slf4j.LoggerFactory
@@ -62,7 +63,7 @@ class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClien
                     }
                 }
                 if (awsPractitionerRole == null) {
-                    return createPractitionerRole(practitionerRole,bundle)?.resource as PractitionerRole
+                    return createUpdate(practitionerRole,bundle)
                 } else return awsPractitionerRole
             }
         } else if (reference.hasIdentifier()) {
@@ -70,17 +71,49 @@ class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClien
         }
         return null
     }
-    fun createPractitionerRole(newPractitionerRole: PractitionerRole, bundle: Bundle): MethodOutcome? {
+
+    fun update(practitionerRole: PractitionerRole, newPactitionerRole: PractitionerRole): MethodOutcome? {
+        var response: MethodOutcome? = null
+        var changed = false
+        for (identifier in newPactitionerRole.identifier) {
+            var found = false
+            for (awsidentifier in practitionerRole.identifier) {
+                if (awsidentifier.value == identifier.value && awsidentifier.system == identifier.system) {
+                    found = true
+                }
+            }
+            if (!found) {
+                practitionerRole.addIdentifier(identifier)
+                changed = true
+            }
+        }
+
+        // TODO do change detection
+        changed = true;
+
+        if (!changed) return MethodOutcome().setResource(practitionerRole)
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient!!.update().resource(newPactitionerRole).withId(practitionerRole.id).execute()
+                log.info("AWS PractitionerRole updated " + response.resource.idElement.value)
+                val auditEvent = awsAuditEvent.createAudit(practitionerRole, AuditEvent.AuditEventAction.C)
+                awsAuditEvent.writeAWS(auditEvent)
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
+    fun create(newPractitionerRole: PractitionerRole): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
-        if (newPractitionerRole.hasPractitioner()) {
-            val practitioner = awsPractitioner.get(newPractitionerRole.practitioner,bundle)
-            if (practitioner != null) newPractitionerRole.practitioner.reference = "Practitioner/" + practitioner.idElement.idPart
-        }
-        if (newPractitionerRole.hasOrganization()) {
-            val organization = awsOrganization.get(newPractitionerRole.organization,bundle)
-            if (organization != null) newPractitionerRole.organization.reference = "Organization/" + organization.idElement.idPart
-        }
+
+
         var retry = 3
         while (retry > 0) {
             try {
@@ -101,4 +134,57 @@ class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClien
         }
         return response
     }
+
+
+    public fun createUpdate(newPractitionerRole: PractitionerRole, bundle: Bundle): PractitionerRole {
+        var awsBundle: Bundle? = null
+        var response: MethodOutcome? = null
+        var nhsIdentifier: Identifier? = null
+        for (identifier in newPractitionerRole.identifier) {
+            // This was a NHS Number check but this has been removed to allow to for more flexible demonstrations
+            // if (identifier.system == FhirSystems.NHS_NUMBER) {
+            nhsIdentifier = identifier
+            break
+        }
+        if (nhsIdentifier == null) throw UnprocessableEntityException("PractitionerRole has no NHS Number identifier")
+        var retry = 3
+        while (retry > 0) {
+            try {
+
+                awsBundle = awsClient!!.search<IBaseBundle>().forResource(PractitionerRole::class.java)
+                    .where(
+                        PractitionerRole.IDENTIFIER.exactly()
+                            .systemAndCode(nhsIdentifier.system, nhsIdentifier.value)
+                    )
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (newPractitionerRole.hasPractitioner()) {
+            val practitioner = awsPractitioner.get(newPractitionerRole.practitioner,bundle)
+            if (practitioner != null) newPractitionerRole.practitioner.reference = "Practitioner/" + practitioner.idElement.idPart
+        }
+        if (newPractitionerRole.hasOrganization()) {
+            val organization = awsOrganization.get(newPractitionerRole.organization,bundle)
+            if (organization != null) newPractitionerRole.organization.reference = "Organization/" + organization.idElement.idPart
+        }
+        return if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
+            && awsBundle.entryFirstRep.hasResource()
+            && awsBundle.entryFirstRep.resource is PractitionerRole
+        ) {
+            val practitionerRole = awsBundle.entryFirstRep.resource as PractitionerRole
+            // Dont update for now - just return aws PractitionerRole
+            return update(practitionerRole, newPractitionerRole)!!.resource as PractitionerRole
+        } else {
+            return create(newPractitionerRole)!!.resource as PractitionerRole
+        }
+    }
+
+
 }

@@ -21,6 +21,7 @@ class TransactionProvider(
     val awsAppointment: AWSAppointment,
     val awsSpecimen: AWSSpecimen,
     val awsConsent: AWSConsent,
+    val awsPractitionerRole: AWSPractitionerRole,
     val awsBundle: AWSBundle) {
 
 
@@ -102,6 +103,12 @@ class TransactionProvider(
                         val consent = awsConsent.createUpdate(workerResource as Consent,bundle)
                         if (consent != null) {
                             returnBundle.add(consent)
+                        }
+                    }
+                    if (workerResource is PractitionerRole) {
+                        val practitionerRole = awsPractitionerRole.createUpdate(workerResource as PractitionerRole,bundle)
+                        if (practitionerRole != null ) {
+                            returnBundle.add(practitionerRole as Resource)
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-package uk.nhs.england.disabled.pmir
+package uk.nhs.england.tie.controller
 
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.hl7v2.DefaultHapiContext
@@ -281,7 +281,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 pid = adt03.pid
                 pv1 = adt03.pV1
                 msh= adt03.msh
-                zu1 = adt03.get("ZU1") as Segment
+              //  zu1 = adt03.get("ZU1") as Segment
                 encounterType = CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
                     .setCode("58000006")
@@ -291,7 +291,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 pid = v2message.pid
                 pv1 = v2message.pV1
                 msh = v2message.msh
-                zu1 = v2message.get("ZU1") as Segment
+             //   zu1 = v2message.get("ZU1") as Segment
 
                 encounterType = CodeableConcept().addCoding(Coding()
                     .setSystem(FhirSystems.SNOMED_CT)
@@ -314,7 +314,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 pd1 = v2message.pD1
                 pv1 = v2message.pV1
                 msh = v2message.msh
-                zu1 = v2message.get("ZU1") as Segment
+               // zu1 = v2message.get("ZU1") as Segment
             }
             if (pv1 != null && pid != null) {
                 if (msh != null) {
@@ -368,6 +368,14 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                     for (identifier in patient.identifier) {
                         if (identifier.system.equals(FhirSystems.NHS_NUMBER)) encounter.subject =
                             Reference().setIdentifier(identifier)
+                    }
+                    when (msh.messageType.triggerEvent.value) {
+                        "A28" -> {
+                            return patient
+                        }
+                        "A31" -> {
+                            return patient
+                        }
                     }
                     return encounter
                 }

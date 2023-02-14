@@ -39,16 +39,18 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val englandFHIRMessage =  "\n\n ## NHS England FHIR Messages" +
          "\n\n | API | FHIR R4 | FHIR STU3 | FHIR Document | MESH | http | Notes | " +
          "\n |---|---|---|---|---|---|---|" +
-         "\n | [Booking and Referral - FHIR API](https://digital.nhs.uk/developer/api-catalogue/booking-and-referral-fhir) | X | - | - | - | X | See `Process a message` |" +
-         "\n | [Electronic Prescription Service - FHIR API](https://digital.nhs.uk/developer/api-catalogue/electronic-prescription-service-fhir) | X | - | - |  - | X | See `Create a new prescription - Prescribing` and `Mark a prescription as dispensed - Dispensing`  | " +
+         "\n | [Booking and Referral - FHIR API](https://digital.nhs.uk/developer/api-catalogue/booking-and-referral-fhir) | X | - | - | - | X | See `Process a message` <ul><li>servicerequest-request</li><li>servicerequest-response</li><li>booking-request</li><li>booking-response</li></ul> |" +
+         "\n | [Electronic Prescription Service - FHIR API](https://digital.nhs.uk/developer/api-catalogue/electronic-prescription-service-fhir) | X | - | - |  - | X | See `Create a new prescription - Prescribing` and `Mark a prescription as dispensed - Dispensing` <ul><li>prescription-order</li><li>dispense-notification</li></ul> | " +
          "\n | [Virtual Wards](https://github.com/nhsengland/virtual-wards-draft-standards/blob/main/4_Data_Transfer_Mechanisms.md) | X | - | - | X | - |Work in progress. Expected to be a FHIR Message | " +
+         "\n | [Genomics](https://simplifier.net/guide/fhir-genomics-implementation-guide?version=current) | X | - | - | - | X |Work in progress. <ul><li>genomictestrequest</li></ul> | " +
          "\n | [National Event Management Service - FHIR API](https://digital.nhs.uk/developer/api-catalogue/national-events-management-service-fhir) | - | X | - | - | X | This is sub divided into several individual message types. <ul><li>Blood Spot Test Outcome</li> <li>Newborn Hearing</li> <li>NIPE Outcome</li> <li>PDS Birth Notification</li> <li>PDS Change of Address</li> <li>PDS Change of GP</li> <li>PDS Death Notification</li> <li>PDS Record Change</li> <li>Professional Contacts</li> <li>Vaccinations</li> </ul> | " +
          "\n | [GP Connect Send Document - FHIR](https://digital.nhs.uk/developer/api-catalogue/gp-connect-send-document-fhir) | - | X | - | X | - | Limited to online consultation providers to GP Systems | " +
          "\n | [Transfer of Care Emergency Care Discharge - FHIR](https://digital.nhs.uk/developer/api-catalogue/transfer-of-care-emergency-care-discharge-fhir) | - | X | X | X | - | Limited to acute providers to GP Systems | " +
          "\n | [Transfer of Care Inpatient Discharge - FHIR](https://digital.nhs.uk/developer/api-catalogue/transfer-of-care-inpatient-discharge-fhir) | - | X | X | X | - | Limited to acute providers to GP Systems | " +
          "\n | [Transfer of Care Mental Health Discharge - FHIR](https://digital.nhs.uk/developer/api-catalogue/transfer-of-care-mental-health-discharge-fhir) | - | X | X | X | - | Limited to acute providers to GP Systems | " +
          "\n | [Transfer of Care Outpatient Clinic Letter - FHIR](https://digital.nhs.uk/developer/api-catalogue/transfer-of-care-outpatient-clinic-letter-fhir) | - | X | X | X | - | Limited to acute providers to GP Systems | " +
-         "\n | [Digital Medicine - FHIR](https://digital.nhs.uk/developer/api-catalogue/digital-medicine-fhir) | - | X | X | X | - | Limited to pharmacy providers to GP Systems. Includes the following message types <ul><li>Immunisation</li><li>emergency medication dispensed without prescription</li><li>minor illness referral consultation</li> </ul> | "
+         "\n | [Digital Medicine - FHIR](https://digital.nhs.uk/developer/api-catalogue/digital-medicine-fhir) | - | X | X | X | - | Limited to pharmacy providers to GP Systems. Includes the following message types <ul><li>Immunisation</li><li>emergency medication dispensed without prescription</li><li>minor illness referral consultation</li> </ul> | " +
+         "\n | [Social Care Assessment, Discharge and Withdrawal](https://data.developer.nhs.uk/specifications/sc-fhir-5.3/Chapter.1.About/index.html) | - | - | - | - | X | FHIR DSTU2. Limited to interactions to Social Care providers. Includes the following message types <ul><li>Admission Notice</li><li>Assessment Notice</li><li>Discharge Notice </li><li>Withdrawal Notice</li> </ul> | "
         val oas = OpenAPI()
             .info(
                 Info()
@@ -267,6 +269,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         )
         examples2.put("UKCore-Bundle-MichaelJonesRequest-Example_v3_message",
             Example().value(FHIRExamples().loadExample("UKCore-Bundle-MichaelJonesRequest-Example_v3_message.json",ctx))
+        )
+        examples2.put("UKCore-Bundle-MichaelJonesRequest-Example_minimal",
+            Example().value(FHIRExamples().loadExample("UKCore-Bundle-MichaelJonesRequest-Example_minimal.json",ctx))
         )
         val transactionItem = PathItem()
             .post(

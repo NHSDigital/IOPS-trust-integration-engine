@@ -33,7 +33,7 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
 
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_POST_PROCESSED)
     fun incomingRequest(request: HttpServletRequest, requestDetails: RequestDetails?, resource: IBaseResource?) :Boolean {
-       log.info(request.method)
+
         if (request.method.equals("POST") || request.method.equals("PUT")) {
             val encoding = RestfulServerUtils.determineRequestEncodingNoDefault(requestDetails)
             if (encoding == null) {
@@ -45,17 +45,18 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
             val requestText = requestDetails?.loadRequestContents()
             if (requestText !=null) {
                 val methodOutcome = validate(requestText)
-                log.info(methodOutcome.toString())
+
                 if (methodOutcome.resource is OperationOutcome) {
                     val validationResult = methodOutcome.resource as OperationOutcome
                     if (validationResult.hasIssue()) {
-                        log.info("I have issues")
+
                         for (issue in validationResult.issue) {
                             if (issue.hasSeverity() && (
                                     issue.severity.equals(OperationOutcome.IssueSeverity.ERROR) ||
                                             issue.severity.equals(OperationOutcome.IssueSeverity.FATAL) ||
                                             issue.severity.equals(OperationOutcome.IssueSeverity.WARNING)
                                         )) {
+                                log.debug(issue.diagnostics)
                                 fail(validationResult)
                             }
                         }
