@@ -32,8 +32,7 @@ class FHIRR4RestfulServer(
     val questionnaireProvider: QuestionnaireProvider,
     val taskProvider: TaskProvider,
     val binaryProvider: BinaryProvider,
-    val documentReferenceProvider: DocumentReferenceProvider,
-    var cognitoAuthInterceptor: CognitoAuthInterceptor
+    val documentReferenceProvider: DocumentReferenceProvider
 ) : RestfulServer(fhirContext) {
 
     override fun initialize() {
