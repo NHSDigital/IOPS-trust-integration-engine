@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
+import uk.nhs.england.tie.util.FhirSystems
 import java.util.*
 
 @Component
@@ -66,6 +67,14 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
                     if (patient != null) awsBundleProvider.updateReference(newObservation.subject, patient.identifierFirstRep,patient)
                 }
         }
+        if (newObservation.hasDerivedFrom()) {
+            for (derived in newObservation.derivedFrom) {
+                if (derived.resource != null && derived.resource is Observation) {
+                    val derivedObservation = createUpdate(derived.resource as Observation, bundle)
+                    if (derivedObservation != null) awsBundleProvider.updateReference(derived, derivedObservation.identifierFirstRep,derivedObservation)
+                }
+            }
+        }
         if (newObservation.hasPerformer() && bundle != null) {
             for (performer in newObservation.performer) {
                 if (performer.resource != null) {
@@ -81,6 +90,20 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
                         val organisation = awsOrganization.get(performer,bundle)
                         if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
                     }
+                } else {
+                    if (performer.hasIdentifier()) {
+                        if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                            performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                            val dr = awsPractitioner.get(performer.identifier)
+                            if (dr != null) {
+                                awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                            }
+                        }
+                        if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                                val organisation = awsOrganization.get(performer.identifier)
+                                if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                            }
+                    }
                 }
             }
 
@@ -94,13 +117,13 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
         ) {
             val observation = awsBundle.entryFirstRep.resource as Observation
             // Dont update for now - just return aws Observation
-            return updateObservation(observation, newObservation)!!.resource as Observation
+            return update(observation, newObservation)!!.resource as Observation
         } else {
-            return createObservation(newObservation)!!.resource as Observation
+            return create(newObservation)!!.resource as Observation
         }
     }
 
-    public fun getObservation(identifier: Identifier): Observation? {
+    public fun get(identifier: Identifier): Observation? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -126,7 +149,7 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
         return bundle.entryFirstRep.resource as Observation
     }
 
-    private fun updateObservation(observation: Observation, newObservation: Observation): MethodOutcome? {
+    private fun update(observation: Observation, newObservation: Observation): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
         for (identifier in newObservation.identifier) {
@@ -166,7 +189,7 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
 
     }
 
-    private fun createObservation(newObservation: Observation): MethodOutcome? {
+    private fun create(newObservation: Observation): MethodOutcome? {
 
         var response: MethodOutcome? = null
 

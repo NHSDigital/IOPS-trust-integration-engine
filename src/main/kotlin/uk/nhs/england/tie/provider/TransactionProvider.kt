@@ -22,6 +22,8 @@ class TransactionProvider(
     val awsSpecimen: AWSSpecimen,
     val awsConsent: AWSConsent,
     val awsPractitionerRole: AWSPractitionerRole,
+    val awsObservation: AWSObservation,
+    val awsDiagnosticReport: AWSDiagnosticReport,
     val awsBundle: AWSBundle) {
 
 
@@ -91,6 +93,19 @@ class TransactionProvider(
                         val appointment = awsAppointment.createUpdate(workerResource as Appointment)
                         if (appointment != null) {
                             returnBundle.add(appointment)
+                        }
+                    }
+                    if (workerResource is Observation) {
+                        val observation = awsObservation.createUpdate(workerResource as Observation,bundle)
+                        if (observation != null) {
+                            returnBundle.add(observation)
+                        }
+                    }
+                    if (workerResource is DiagnosticReport) {
+                        val tempOperationOutcome = OperationOutcome()
+                        val diagnosticReport = awsDiagnosticReport.createUpdate(workerResource as DiagnosticReport,bundle, tempOperationOutcome)
+                        if (diagnosticReport != null) {
+                            returnBundle.add(diagnosticReport)
                         }
                     }
                     if (workerResource is Specimen) {

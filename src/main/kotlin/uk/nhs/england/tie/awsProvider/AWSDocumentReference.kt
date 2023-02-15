@@ -77,15 +77,16 @@ class AWSDocumentReference(val messageProperties: MessageProperties, val awsClie
         for (participant in newDocumentReference.author) {
             if (participant.hasIdentifier()) {
                 if (participant.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
-                    participant.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
+                    participant.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
                     val dr = awsPractitioner.get(participant.identifier)
                     if (dr != null) {
-                        awsBundleProvider.updateReference(participant,dr.identifierFirstRep,dr)
-                    } else if (participant.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                        awsBundleProvider.updateReference(participant, dr.identifierFirstRep, dr)
+                    }
+                }
+                if (participant.identifier.system.equals(FhirSystems.ODS_CODE)) {
                         val organisation = awsOrganization.get(participant.identifier)
                         if (organisation != null) awsBundleProvider.updateReference(participant, organisation.identifierFirstRep, organisation)
                     }
-                }
             }
         }
 

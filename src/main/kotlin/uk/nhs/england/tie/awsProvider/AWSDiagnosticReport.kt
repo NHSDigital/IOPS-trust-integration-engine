@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
+import uk.nhs.england.tie.util.FhirSystems
 import java.util.*
 
 @Component
@@ -81,6 +82,20 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
                     if (performer.resource is Organization) {
                         val organisation = awsOrganization.get(performer,bundle)
                         if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                    }
+                } else {
+                    if (performer.hasIdentifier()) {
+                        if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                            performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                            val dr = awsPractitioner.get(performer.identifier)
+                            if (dr != null) {
+                                awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                            }
+                        }
+                        if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                            val organisation = awsOrganization.get(performer.identifier)
+                            if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                        }
                     }
                 }
             }
