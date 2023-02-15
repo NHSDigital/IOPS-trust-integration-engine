@@ -60,8 +60,17 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
 
         if (newTask.hasRequester()) {
             if (newTask.requester.hasIdentifier()) {
-                val awsOrganization = awsOrganization.get(newTask.requester.identifier)
-                if (awsOrganization != null)   awsBundleProvider.updateReference(newTask.requester,awsOrganization.identifierFirstRep,awsOrganization)
+                if (newTask.requester.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                    newTask.requester.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                    val dr = awsPractitioner.get(newTask.requester.identifier)
+                    if (dr != null) {
+                        awsBundleProvider.updateReference(newTask.requester, dr.identifierFirstRep, dr)
+                    }
+                }
+                if (newTask.requester.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                    val organisation = awsOrganization.get(newTask.requester.identifier)
+                    if (organisation != null) awsBundleProvider.updateReference(newTask.requester, organisation.identifierFirstRep, organisation)
+                }
 
             }
         }

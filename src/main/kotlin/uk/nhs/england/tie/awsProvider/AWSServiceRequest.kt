@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
+import uk.nhs.england.tie.util.FhirSystems
 import java.util.*
 
 @Component
@@ -80,18 +81,43 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
         }
         if (newServiceRequest.hasPerformer() && bundle != null) {
             for (performer in newServiceRequest.performer) {
-                if (performer.resource != null)
+                if (performer.resource != null) {
                     if (performer.resource is PractitionerRole) {
                         val practitionerRole = awsPractitionerRole.get(performer, bundle)
-                        if (practitionerRole != null) awsBundleProvider.updateReference(performer, practitionerRole.identifierFirstRep,practitionerRole )
+                        if (practitionerRole != null) awsBundleProvider.updateReference(
+                            performer,
+                            practitionerRole.identifierFirstRep,
+                            practitionerRole
+                        )
                     } else if ((performer.resource is Practitioner)) {
                         val practitioner = awsPractitioner.get(performer, bundle)
-                        if (practitioner != null) awsBundleProvider.updateReference(performer, practitioner.identifierFirstRep,practitioner )
-                    }
-                    else if ((performer.resource is Organization)) {
+                        if (practitioner != null) awsBundleProvider.updateReference(
+                            performer,
+                            practitioner.identifierFirstRep,
+                            practitioner
+                        )
+                    } else if ((performer.resource is Organization)) {
                         val organization = awsOrganization.get(performer, bundle)
-                        if (organization != null) awsBundleProvider.updateReference(performer, organization.identifierFirstRep,organization )
+                        if (organization != null) awsBundleProvider.updateReference(
+                            performer,
+                            organization.identifierFirstRep,
+                            organization
+                        )
                     }
+                 }
+                if (performer.hasIdentifier()) {
+                    if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                        performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                        val dr = awsPractitioner.get(performer.identifier)
+                        if (dr != null) {
+                            awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                        }
+                    }
+                    if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                        val organisation = awsOrganization.get(performer.identifier)
+                        if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                    }
+                }
             }
         }
         if (newServiceRequest.hasEncounter() && newServiceRequest.encounter.resource != null) {
