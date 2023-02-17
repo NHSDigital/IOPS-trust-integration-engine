@@ -124,29 +124,12 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
 
         val examples = LinkedHashMap<String,Example?>()
-        examples.put("PDS - Birth Notification",
-            Example().value(FHIRExamples().loadExample("pds-birth-notification.json",ctx))
-        )
-        examples.put("PDS - Change of Address",
-            Example().value(FHIRExamples().loadExample("pds-change-of-address.json",ctx))
-        )
-        examples.put("PDS - Death Notification",
-            Example().value(FHIRExamples().loadExample("pds-death-notification.json",ctx))
-        )
-
-        examples.put("BARS - Making a referral request",
-                Example().value(FHIRExamples().loadExample("Making a referral request.json",ctx))
-            )
         examples.put("EPS - Prescription Order",
             Example().value(FHIRExamples().loadExample("prescription-order.json",ctx))
         )
         examples.put("EPS - Dispense Notification",
             Example().value(FHIRExamples().loadExample("dispense-notification.json",ctx))
         )
-        examples.put("Pathology - Unsolicited Observations",
-            Example().value(FHIRExamples().loadExample("pathology-report.json",ctx))
-        )
-
         examples.put("Provide Document Bundle Message (PDF)",
             Example().value(FHIRExamples().loadExample("document-message.json",ctx))
         )
@@ -272,6 +255,12 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         )
         examples2.put("UKCore-Bundle-MichaelJonesRequest-Example_minimal",
             Example().value(FHIRExamples().loadExample("UKCore-Bundle-MichaelJonesRequest-Example_minimal.json",ctx))
+        )
+        examples2.put("Bundle-transaction-physicalActivity",
+            Example().value(FHIRExamples().loadExample("Bundle-transaction-physicalActivity.json",ctx))
+        )
+        examples2.put("Bundle-Transaction-ClinicalObservations",
+            Example().value(FHIRExamples().loadExample("Bundle-Transaction-ClinicalObservations.json",ctx))
         )
         val transactionItem = PathItem()
             .post(

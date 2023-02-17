@@ -16,7 +16,7 @@ fhir:
   server:
     name: Health Administration Events and Documents
     baseUrl: https://3cdzg7kbj4.execute-api.eu-west-2.amazonaws.com/poc/events
-    version: 1.0.18
+    version: 1.0.20
 
 ###Remote terminology validation:
 

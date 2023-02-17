@@ -56,19 +56,10 @@
           "lastUpdated": "2016-03-08T15:26:01+01:00"
         },
         "status": "current",
-        "type": {
-          "coding": [
-            {
-              "system": "http://snomed.info/sct",
-              "code": "373942005",
-              "display": "Discharge summary"
-            }
-          ]
-        },
         "subject": {
           "identifier": {
             "system": "https://fhir.nhs.uk/Id/nhs-number",
-            "value": "1352465790"
+            "value": "9135246570"
           },
           "display": "Richard Smith"
         },

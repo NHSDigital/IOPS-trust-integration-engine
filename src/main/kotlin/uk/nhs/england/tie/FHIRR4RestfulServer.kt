@@ -11,7 +11,6 @@ import uk.nhs.england.tie.configuration.MessageProperties
 import uk.nhs.england.tie.provider.*
 import uk.nhs.england.tie.interceptor.AWSAuditEventLoggingInterceptor
 import uk.nhs.england.tie.interceptor.CapabilityStatementInterceptor
-import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import uk.nhs.england.tie.interceptor.ValidationInterceptor
 import java.util.*
 import javax.servlet.annotation.WebServlet

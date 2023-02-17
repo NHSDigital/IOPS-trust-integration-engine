@@ -21,6 +21,8 @@ class ProcessMessageProvider(
     val awsPatient: AWSPatient,
     val awsRelatedPerson: AWSRelatedPerson,
     val awsTask : AWSTask,
+    val awsBinary: AWSBinary,
+    val awsDocumentReference: AWSDocumentReference,
     val awsBundle: AWSBundle) {
 
     @Operation(name = "\$process-message", idempotent = true)
@@ -52,6 +54,9 @@ class ProcessMessageProvider(
                     }
                     "servicerequest-request" -> {
                         focusType = "ServiceRequest"
+                    }
+                    "document" -> {
+                        focusType = "DocumentReference"
                     }
                 }
                 var medicationRequest : MedicationRequest? = null
@@ -193,6 +198,38 @@ class ProcessMessageProvider(
                                     .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
                                     .setCode(OperationOutcome.IssueType.INFORMATIONAL)
                                     .addLocation(observation.id))
+                        }
+                    }
+                    "DocumentReference" -> {
+                        val document = workerResource as DocumentReference
+                        if (document.hasContent()) {
+                            for(content in document.content) {
+                                if (content.hasAttachment()) {
+                                    val attachment = content.attachment
+                                    if (attachment.hasUrl()) {
+                                        val entry = awsBundle.findResource(bundle, "Binary", attachment.url)
+                                        if (entry != null && entry is Binary) {
+                                            val outcome = awsBinary.create(entry)
+                                            if (outcome != null && outcome.resource != null && outcome.resource is Binary) {
+                                                content.attachment.url = fhirServerProperties.server.baseUrl + "/Binary/" +(outcome.resource as Binary).id
+                                                operationOutcome.issue.add(OperationOutcome.OperationOutcomeIssueComponent()
+                                                    .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+                                                    .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+                                                    .addLocation("Binary/" +(outcome.resource as Binary).id))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        val documentReference = awsDocumentReference.createUpdateAWSDocumentReference(
+                            workerResource as DocumentReference, bundle)
+                        if (documentReference != null) {
+                            operationOutcome.issue.add(
+                                OperationOutcome.OperationOutcomeIssueComponent()
+                                    .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+                                    .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+                                    .addLocation(documentReference.id))
                         }
                     }
                 }

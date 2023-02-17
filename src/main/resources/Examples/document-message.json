@@ -56,15 +56,6 @@
           "lastUpdated": "2016-03-08T15:26:01+01:00"
         },
         "status": "current",
-        "type": {
-          "coding":  [
-            {
-              "system": "http://snomed.info/sct",
-              "code": "371531000",
-              "display": "Report of clinical encounter"
-            }
-          ]
-        },
         "subject": {
           "identifier": {
             "system": "https://fhir.nhs.uk/Id/nhs-number",
