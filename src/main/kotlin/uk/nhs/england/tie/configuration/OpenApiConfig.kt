@@ -131,10 +131,13 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             Example().value(FHIRExamples().loadExample("dispense-notification.json",ctx))
         )
         examples.put("Provide Document Bundle Message (PDF)",
-            Example().value(FHIRExamples().loadExample("document-message.json",ctx))
+            Example().value(FHIRExamples().loadExample("Bundle-patient-document.json",ctx))
         )
         examples.put("Provide Document Bundle Message (FHIR Document STU3)",
             Example().value(FHIRExamples().loadExample("document-message-TOC.json",ctx))
+        )
+        examples.put("Daily Activity Report (Observations)",
+            Example().value(FHIRExamples().loadExample("Bundle-message-dailyReport.json",ctx))
         )
 
 
@@ -173,6 +176,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         examplesPatient93.put("Merge Patient (Trust PAS)",
             Example().value(FHIRExamples().loadExample("patient-MRN-567890-Merge.json",ctx))
         )
+
 
         // Patient
 

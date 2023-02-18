@@ -39,12 +39,23 @@
             "value": "urn:uuid:7d5bb8ac-68ee-4926-85e7-b8aac8e1f09d"
           }
         ],
+        "category":  [
+          {
+              "coding":  [
+                  {
+                      "system": "http://snomed.info/sct",
+                      "code": "823681000000100",
+                      "display": "Outpatient letter"
+                  }
+              ]
+          }
+      ],
         "status": "current",
         "subject": {
           "identifier": {
             "system": "http://example.fhir.nhs/patients",
             "value": "mrn-1234"
-          },
+          }, 
           "display": "Dee Schmidt"
         },
         "date": "2020-02-01T23:50:50-05:00",
