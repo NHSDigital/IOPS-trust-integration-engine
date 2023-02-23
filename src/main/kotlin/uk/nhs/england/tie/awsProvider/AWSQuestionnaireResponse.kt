@@ -143,15 +143,16 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
             }
         }
 
-        /*
-       if (newQuestionnaireResponse.hasQuestionnaire()) {
-           val listQ = awsQuestionnaire.seach(UriParam().setValue(newQuestionnaireResponse.questionnaire))
-           if (listQ != null && listQ.size>0) {
-               newQuestionnaireResponse.questionnaire = listQ[0].id
+/*
+Think this needs to be original url of questionnaire
+           if (newQuestionnaireResponse.hasQuestionnaire()) {
+               val listQ = awsQuestionnaire.search(UriParam().setValue(newQuestionnaireResponse.questionnaire))
+               if (listQ != null && listQ.size>0) {
+                   newQuestionnaireResponse.questionnaire = listQ[0].id
+               }
            }
-       }
 
-        */
+*/
         if (newQuestionnaireResponse.hasSource()) {
 
             // Bit crude refactor?
