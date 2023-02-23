@@ -29,6 +29,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
     var ADT = "Admission and Discharge Events (ADT)"
     var BUNDLE = "Batch Record Transfer"
     var MHD = "Documents"
+    var FORMS = "Structured Data Capture"
     var APIM = "Security and API Management"
     @Bean
     open fun customOpenAPI(
@@ -89,6 +90,12 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         )
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
+                .name(FORMS)
+                .description("[HL7 FHIR Structured Data Capture](http://hl7.org/fhir/uv/sdc/) \n"
+                )
+        )
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
                 .name(MHD)
                 .description(
                     "[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
@@ -100,12 +107,6 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 .name("UKCore Alert Communication Management")
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE mACM](https://www.ihe.net/uploadedFiles/Documents/ITI/IHE_ITI_Suppl_mACM.pdf)")
-        )
-        oas.addTagsItem(
-            io.swagger.v3.oas.models.tags.Tag()
-                .name("UKCore Structured Data Capture")
-                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
-                        + " [IHE SDC](https://wiki.ihe.net/index.php/Structured_Data_Capture)")
         )
 */
 /*
@@ -393,18 +394,16 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             )
 
         oas.path("/FHIR/R4/Communication",communicationItem)
-
+*/
         val examplesQuestionnaireResponse = LinkedHashMap<String,Example?>()
-        examplesQuestionnaireResponse .put("Patient Registration",
-            Example().value(FHIRExamples().loadExample("QuestionnaireResponse-patient-registration-completed.json",ctx))
-        )
+
         examplesQuestionnaireResponse .put("Simple Blood Pressure",
             Example().value(FHIRExamples().loadExample("QuestionnaireResponse-patient-simple-blood-pressure.json",ctx))
         )
         val questionnaireResponseItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem("UKCore Structured Data Capture")
+                    .addTagsItem(FORMS)
                     .summary("Submit Completed Form (IHE ITI-35)")
                     .description("The results of a completed form")
                     .responses(getApiResponses())
@@ -414,73 +413,10 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .examples(examplesQuestionnaireResponse )
                                 .schema(StringSchema()))
                     )))
-            .get(
-                Operation()
-                    .addTagsItem("UKCore Structured Data Capture")
-                    .summary("Query Form Results")
-                    .description("This allows querying results of a QuestionnaireResponse")
-                    .addParametersItem(Parameter()
-                        .name("patient")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("The patient that is the subject of the questionnaire response")
-                        .schema(StringSchema())
-                    )
-                /*    .addParametersItem(Parameter()
-                        .name("questionnaire")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("The questionnaire the answers are provided for")
-                        .schema(StringSchema())
-                        .example("https://example.fhir.nhs.uk/Questionnaire/Simple-Blood-Pressure")
-                    ) */
-                    .responses(getApiResponses())
-            )
+
 
         oas.path("/FHIR/R4/QuestionnaireResponse",questionnaireResponseItem)
-
-        val examplesQuestionnaire = LinkedHashMap<String,Example?>()
-        examplesQuestionnaire .put("Patient Blood Pressure Form Definition",
-            Example().value(FHIRExamples().loadExample("Questionnaire-Simple-Blood-Pressure.json",ctx))
-        )
-        examplesQuestionnaire .put("Patient Registration Form Definition",
-            Example().value(FHIRExamples().loadExample("Questionnaire-Patient-Registration.json",ctx))
-        )
-
-        val questionnaireItem = PathItem()
-            .post(
-                Operation()
-                    .addTagsItem("UKCore Structured Data Capture")
-                    .summary("Create Form Definition")
-
-                    .responses(getApiResponses())
-                    .requestBody(RequestBody().content(Content()
-                        .addMediaType("application/fhir+json",
-                            MediaType()
-                                .examples(examplesQuestionnaire )
-                                .schema(StringSchema()))
-                    )))
-            .get(
-                Operation()
-                    .addTagsItem("UKCore Structured Data Capture")
-                    .summary("Retrieve Form (Definition) (IHE ITI-34)")
-
-                    .addParametersItem(Parameter()
-                        .name("url")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("The uri that identifies the questionnaire")
-                        .schema(StringSchema())
-                        .example("https://example.fhir.nhs.uk/Questionnaire/Simple-Blood-Pressure")
-                    )
-                    .responses(getApiResponses())
-            )
-
-        oas.path("/FHIR/R4/Questionnaire",questionnaireItem)
-
+/*
 
         val examplesTask = LinkedHashMap<String,Example?>()
         examplesTask.put("Form Complete Task",

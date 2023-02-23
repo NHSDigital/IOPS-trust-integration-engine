@@ -81,13 +81,13 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
         ) {
             val encounter = awsBundle.entryFirstRep.resource as Encounter
             // Dont update for now - just return aws Encounter
-            return updateEncounter(encounter, newEncounter)!!.resource as Encounter
+            return update(encounter, newEncounter)!!.resource as Encounter
         } else {
-            return createEncounter(newEncounter)!!.resource as Encounter
+            return create(newEncounter)!!.resource as Encounter
         }
     }
 
-    private fun updateEncounter(encounter: Encounter, newEncounter: Encounter): MethodOutcome? {
+    private fun update(encounter: Encounter, newEncounter: Encounter): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
         for (identifier in newEncounter.identifier) {
@@ -149,7 +149,7 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
 
     }
 
-    private fun createEncounter(newEncounter: Encounter): MethodOutcome? {
+    private fun create(newEncounter: Encounter): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
 

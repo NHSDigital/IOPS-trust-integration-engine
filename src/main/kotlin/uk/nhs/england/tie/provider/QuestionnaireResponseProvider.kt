@@ -27,16 +27,8 @@ class QuestionnaireResponseProvider(
         theRequest: HttpServletRequest,
         @ResourceParam questionnaireResponse: QuestionnaireResponse
     ): MethodOutcome? {
-        return awsQuestionnaireResponse.create(questionnaireResponse)
+        return awsQuestionnaireResponse.createUpdate(questionnaireResponse)
     }
 
-    @Search
-    fun search(httpRequest : HttpServletRequest,
-               @OptionalParam(name = QuestionnaireResponse.SP_PATIENT) patient: ReferenceParam?,
-               @OptionalParam(name = QuestionnaireResponse.SP_QUESTIONNAIRE) questionnaire : ReferenceParam?,
-               @OptionalParam(name= QuestionnaireResponse.SP_STATUS) status : TokenParam?
-    ): List<QuestionnaireResponse>? {
-        return awsQuestionnaireResponse.seach(patient,questionnaire,status)
-    }
 
 }

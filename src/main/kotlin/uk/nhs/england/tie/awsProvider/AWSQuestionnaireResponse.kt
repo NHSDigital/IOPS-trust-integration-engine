@@ -109,7 +109,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
         return list
     }
    
-    fun create(newQuestionnaireResponse: QuestionnaireResponse): MethodOutcome? {
+    fun createUpdate(newQuestionnaireResponse: QuestionnaireResponse): MethodOutcome? {
         var awsBundle: Bundle? = null
         var response: MethodOutcome? = null
         if (!newQuestionnaireResponse.hasIdentifier()) throw UnprocessableEntityException("QuestionnaireResponse has no identifier")
@@ -122,7 +122,10 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
                 awsBundle = awsClient!!.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
                     .where(
                         QuestionnaireResponse.IDENTIFIER.exactly()
-                            .systemAndCode(newQuestionnaireResponse.identifier.system, newQuestionnaireResponse.identifier.value)
+                            .systemAndCode(
+                                newQuestionnaireResponse.identifier.system,
+                                newQuestionnaireResponse.identifier.value
+                            )
                     )
                     .returnBundle(Bundle::class.java)
                     .execute()
@@ -135,8 +138,8 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
             }
         }
         if (awsBundle != null) {
-            if (awsBundle.hasEntry() && awsBundle.entry.size>0) {
-                throw UnprocessableEntityException("QuestionnaireResponse already exists")
+            if (awsBundle.hasEntry() && awsBundle.entry.size > 0) {
+                //   throw UnprocessableEntityException("QuestionnaireResponse already exists")
             }
         }
 
@@ -155,16 +158,28 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
 
             if (newQuestionnaireResponse.source.hasIdentifier()) {
                 val awsPatient = awsPatient.get(newQuestionnaireResponse.source.identifier)
-                if (awsPatient != null)  {
-                    awsBundleProvider.updateReference(newQuestionnaireResponse.source,awsPatient.identifierFirstRep,awsPatient)
+                if (awsPatient != null) {
+                    awsBundleProvider.updateReference(
+                        newQuestionnaireResponse.source,
+                        awsPatient.identifierFirstRep,
+                        awsPatient
+                    )
                 } else {
                     val awsOrganization = awsOrganization.get(newQuestionnaireResponse.source.identifier)
                     if (awsOrganization != null) {
-                        awsBundleProvider.updateReference(newQuestionnaireResponse.source,awsOrganization.identifierFirstRep,awsOrganization)
+                        awsBundleProvider.updateReference(
+                            newQuestionnaireResponse.source,
+                            awsOrganization.identifierFirstRep,
+                            awsOrganization
+                        )
                     } else {
                         val awsPractitioner = awsPractitioner.get(newQuestionnaireResponse.source.identifier)
                         if (awsPractitioner != null) {
-                            awsBundleProvider.updateReference(newQuestionnaireResponse.source,awsPractitioner.identifierFirstRep,awsPractitioner)
+                            awsBundleProvider.updateReference(
+                                newQuestionnaireResponse.source,
+                                awsPractitioner.identifierFirstRep,
+                                awsPractitioner
+                            )
                         }
                     }
                 }
@@ -175,19 +190,38 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
         if (newQuestionnaireResponse.hasSubject()) {
             if (newQuestionnaireResponse.subject.hasIdentifier()) {
                 val awsPatient = awsPatient.get(newQuestionnaireResponse.subject.identifier)
-                if (awsPatient != null)  awsBundleProvider.updateReference(newQuestionnaireResponse.subject,awsPatient.identifierFirstRep,awsPatient)
+                if (awsPatient != null) awsBundleProvider.updateReference(
+                    newQuestionnaireResponse.subject,
+                    awsPatient.identifierFirstRep,
+                    awsPatient
+                )
             }
         }
 
-        retry = 3
+        if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
+            && awsBundle.entryFirstRep.hasResource()
+            && awsBundle.entryFirstRep.resource is QuestionnaireResponse
+        ) {
+            val questionnaireResponse = awsBundle.entryFirstRep.resource as QuestionnaireResponse
+            // Dont update for now - just return aws QuestionnaireResponse
+            return update(questionnaireResponse, newQuestionnaireResponse)
+        } else {
+            return create(newQuestionnaireResponse)
+        }
+    }
+    private fun create(newQuestionnaireResponse: QuestionnaireResponse): MethodOutcome? {
+        val awsBundle: Bundle? = null
+        var response: MethodOutcome? = null
+
+        var retry = 3
         while (retry > 0) {
             try {
                 response = awsClient
                     .create()
                     .resource(newQuestionnaireResponse)
                     .execute()
-                val communicationRequest = response.resource as QuestionnaireResponse
-                val auditEvent = awsAuditEvent.createAudit(communicationRequest, AuditEvent.AuditEventAction.C)
+                val questionnaireResponse = response.resource as QuestionnaireResponse
+                val auditEvent = awsAuditEvent.createAudit(questionnaireResponse, AuditEvent.AuditEventAction.C)
                 awsAuditEvent.writeAWS(auditEvent)
                 break
             } catch (ex: Exception) {
@@ -200,5 +234,32 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
         return response
     }
 
+    private fun update(questionnaireResponse: QuestionnaireResponse, newQuestionnaireResponse: QuestionnaireResponse): MethodOutcome? {
+        var response: MethodOutcome? = null
+        var changed = false
+        
+        // TODO do change detection
+        changed = true;
+
+        if (!changed) return MethodOutcome().setResource(questionnaireResponse)
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient!!.update().resource(newQuestionnaireResponse).withId(questionnaireResponse.id).execute()
+                log.info("AWS QuestionnaireResponse updated " + response.resource.idElement.value)
+                val auditEvent = awsAuditEvent.createAudit(questionnaireResponse, AuditEvent.AuditEventAction.C)
+                awsAuditEvent.writeAWS(auditEvent)
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+
+    }
+    
 
 }
