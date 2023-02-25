@@ -120,7 +120,7 @@ class CognitoAuthInterceptor(val messageProperties: MessageProperties,
                 }
             } catch (ex: FileNotFoundException) {
                 null
-            } catch (ex: IOException) {
+            } catch (ex: Exception) {
                 retry--
                 if (ex.message != null) {
                     if (ex.message!!.contains("401") || ex.message!!.contains("403")) {
