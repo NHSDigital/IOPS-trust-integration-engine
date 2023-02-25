@@ -24,6 +24,7 @@ class AWSDocumentReference(val messageProperties: MessageProperties, val awsClie
                            val awsPractitioner: AWSPractitioner,
                            val awsPatient: AWSPatient,
                            val awsBundleProvider: AWSBundle,
+                           val awsEncounter: AWSEncounter,
                            val awsAuditEvent: AWSAuditEvent
 ) {
 
@@ -72,6 +73,9 @@ class AWSDocumentReference(val messageProperties: MessageProperties, val awsClie
                     val patient = awsPatient.get(newDocumentReference.subject.identifier)
                     if (patient != null) awsBundleProvider.updateReference(newDocumentReference.subject, patient.identifierFirstRep, patient )
                 }
+        }
+        if (newDocumentReference.hasContext() && newDocumentReference.context.hasEncounter()) {
+          //TODO
         }
         // Author
         for (participant in newDocumentReference.author) {

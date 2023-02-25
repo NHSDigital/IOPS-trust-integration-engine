@@ -5,6 +5,7 @@ import ca.uhn.fhir.i18n.Msg
 import ca.uhn.fhir.interceptor.api.Hook
 import ca.uhn.fhir.interceptor.api.Interceptor
 import ca.uhn.fhir.interceptor.api.Pointcut
+import ca.uhn.fhir.rest.api.EncodingEnum
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.api.server.RequestDetails
 import ca.uhn.fhir.rest.server.RestfulServerUtils
@@ -44,7 +45,7 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
            // val charset: Charset = ResourceParameter.determineRequestCharset(requestDetails)
             val requestText = requestDetails?.loadRequestContents()
             if (requestText !=null) {
-                val methodOutcome = validate(requestText)
+                val methodOutcome = validate(encoding,requestText)
 
                 if (methodOutcome.resource is OperationOutcome) {
                     val validationResult = methodOutcome.resource as OperationOutcome
@@ -86,7 +87,7 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
 
 
 
-    fun validate(input : ByteArray): MethodOutcome {
+    fun validate(encoding : EncodingEnum, input : ByteArray): MethodOutcome {
 
         val method = MethodOutcome()
         method.created = true
@@ -107,7 +108,11 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
 
         while (retry > 0) {
             val conn = myUrl.openConnection() as HttpURLConnection
-              conn.setRequestProperty("Content-Type", "application/fhir+json")
+            if (encoding.equals(EncodingEnum.XML)) {
+                conn.setRequestProperty("Content-Type", "application/fhir+xml")
+            } else {
+                conn.setRequestProperty("Content-Type", "application/fhir+json")
+            }
             conn.setRequestProperty("Accept", "application/fhir+json")
             conn.requestMethod = "POST"
             conn.setDoOutput(true)
@@ -121,7 +126,7 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
                 val `is` = InputStreamReader(conn.inputStream)
                 try {
                     val rd = BufferedReader(`is`)
-                    val postedResource = ctx.newJsonParser().parseResource(IOUtils.toString(rd)) as Resource
+                    val postedResource :Resource = ctx.newJsonParser().parseResource(IOUtils.toString(rd)) as Resource
                     if (postedResource != null && postedResource is Resource) {
                         method.resource = postedResource
                     }

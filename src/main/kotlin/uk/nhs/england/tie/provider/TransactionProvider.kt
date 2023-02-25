@@ -24,6 +24,7 @@ class TransactionProvider(
     val awsPractitionerRole: AWSPractitionerRole,
     val awsObservation: AWSObservation,
     val awsDiagnosticReport: AWSDiagnosticReport,
+    val awsEncounter: AWSEncounter,
     val awsBundle: AWSBundle) {
 
 
@@ -124,6 +125,12 @@ class TransactionProvider(
                         val practitionerRole = awsPractitionerRole.createUpdate(workerResource as PractitionerRole,bundle)
                         if (practitionerRole != null ) {
                             returnBundle.add(practitionerRole as Resource)
+                        }
+                    }
+                    if (workerResource is Encounter) {
+                        val encounter = awsEncounter.createUpdate(workerResource as Encounter)
+                        if (encounter != null ) {
+                            returnBundle.add(encounter as Resource)
                         }
                     }
                 }

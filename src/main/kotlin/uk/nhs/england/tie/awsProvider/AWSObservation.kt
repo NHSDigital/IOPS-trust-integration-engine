@@ -24,6 +24,7 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
                      val awsPractitionerRole: AWSPractitionerRole,
                      val awsPractitioner: AWSPractitioner,
                      val awsPatient: AWSPatient,
+                     val awsEncounter: AWSEncounter,
                      val awsAuditEvent: AWSAuditEvent) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
@@ -65,6 +66,16 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
                 if (newObservation.subject.hasIdentifier()) {
                     val patient = awsPatient.get(newObservation.subject.identifier)
                     if (patient != null) awsBundleProvider.updateReference(newObservation.subject, patient.identifierFirstRep,patient)
+                }
+        }
+        if (newObservation.hasEncounter()) {
+            if (newObservation.encounter.hasReference() && bundle != null) {
+                val encounter = awsEncounter.get(newObservation.encounter, bundle)
+                if (encounter != null) awsBundleProvider.updateReference(newObservation.encounter, encounter.identifierFirstRep,encounter)
+            } else
+                if (newObservation.encounter.hasIdentifier()) {
+                    val encounter = awsEncounter.get(newObservation.encounter.identifier)
+                    if (encounter != null) awsBundleProvider.updateReference(newObservation.encounter, encounter.identifierFirstRep,encounter)
                 }
         }
         if (newObservation.hasDerivedFrom()) {

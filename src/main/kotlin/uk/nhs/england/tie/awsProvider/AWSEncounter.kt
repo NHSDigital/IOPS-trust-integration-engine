@@ -27,6 +27,52 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
+    public fun get(identifier: Identifier): Encounter? {
+        var bundle: Bundle? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = awsClient
+                    .search<IBaseBundle>()
+                    .forResource(Encounter::class.java)
+                    .where(
+                        Encounter.IDENTIFIER.exactly()
+                            .systemAndCode(identifier.system, identifier.value)
+                    )
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (bundle == null || !bundle.hasEntry()) return null
+        return bundle.entryFirstRep.resource as Encounter
+    }
+    public fun get(reference: Reference, bundle: Bundle): Encounter? {
+        var awsEncounter : Encounter? = null
+        if (reference.hasReference()) {
+
+            val encounter = awsBundleProvider.findResource(bundle, "Encounter", reference.reference) as Encounter?
+            if (encounter != null) {
+                for ( identifier in encounter.identifier) {
+                    awsEncounter = get(identifier)
+                    if (awsEncounter != null) {
+                        break;
+                    }
+                }
+                if (awsEncounter == null) {
+                    return createUpdate(encounter)
+                } else return awsEncounter
+            }
+        } else if (reference.hasIdentifier()) {
+            return get(reference.identifier)
+        }
+        return null
+    }
 
     fun createUpdate(newEncounter: Encounter): Encounter? {
         var awsBundle: Bundle? = null
@@ -72,6 +118,12 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
                         awsBundleProvider.updateReference(participant.individual,dr.identifierFirstRep,dr)
                     }
                 }
+                if (participant.individual.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                    val org = awsOrganization.get(participant.individual.identifier)
+                    if (org != null) {
+                        awsBundleProvider.updateReference(participant.individual,org.identifierFirstRep,org)
+                    }
+                }
             }
         }
 
@@ -103,10 +155,11 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
             }
         }
         // May need to check status history already contains this history
+        // TODO
         encounter.addStatusHistory()
             .setStatus(encounter.status)
             .setPeriod(encounter.period)
-        newEncounter.statusHistory = encounter.statusHistory
+       // newEncounter.statusHistory = encounter.statusHistory
 
         if (encounter.hasLocation() && newEncounter.hasLocation()) {
             // Try to amend the location history

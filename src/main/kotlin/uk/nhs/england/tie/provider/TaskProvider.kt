@@ -33,23 +33,13 @@ class TaskProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
         return awsTask.createUpdate(task)
 
     }
-    
-    @Search
-    fun search(httpRequest : HttpServletRequest,
-               @OptionalParam(name = Task.SP_OWNER) owner: ReferenceParam?,
-               @OptionalParam(name = Task.SP_REQUESTER) requester: ReferenceParam?,
-               @OptionalParam(name = Task.SP_PATIENT) patient : ReferenceParam?,
-               @OptionalParam(name= Task.SP_STATUS) status : TokenParam?,
-               @OptionalParam(name= Task.SP_CODE) code : TokenParam?
-    ): List<Task> {
-        val list = mutableListOf<Task>()
-        val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, httpRequest.queryString)
-        if (resource != null && resource is Bundle) {
-            for (entry in resource.entry) {
-                if (entry.hasResource() && entry.resource is Task) list.add(entry.resource as Task)
-            }
-        }
-        return list
+
+    @Create
+    fun create(theRequest: HttpServletRequest, @ResourceParam task: Task): MethodOutcome? {
+
+        val method = MethodOutcome().setCreated(true)
+        method.resource = awsTask.createUpdate(task, null)
+        return method
     }
 
 }

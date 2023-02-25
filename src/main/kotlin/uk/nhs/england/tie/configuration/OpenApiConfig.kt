@@ -31,6 +31,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
     var MHD = "Documents"
     var FORMS = "Structured Data Capture"
     var APIM = "Security and API Management"
+    var WORKFLOW = "FHIR Workflow"
     @Bean
     open fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
@@ -101,6 +102,13 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     "[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                             + " [IHE MHD ITI-67 and ITI-68](https://profiles.ihe.net/ITI/MHD/ITI-67.html)")
         )
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
+                .name(WORKFLOW)
+                .description(
+                    "[HL7 FHIR Workflow](http://hl7.org/fhir/R4/workflow-module.html) \n"
+                            + " [HL7 FHIR Structure Data Capture](http://hl7.org/fhir/uv/sdc/workflow.html)")
+        )
         /*
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
@@ -156,6 +164,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                             MediaType()
                                 .examples(examples)
                                 .schema(StringSchema()))
+                        .addMediaType("application/fhir+xml",
+                            MediaType()
+                                .schema(StringSchema()))
                     )))
 
         oas.path("/FHIR/R4/\$process-message",processMessageItem)
@@ -203,6 +214,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                             MediaType()
                                 .examples(examplesPatient104)
                                 .schema(StringSchema()))
+                        .addMediaType("application/fhir+xml",
+                            MediaType()
+                                .schema(StringSchema()))
                     )))
             .post(
                 Operation()
@@ -215,6 +229,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                         .addMediaType("application/fhir+json",
                             MediaType()
                                 .examples(examplesPatient93)
+                                .schema(StringSchema()))
+                        .addMediaType("application/fhir+xml",
+                            MediaType()
                                 .schema(StringSchema()))
                     )))
 
@@ -237,6 +254,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                         .addMediaType("application/fhir+json",
                             MediaType()
                                 .examples(examplesEncounter)
+                                .schema(StringSchema()))
+                        .addMediaType("application/fhir+xml",
+                            MediaType()
                                 .schema(StringSchema()))
                     )))
 
@@ -280,6 +300,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 MediaType()
                                     .examples(examples2)
                                     .schema(StringSchema()))
+                            .addMediaType("application/fhir+xml",
+                                MediaType()
+                                    .schema(StringSchema()))
                         )))
 
 
@@ -319,12 +342,10 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         val examplesDSUB = LinkedHashMap<String,Example?>()
 
-        examplesDSUB.put("Document Notification (PDF)",
+        examplesDSUB["Document Notification (PDF)"] =
             Example().value(FHIRExamples().loadExample("documentReference-DSUB.json",ctx))
-        )
-        examplesDSUB.put("Document Notification (FHIR Document STU3)",
+        examplesDSUB["Document Notification (FHIR Document STU3)"] =
             Example().value(FHIRExamples().loadExample("documentReference-TOC-Notification.json",ctx))
-        )
 
         var documentReferenceItem = PathItem()
             .post(
@@ -337,6 +358,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                         .addMediaType("application/fhir+json",
                             MediaType()
                                 .examples(examplesDSUB)
+                                .schema(StringSchema()))
+                        .addMediaType("application/fhir+xml",
+                            MediaType()
                                 .schema(StringSchema()))
                     )))
         oas.path("/FHIR/R4/DocumentReference",documentReferenceItem)
@@ -412,22 +436,27 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                             MediaType()
                                 .examples(examplesQuestionnaireResponse )
                                 .schema(StringSchema()))
+                        .addMediaType("application/fhir+xml",
+                            MediaType()
+                                .schema(StringSchema()))
                     )))
 
 
         oas.path("/FHIR/R4/QuestionnaireResponse",questionnaireResponseItem)
-/*
 
-        val examplesTask = LinkedHashMap<String,Example?>()
-        examplesTask.put("Form Complete Task",
+
+        var examplesPOSTTask = LinkedHashMap<String,Example?>()
+        examplesPOSTTask["Form Complete Task"] =
             Example().value(FHIRExamples().loadExample("Task-formComplete.json",ctx))
-        )
+
+        val examplesPUTTask = LinkedHashMap<String,Example?>()
+        examplesPUTTask["Form Complete Task Updated to be completed"] = Example().value(FHIRExamples().loadExample("Task-formComplete-completed.json",ctx))
 
         val taskItem = PathItem()
             .put(
                 Operation()
-                    .addTagsItem("UKCore Alert Communication Management")
-                    .summary("Complete Form Request (Task)")
+                    .addTagsItem(WORKFLOW)
+                    .summary("Complete Form Request (Task) - Completed")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
                         .name("identifier")
@@ -441,50 +470,22 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .requestBody(RequestBody().content(Content()
                         .addMediaType("application/fhir+json",
                             MediaType()
-                                .examples(examplesTask )
+                                .examples(examplesPUTTask )
                                 .schema(StringSchema()))
                     )))
-            .get(
+            .post(
                 Operation()
-                    .addTagsItem("UKCore Alert Communication Management")
-                    .summary("Query Tasks")
-                    .addParametersItem(Parameter()
-                        .name("patient")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("Search by patient")
-                        .schema(StringSchema())
-                    )
-                    .addParametersItem(Parameter()
-                        .name("owner")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("Search by task owner")
-                        .schema(StringSchema())
-                    )
-                    .addParametersItem(Parameter()
-                        .name("requester")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("Search by task requester")
-                        .schema(StringSchema())
-                    )
-                    .addParametersItem(Parameter()
-                        .name("status")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("Search by task status")
-                        .schema(StringSchema())
-                    )
+                    .addTagsItem(WORKFLOW)
+                    .summary("Complete Form Request (Task)")
                     .responses(getApiResponses())
-            )
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesPOSTTask )
+                                .schema(StringSchema()))
+                    )))
 
         oas.path("/FHIR/R4/Task",taskItem)
-*/
 
         /*
 
@@ -576,7 +577,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         response200.description = "OK"
         val exampleList = mutableListOf<Example>()
         exampleList.add(Example().value("{}"))
-        response200.content = Content().addMediaType("application/fhir+json", MediaType().schema(StringSchema()._default("{}")))
+        response200.content = Content().addMediaType("application/fhir+json", MediaType().schema(StringSchema()._default("{}"))).addMediaType("application/fhir+xml", MediaType().schema(StringSchema()._default("")))
         val apiResponses = ApiResponses().addApiResponse("200",response200)
         return apiResponses
     }

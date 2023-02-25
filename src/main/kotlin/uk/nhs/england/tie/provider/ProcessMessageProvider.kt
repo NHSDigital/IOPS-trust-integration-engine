@@ -21,6 +21,7 @@ class ProcessMessageProvider(
     val awsPatient: AWSPatient,
     val awsRelatedPerson: AWSRelatedPerson,
     val awsTask : AWSTask,
+    val awsEncounter: AWSEncounter,
     val awsBinary: AWSBinary,
     val awsDocumentReference: AWSDocumentReference,
     val awsBundle: AWSBundle) {
@@ -198,6 +199,16 @@ class ProcessMessageProvider(
                                     .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
                                     .setCode(OperationOutcome.IssueType.INFORMATIONAL)
                                     .addLocation(observation.id))
+                        }
+                    }
+                    "Encounter" -> {
+                        val encounter = awsEncounter.createUpdate(workerResource as Encounter)
+                        if (encounter != null) {
+                            operationOutcome.issue.add(
+                                OperationOutcome.OperationOutcomeIssueComponent()
+                                    .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+                                    .setCode(OperationOutcome.IssueType.INFORMATIONAL)
+                                    .addLocation(encounter.id))
                         }
                     }
                     "DocumentReference" -> {

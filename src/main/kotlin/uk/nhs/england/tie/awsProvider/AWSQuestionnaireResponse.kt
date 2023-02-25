@@ -31,6 +31,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
                                 val awsPractitioner: AWSPractitioner,
                                 val awsBundleProvider: AWSBundle,
                                 val awsQuestionnaire: AWSQuestionnaire,
+                                val awsEncounter: AWSEncounter,
                                 val awsAuditEvent: AWSAuditEvent) {
 
 
@@ -143,16 +144,17 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
             }
         }
 
-/*
-Think this needs to be original url of questionnaire
+
+        //Think this needs to be original url of questionnaire
+        /*
            if (newQuestionnaireResponse.hasQuestionnaire()) {
                val listQ = awsQuestionnaire.search(UriParam().setValue(newQuestionnaireResponse.questionnaire))
                if (listQ != null && listQ.size>0) {
-                   newQuestionnaireResponse.questionnaire = listQ[0].id
+                   newQuestionnaireResponse.questionnaire = "Questionnaire/"+listQ[0].idElement.idPart
                }
            }
-
 */
+
         if (newQuestionnaireResponse.hasSource()) {
 
             // Bit crude refactor?
@@ -196,6 +198,12 @@ Think this needs to be original url of questionnaire
                     awsPatient.identifierFirstRep,
                     awsPatient
                 )
+            }
+        }
+        if (newQuestionnaireResponse.hasEncounter()) {
+            if (newQuestionnaireResponse.encounter.hasIdentifier()) {
+                val encounter = awsEncounter.get(newQuestionnaireResponse.encounter.identifier)
+                if (encounter != null) awsBundleProvider.updateReference(newQuestionnaireResponse.encounter, encounter.identifierFirstRep,encounter)
             }
         }
 

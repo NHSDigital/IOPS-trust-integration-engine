@@ -25,6 +25,7 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
                           val awsPractitioner: AWSPractitioner,
                           val awsPatient: AWSPatient,
                           val awsObservation: AWSObservation,
+                          val awsEncounter: AWSEncounter,
                           val awsAuditEvent: AWSAuditEvent) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
@@ -100,6 +101,16 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
                 }
             }
 
+        }
+        if (newDiagnosticReport.hasEncounter()) {
+            if (newDiagnosticReport.encounter.hasReference() && bundle != null) {
+                val encounter = awsEncounter.get(newDiagnosticReport.encounter, bundle)
+                if (encounter != null) awsBundleProvider.updateReference(newDiagnosticReport.encounter, encounter.identifierFirstRep,encounter)
+            } else
+                if (newDiagnosticReport.encounter.hasIdentifier()) {
+                    val encounter = awsEncounter.get(newDiagnosticReport.encounter.identifier)
+                    if (encounter != null) awsBundleProvider.updateReference(newDiagnosticReport.encounter, encounter.identifierFirstRep,encounter)
+                }
         }
         if (newDiagnosticReport.hasResult()) {
             for (result in newDiagnosticReport.result) {
