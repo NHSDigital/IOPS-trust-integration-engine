@@ -7,12 +7,14 @@ import ca.uhn.fhir.rest.api.server.RequestDetails
 import ca.uhn.fhir.rest.server.IResourceProvider
 import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
+import uk.nhs.england.tie.awsProvider.AWSCareTeam
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 
 import javax.servlet.http.HttpServletRequest
 
 @Component
-class CareTeamProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor) : IResourceProvider {
+class CareTeamProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
+    var awsCareTeam: AWSCareTeam) : IResourceProvider {
     override fun getResourceType(): Class<CareTeam> {
         return CareTeam::class.java
     }
@@ -31,7 +33,7 @@ class CareTeamProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor) : IRe
     @Create
     fun create(theRequest: HttpServletRequest, @ResourceParam careTeam: CareTeam): MethodOutcome? {
 
-        return cognitoAuthInterceptor.updatePost(theRequest,careTeam)
+        return awsCareTeam.create(careTeam,null)
 
     }
 
