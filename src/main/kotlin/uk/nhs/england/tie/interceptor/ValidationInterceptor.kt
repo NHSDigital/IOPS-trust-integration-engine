@@ -17,6 +17,7 @@ import org.hl7.fhir.r4.model.Resource
 import org.slf4j.LoggerFactory
 import uk.nhs.england.tie.configuration.MessageProperties
 import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -35,7 +36,7 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_POST_PROCESSED)
     fun incomingRequest(request: HttpServletRequest, requestDetails: RequestDetails?, resource: IBaseResource?) :Boolean {
 
-        if (request.method.equals("POST") || request.method.equals("PUT")) {
+        if ((request.method.equals("POST") || request.method.equals("PUT")) && !request.pathInfo.endsWith("validate") ) {
             val encoding = RestfulServerUtils.determineRequestEncodingNoDefault(requestDetails)
             if (encoding == null) {
                 log.trace("Incoming request does not appear to be FHIR, not going to validate")
@@ -134,7 +135,23 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
                 } finally {
                     `is`.close()
                 }
-            } catch (ex: Exception) {
+
+            }
+            catch (ex : IOException) {
+                val `is` = InputStreamReader(conn.errorStream)
+                try {
+                    val rd = BufferedReader(`is`)
+                    val postedResource :Resource = ctx.newJsonParser().parseResource(IOUtils.toString(rd)) as Resource
+                    if (postedResource != null && postedResource is Resource) {
+                        method.resource = postedResource
+                    }
+                    return method
+                } finally {
+                    `is`.close()
+                }
+                throw ex
+            }
+            catch (ex: Exception) {
                 retry--
                 if (ex.message != null) {
                     if (ex.message!!.contains("401") || ex.message!!.contains("403")) {
