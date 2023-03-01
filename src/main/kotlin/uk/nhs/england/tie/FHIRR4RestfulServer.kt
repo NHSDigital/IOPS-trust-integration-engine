@@ -30,7 +30,10 @@ class FHIRR4RestfulServer(
     val questionnaireResponseProvider: QuestionnaireResponseProvider,
     val taskProvider: TaskProvider,
     val binaryProvider: BinaryProvider,
-    val documentReferenceProvider: DocumentReferenceProvider
+    val documentReferenceProvider: DocumentReferenceProvider,
+    val careTeamProvider: CareTeamProvider,
+    val careTeamPlainProvider: CareTeamPlainProvider
+
 ) : RestfulServer(fhirContext) {
 
     override fun initialize() {
@@ -50,6 +53,10 @@ class FHIRR4RestfulServer(
 
         registerProvider(binaryProvider)
         registerProvider(documentReferenceProvider)
+
+        registerProvider(careTeamProvider)
+        registerProvider(careTeamPlainProvider)
+
 
         registerInterceptor(CapabilityStatementInterceptor(this.fhirContext,fhirServerProperties))
 
