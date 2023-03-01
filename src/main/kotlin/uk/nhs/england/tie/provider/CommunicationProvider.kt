@@ -10,26 +10,22 @@ import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import javax.servlet.http.HttpServletRequest
 
 @Component
-class CommunicationProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor) : IResourceProvider {
-    override fun getResourceType(): Class<Communication> {
-        return Communication::class.java
-    }
+class CommunicationProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor)  {
 
 
-    @Search
+
+    @Search(type=Communication::class)
     fun search(httpRequest : HttpServletRequest,
                @OptionalParam(name = Communication.SP_RECIPIENT) recipient: ReferenceParam?,
                @OptionalParam(name = Communication.SP_SENDER) sender : ReferenceParam?,
                @OptionalParam(name= Communication.SP_STATUS) status : TokenParam?
-               ): List<Communication> {
+               ): Bundle? {
         val list = mutableListOf<Communication>()
-        val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, httpRequest.queryString)
+        val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, httpRequest.queryString,"Communication")
         if (resource != null && resource is Bundle) {
-            for (entry in resource.entry) {
-                if (entry.hasResource() && entry.resource is Communication) list.add(entry.resource as Communication)
-            }
+            return resource
         }
-        return list
+        return null
     }
 
 
