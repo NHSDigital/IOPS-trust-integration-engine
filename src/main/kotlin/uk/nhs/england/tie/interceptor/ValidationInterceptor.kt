@@ -141,15 +141,18 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
                 val `is` = InputStreamReader(conn.errorStream)
                 try {
                     val rd = BufferedReader(`is`)
-                    val postedResource :Resource = ctx.newJsonParser().parseResource(IOUtils.toString(rd)) as Resource
+                    val postedResource: Resource = ctx.newJsonParser().parseResource(IOUtils.toString(rd)) as Resource
                     if (postedResource != null && postedResource is Resource) {
                         method.resource = postedResource
                     }
                     return method
+                }
+                catch (exOther: Exception) {
+                    throw ex
                 } finally {
                     `is`.close()
                 }
-                throw ex
+
             }
             catch (ex: Exception) {
                 retry--

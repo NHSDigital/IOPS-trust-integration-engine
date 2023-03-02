@@ -12,8 +12,8 @@
       "coding": [
         {
           "system": "http://snomed.info/sct",
-          "code": "708168004",
-          "display": "Mental health service"
+          "code": "963151000000104",
+          "display": "Diabetic medicine service"
         }
       ]
     }

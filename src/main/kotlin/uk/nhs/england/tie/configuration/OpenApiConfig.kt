@@ -32,8 +32,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
     var FORMS = "Structured Data Capture"
     var APIM = "Security and API Management"
     var WORKFLOW = "FHIR Workflow"
-    var DCTM = "Care Team Management"
-    var CASE_LOAD = "Case Load (Episodes/Stays)"
+    var CARE = "Care Team, Episodes and Plans"
     @Bean
     open fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
@@ -113,7 +112,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         )
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name(DCTM )
+                .name(CARE )
                 .description("[HL7 FHIR Administration Module](https://www.hl7.org/fhir/R4/administration-module.html) \n"
                         + " [IHE DCTM](https://www.ihe.net/uploadedFiles/Documents/PCC/IHE_PCC_Suppl_DCTM.pdf)")
         )
@@ -374,13 +373,132 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         oas.path("/FHIR/R4/DocumentReference",documentReferenceItem)
 
 
+        //Care Plan
+
+        var carePlanItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(CARE)
+                    .summary("")
+                    .description("This transaction is used to find a CarePlan resource.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("patient")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who episode/stay is for")
+                        .schema(StringSchema())
+                        .example("073eef49-81ee-4c2e-893b-bc2e4efd2630")
+                    )
+                    .addParametersItem(Parameter()
+                        .name("patient:identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who episode/stay is for. `https://fhir.nhs.uk/Id/nhs-number|{nhsNumber}` ")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("date")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Time period episode covers")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("status")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("planned | waitlist | active | onhold | finished | cancelled | entered-in-error")
+                        .schema(StringSchema())
+                    )
+
+            )
+
+        examples = LinkedHashMap<String,Example?>()
+
+        examples.put("Create Diabetes CarePlan",
+            Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Hypertension.json",ctx))
+        )
+        carePlanItem
+            .post(
+                Operation()
+                    .addTagsItem(CARE)
+                    .summary("")
+                    .description("This transaction is used to update or to create a EpisodeOfCare resource.")
+                    .responses(getApiResponses())
+                    .requestBody(
+                        RequestBody().content(Content()
+                            .addMediaType("application/fhir+json",
+                                MediaType()
+                                    .examples(examples)
+                                    .schema(StringSchema()))
+                        )))
+
+        oas.path("/FHIR/R4/CarePlan",carePlanItem)
+        carePlanItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(CARE)
+                    .description("This transaction is used to retrieve a specific CarePlan resource using a known FHIR CarePlan " +
+                            "resource id.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                        .example("b664a27a-2117-4b13-a0d1-cc0b98e4532b")
+                    )
+            )
+
+        carePlanItem.put(
+            Operation()
+                .addTagsItem(CARE)
+                .description("This transaction is used to update or to create a CareTeam resource. A CareTeam resource is " +
+                        "submitted to a Care Team Service where the update or creation is handled.")
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The ID of the resource")
+                    .schema(StringSchema())
+                    .example("c4a7c5cb-ea81-4e52-8171-22f11fa5caf0")
+                )
+                .requestBody(
+                    RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .schema(StringSchema()))
+                    )))
+        carePlanItem.delete(Operation()
+            .addTagsItem(CARE)
+            .summary("Delete CareTeam")
+            .responses(getApiResponses())
+            .addParametersItem(Parameter()
+                .name("id")
+                .`in`("path")
+                .required(false)
+                .style(Parameter.StyleEnum.SIMPLE)
+                .description("The id of the CareTeam to be deleted")
+                .schema(StringSchema())))
+
+        oas.path("/FHIR/R4/CarePlan/{id}",carePlanItem)
+
         // Case Load Episode of Care
 
         var episodeOfCareItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem(CASE_LOAD)
-                    .summary("[PCC-46]")
+                    .addTagsItem(CARE)
+                    .summary("")
                     .description("This transaction is used to find a Episode resource.")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
@@ -421,14 +539,14 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         examples = LinkedHashMap<String,Example?>()
 
-        examples.put("Create Hypertension (virtual ward) Episode",
+        examples.put("Create Diabetes (virtual ward) Episode",
             Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Hypertension.json",ctx))
         )
         episodeOfCareItem
             .post(
                 Operation()
-                    .addTagsItem(CASE_LOAD)
-                    .summary("[PCC-45]")
+                    .addTagsItem(CARE)
+                    .summary("")
                     .description("This transaction is used to update or to create a EpisodeOfCare resource.")
                     .responses(getApiResponses())
                     .requestBody(
@@ -449,7 +567,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         var careTeamItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem(DCTM )
+                    .addTagsItem(CARE)
                     .summary("[PCC-47]")
                     .description("This transaction is used to retrieve a specific CareTeam resource using a known FHIR CareTeam " +
                             "resource id.")
@@ -470,7 +588,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         )
         careTeamItem.put(
             Operation()
-                .addTagsItem(DCTM )
+                .addTagsItem(CARE)
                 .summary("[PCC-45]")
                 .description("This transaction is used to update or to create a CareTeam resource. A CareTeam resource is " +
                         "submitted to a Care Team Service where the update or creation is handled.")
@@ -492,7 +610,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .schema(StringSchema()))
                     )))
         careTeamItem.delete(Operation()
-            .addTagsItem(DCTM)
+            .addTagsItem(CARE)
             .summary("Delete CareTeam")
             .responses(getApiResponses())
             .addParametersItem(Parameter()
@@ -508,7 +626,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         careTeamItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem(DCTM)
+                    .addTagsItem(CARE)
                     .summary("[PCC-46]")
                     .description("This transaction is used to find a CareTeam resource. The Care Team Contributor searches for a " +
                             "CareTeam resource of interest. A CareTeam resource located by search may then be retrieved for " +
@@ -557,7 +675,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         careTeamItem
             .post(
                 Operation()
-                    .addTagsItem(DCTM )
+                    .addTagsItem(CARE)
                     .summary("[PCC-45]")
                     .description("This transaction is used to update or to create a CareTeam resource. A CareTeam resource is " +
                             "submitted to a Care Team Service where the update or creation is handled.")

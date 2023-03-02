@@ -44,7 +44,7 @@ class CareTeamProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
         return if (resource is CareTeam) resource else null
     }
     @Delete
-    fun create(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
+    fun delete(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
         return awsCareTeam.delete(theId)
     }
 
