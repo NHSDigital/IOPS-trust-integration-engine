@@ -32,7 +32,10 @@ class FHIRR4RestfulServer(
     val binaryProvider: BinaryProvider,
     val documentReferenceProvider: DocumentReferenceProvider,
     val careTeamProvider: CareTeamProvider,
-    val careTeamPlainProvider: CareTeamPlainProvider
+    val careTeamPlainProvider: CareTeamPlainProvider,
+
+    val episodeOfCarePlainProvider: EpisodeOfCarePlainProvider,
+    val episodeOfCareProvider: EpisodeOfCareProvider
 
 ) : RestfulServer(fhirContext) {
 
@@ -57,6 +60,8 @@ class FHIRR4RestfulServer(
         registerProvider(careTeamProvider)
         registerProvider(careTeamPlainProvider)
 
+        registerProvider(episodeOfCareProvider)
+        registerProvider(episodeOfCarePlainProvider)
 
         registerInterceptor(CapabilityStatementInterceptor(this.fhirContext,fhirServerProperties))
 

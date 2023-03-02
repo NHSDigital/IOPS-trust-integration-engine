@@ -33,6 +33,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
     var APIM = "Security and API Management"
     var WORKFLOW = "FHIR Workflow"
     var DCTM = "Care Team Management"
+    var CASE_LOAD = "Case Load (Episodes/Stays)"
     @Bean
     open fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
@@ -372,6 +373,76 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
         oas.path("/FHIR/R4/DocumentReference",documentReferenceItem)
 
+
+        // Case Load Episode of Care
+
+        var episodeOfCareItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(CASE_LOAD)
+                    .summary("[PCC-46]")
+                    .description("This transaction is used to find a Episode resource.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("patient")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who episode/stay is for")
+                        .schema(StringSchema())
+                        .example("073eef49-81ee-4c2e-893b-bc2e4efd2630")
+                    )
+                    .addParametersItem(Parameter()
+                        .name("patient:identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who episode/stay is for. `https://fhir.nhs.uk/Id/nhs-number|{nhsNumber}` ")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("date")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Time period episode covers")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("status")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("planned | waitlist | active | onhold | finished | cancelled | entered-in-error")
+                        .schema(StringSchema())
+                    )
+
+            )
+
+        examples = LinkedHashMap<String,Example?>()
+
+        examples.put("Create Hypertension (virtual ward) Episode",
+            Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Hypertension.json",ctx))
+        )
+        episodeOfCareItem
+            .post(
+                Operation()
+                    .addTagsItem(CASE_LOAD)
+                    .summary("[PCC-45]")
+                    .description("This transaction is used to update or to create a EpisodeOfCare resource.")
+                    .responses(getApiResponses())
+                    .requestBody(
+                        RequestBody().content(Content()
+                            .addMediaType("application/fhir+json",
+                                MediaType()
+                                    .examples(examples)
+                                    .schema(StringSchema()))
+                        )))
+
+        oas.path("/FHIR/R4/EpisodeOfCare",episodeOfCareItem)
+
+
+
 /// Care Teams
 
 
@@ -420,6 +491,17 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .examples(examplesPUT)
                                 .schema(StringSchema()))
                     )))
+        careTeamItem.delete(Operation()
+            .addTagsItem(DCTM)
+            .summary("Delete CareTeam")
+            .responses(getApiResponses())
+            .addParametersItem(Parameter()
+                .name("id")
+                .`in`("path")
+                .required(false)
+                .style(Parameter.StyleEnum.SIMPLE)
+                .description("The id of the CareTeam to be deleted")
+                .schema(StringSchema())))
 
         oas.path("/FHIR/R4/CareTeam/{id}",careTeamItem)
 
@@ -435,11 +517,19 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .addParametersItem(Parameter()
                         .name("patient")
                         .`in`("query")
-                        .required(true)
+                        .required(false)
                         .style(Parameter.StyleEnum.SIMPLE)
                         .description("Who care team is for")
                         .schema(StringSchema())
                         .example("073eef49-81ee-4c2e-893b-bc2e4efd2630")
+                    )
+                    .addParametersItem(Parameter()
+                        .name("patient:identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who care team is for. `https://fhir.nhs.uk/Id/nhs-number|{nhsNumber}` ")
+                        .schema(StringSchema())
                     )
                     .addParametersItem(Parameter()
                         .name("date")

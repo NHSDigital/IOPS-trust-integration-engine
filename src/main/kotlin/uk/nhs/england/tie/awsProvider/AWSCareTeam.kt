@@ -1,8 +1,13 @@
 package uk.nhs.england.tie.awsProvider
 
 import ca.uhn.fhir.context.FhirContext
+import ca.uhn.fhir.rest.annotation.Delete
+import ca.uhn.fhir.rest.annotation.IdParam
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.client.api.IGenericClient
+import ca.uhn.fhir.rest.param.TokenParam
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
+import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -10,6 +15,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
 import uk.nhs.england.tie.util.FhirSystems
+import javax.servlet.http.HttpServletRequest
 
 @Component
 class AWSCareTeam(val messageProperties: MessageProperties, val awsClient: IGenericClient,
@@ -24,8 +30,40 @@ class AWSCareTeam(val messageProperties: MessageProperties, val awsClient: IGene
 ) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
-   
+    public fun search(identifier: TokenParam) : List<CareTeam> {
+        var resources = mutableListOf<CareTeam>()
+        var bundle: Bundle? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = awsClient
+                    .search<IBaseBundle>()
+                    .forResource(CareTeam::class.java)
+                    .where(
+                        CareTeam.IDENTIFIER.exactly().code(identifier.value)
+                    )
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                 break;
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (bundle!=null && bundle.hasEntry()) {
+            for (entry in bundle.entry) {
+                if (entry.hasResource() && entry.resource is CareTeam) resources.add(entry.resource as CareTeam)
+            }
+        }
+        return resources
+    }
     fun create(newCareTeam: CareTeam, bundle: Bundle?): MethodOutcome? {
+
+        val duplicateCheck = search(TokenParam().setValue(newCareTeam.identifierFirstRep.value))
+        if (duplicateCheck.size>0) throw UnprocessableEntityException("A CareTeam with this identifier already exists.")
+
         var response: MethodOutcome? = null
         if (newCareTeam.hasSubject() && newCareTeam.subject.hasIdentifier()) {
             val patient = awsPatient.get(newCareTeam.subject.identifier)
@@ -94,4 +132,30 @@ class AWSCareTeam(val messageProperties: MessageProperties, val awsClient: IGene
         }
         return response
     }
+    fun delete(theId: IdType): MethodOutcome? {
+        var response: MethodOutcome? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .delete()
+                    .resourceById(theId)
+                    .execute()
+
+              /* TODO
+                val auditEvent = awsAuditEvent.createAudit(storedQuestionnaire, AuditEvent.AuditEventAction.D)
+                awsAuditEvent.writeAWS(auditEvent)
+                */
+                break
+
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
+
 }

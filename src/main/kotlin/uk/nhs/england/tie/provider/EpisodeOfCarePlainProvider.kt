@@ -17,25 +17,25 @@ import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import javax.servlet.http.HttpServletRequest
 
 @Component
-class CareTeamPlainProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
-                            var awsPatient: AWSPatient)  {
+class EpisodeOfCarePlainProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
+                                 var awsPatient: AWSPatient)  {
 
 
 
-    @Search(type=CareTeam::class)
+    @Search(type=EpisodeOfCare::class)
     fun search(
         httpRequest : HttpServletRequest,
-        @OptionalParam(name = CareTeam.SP_DATE) date: DateRangeParam?,
-        @OptionalParam(name = CareTeam.SP_PATIENT) patient: ReferenceParam?,
-        @OptionalParam(name = CareTeam.SP_STATUS) status: TokenParam?,
-        @OptionalParam(name = CareTeam.SP_IDENTIFIER)  identifier :TokenParam?,
+        @OptionalParam(name = EpisodeOfCare.SP_DATE) date: DateRangeParam?,
+        @OptionalParam(name = EpisodeOfCare.SP_PATIENT) patient: ReferenceParam?,
+        @OptionalParam(name = EpisodeOfCare.SP_STATUS) status: TokenParam?,
+        @OptionalParam(name = EpisodeOfCare.SP_IDENTIFIER)  identifier :TokenParam?,
         @OptionalParam(name = "patient:identifier") nhsNumber : TokenParam?,
-        @OptionalParam(name = CareTeam.SP_RES_ID)  resid : StringParam?
+        @OptionalParam(name = EpisodeOfCare.SP_RES_ID)  resid : StringParam?
     ): Bundle? {
 
         var queryString = awsPatient.processQueryString(httpRequest.queryString,nhsNumber)
 
-        val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, queryString,"CareTeam")
+        val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, queryString,"EpisodeOfCare")
         if (resource != null && resource is Bundle) {
             return resource
         }

@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.api.server.RequestDetails
 
 import ca.uhn.fhir.rest.server.IResourceProvider
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSCareTeam
@@ -27,12 +28,12 @@ class CareTeamProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
         @IdParam theId: IdType?,
         theRequestDetails: RequestDetails?
     ): MethodOutcome? {
-
+        if (!careTeam.hasIdentifier()) throw UnprocessableEntityException("CareTeam identifier is required")
         return cognitoAuthInterceptor.updatePost(theRequest,careTeam)
     }
     @Create
     fun create(theRequest: HttpServletRequest, @ResourceParam careTeam: CareTeam): MethodOutcome? {
-
+        if (!careTeam.hasIdentifier()) throw UnprocessableEntityException("CareTeam identifier is required")
         return awsCareTeam.create(careTeam,null)
 
     }
@@ -42,6 +43,9 @@ class CareTeamProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
         val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, null,"CareTeam")
         return if (resource is CareTeam) resource else null
     }
-
+    @Delete
+    fun create(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
+        return awsCareTeam.delete(theId)
+    }
 
 }
