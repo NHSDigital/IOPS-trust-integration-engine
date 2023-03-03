@@ -24,6 +24,8 @@ class AWSEpisodeOfCare(val messageProperties: MessageProperties, val awsClient: 
                        val awsPractitioner: AWSPractitioner,
                        val awsPatient: AWSPatient,
                        val awsCareTeam: AWSCareTeam,
+                       val awsCondition: AWSCondition,
+                       val awsServiceRequest: AWSServiceRequest,
                        val awsBundleProvider: AWSBundle,
                        val awsAuditEvent: AWSAuditEvent) {
 
@@ -110,6 +112,18 @@ class AWSEpisodeOfCare(val messageProperties: MessageProperties, val awsClient: 
             val patient = awsPatient.get(newEpisodeOfCare.patient.identifier)
             if (patient != null) awsBundleProvider.updateReference(newEpisodeOfCare.patient, patient.identifierFirstRep, patient)
         }
+        if (newEpisodeOfCare.hasReferralRequest()) {
+            for (referral in newEpisodeOfCare.referralRequest) {
+                if (referral.hasIdentifier()) {
+                    val serviceRequest = awsServiceRequest.get(referral.identifier)
+                    if (serviceRequest != null) awsBundleProvider.updateReference(
+                        referral,
+                        serviceRequest.identifierFirstRep,
+                        serviceRequest
+                    )
+                }
+            }
+        }
         for (participant in newEpisodeOfCare.team) {
             if (participant.hasIdentifier()) {
                 val dr = awsCareTeam.search(TokenParam()
@@ -127,6 +141,25 @@ class AWSEpisodeOfCare(val messageProperties: MessageProperties, val awsClient: 
                 val dr = awsPractitioner.get(newEpisodeOfCare.careManager.identifier)
                 if (dr != null) {
                     awsBundleProvider.updateReference(newEpisodeOfCare.careManager,dr.identifierFirstRep,dr)
+                }
+            }
+        }
+        if (newEpisodeOfCare.hasDiagnosis()) {
+            for(diagnosis in newEpisodeOfCare.diagnosis) {
+                if (diagnosis.hasCondition()) {
+                    if (diagnosis.condition.hasType() && diagnosis.condition.hasIdentifier()) {
+                        when(diagnosis.condition.type) {
+                            "Condition" -> {
+                                val condition = awsCondition.get(diagnosis.condition.identifier)
+                                if (condition != null) awsBundleProvider.updateReference(
+                                    diagnosis.condition,
+                                    condition.identifierFirstRep,
+                                    condition
+                                )
+                                break
+                            }
+                        }
+                    }
                 }
             }
         }

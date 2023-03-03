@@ -27,6 +27,7 @@ class AWSCarePlan(val messageProperties: MessageProperties, val awsClient: IGene
                   val awsPractitioner: AWSPractitioner,
                   val awsPatient: AWSPatient,
                   val awsCareTeam: AWSCareTeam,
+                  val awsCondition: AWSCondition,
                   val awsBundleProvider: AWSBundle
 ) {
 
@@ -61,11 +62,57 @@ class AWSCarePlan(val messageProperties: MessageProperties, val awsClient: IGene
         return resources
     }
     fun create(newCarePlan: CarePlan, bundle: Bundle?): MethodOutcome? {
-
+        var response: MethodOutcome? = null
         val duplicateCheck = search(TokenParam().setValue(newCarePlan.identifierFirstRep.value))
         if (duplicateCheck.size>0) throw UnprocessableEntityException("A CarePlan with this identifier already exists.")
-
+        val updatedCarePlan = updateReferences(newCarePlan, bundle)
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .create()
+                    .resource(updatedCarePlan)
+                    .execute()
+                val carePlan = response.resource as CarePlan
+                val auditEvent = awsAuditEvent.createAudit(carePlan, AuditEvent.AuditEventAction.C)
+                awsAuditEvent.writeAWS(auditEvent)
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
+    fun update(newCarePlan: CarePlan, bundle: Bundle?,theId: IdType?): MethodOutcome? {
         var response: MethodOutcome? = null
+        val updatedCarePlan = updateReferences(newCarePlan, bundle)
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .update()
+                    .resource(updatedCarePlan)
+                    .withId(theId)
+                    .execute()
+                val carePlan = response.resource as CarePlan
+                val auditEvent = awsAuditEvent.createAudit(carePlan, AuditEvent.AuditEventAction.U)
+                awsAuditEvent.writeAWS(auditEvent)
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
+    fun updateReferences(newCarePlan: CarePlan, bundle: Bundle?): CarePlan {
+
+
         if (newCarePlan.hasSubject() && newCarePlan.subject.hasIdentifier()) {
             val patient = awsPatient.get(newCarePlan.subject.identifier)
             if (patient != null) awsBundleProvider.updateReference(newCarePlan.subject, patient.identifierFirstRep, patient)
@@ -119,27 +166,24 @@ class AWSCarePlan(val messageProperties: MessageProperties, val awsClient: IGene
                 }
             }
         }
-
-
-        var retry = 3
-        while (retry > 0) {
-            try {
-                response = awsClient
-                    .create()
-                    .resource(newCarePlan)
-                    .execute()
-                val carePlan = response.resource as CarePlan
-                val auditEvent = awsAuditEvent.createAudit(carePlan, AuditEvent.AuditEventAction.C)
-                awsAuditEvent.writeAWS(auditEvent)
-                break
-            } catch (ex: Exception) {
-                // do nothing
-                log.error(ex.message)
-                retry--
-                if (retry == 0) throw ex
+        if (newCarePlan.hasAddresses()) {
+            for (reference in newCarePlan.addresses) {
+                if (reference.hasType() && reference.hasIdentifier()) {
+                    when(reference.type) {
+                        "Condition" -> {
+                            val condition = awsCondition.get(reference.identifier)
+                            if (condition != null) awsBundleProvider.updateReference(
+                                reference,
+                                condition.identifierFirstRep,
+                                condition
+                            )
+                            break
+                        }
+                    }
+                }
             }
         }
-        return response
+        return newCarePlan
     }
     fun delete(theId: IdType): MethodOutcome? {
         var response: MethodOutcome? = null

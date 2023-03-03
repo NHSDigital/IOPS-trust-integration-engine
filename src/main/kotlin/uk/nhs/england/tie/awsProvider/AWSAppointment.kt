@@ -77,7 +77,7 @@ class AWSAppointment(val messageProperties: MessageProperties, val awsClient: IG
         for (basedOn in newAppointment.basedOn) {
             if (basedOn.hasIdentifier() && basedOn.identifier.hasSystem()) {
                 if (basedOn.identifier.system.equals(FhirSystems.UBRN)) {
-                    val serviceRequest = awsServiceRequest.search(basedOn.identifier)
+                    val serviceRequest = awsServiceRequest.get(basedOn.identifier)
                     if (serviceRequest != null) {
                         val canonical = basedOn.identifier
                         awsBundleProvider.updateReference(basedOn, basedOn.identifier, serviceRequest)

@@ -31,8 +31,8 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
-    fun processQueryString(httpString: String, nhsNumber : TokenParam? ) : String {
-        var queryString = httpString
+    fun processQueryString(httpString: String?, nhsNumber : TokenParam? ) : String? {
+        var queryString: String? = httpString
         if (queryString != null && nhsNumber != null) {
             val params: List<String> = queryString.split("&")
             val newParams = mutableListOf<String>()

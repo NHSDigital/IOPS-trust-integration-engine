@@ -85,7 +85,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
             }
             if (newTask.focus.hasIdentifier() && newTask.focus.identifier.hasSystem()) {
                 if (newTask.focus.identifier.system.equals(FhirSystems.UBRN)) {
-                    val serviceRequest = awsServiceRequest.search(newTask.focus.identifier)
+                    val serviceRequest = awsServiceRequest.get(newTask.focus.identifier)
                     if (serviceRequest != null ) {
                         val canonical = newTask.focus.reference
                         awsBundleProvider.updateReference(newTask.focus,newTask.focus.identifier,serviceRequest)

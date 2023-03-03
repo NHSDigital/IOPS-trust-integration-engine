@@ -26,6 +26,7 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
                         val awsEncounter: AWSEncounter,
                         val awsDocumentReference: AWSDocumentReference,
                         val awsBundleProvider : AWSBundle,
+                        val awsCondition: AWSCondition,
                         val awsAuditEvent: AWSAuditEvent) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
@@ -69,8 +70,8 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
                     if (patient != null) awsBundleProvider.updateReference(newServiceRequest.subject, patient.identifierFirstRep, patient )
                 }
         }
-        if (newServiceRequest.hasRequester() && bundle != null) {
-            if (newServiceRequest.requester.resource != null)
+        if (newServiceRequest.hasRequester() ) {
+            if (newServiceRequest.requester.resource != null && bundle != null)
                 if (newServiceRequest.requester.resource is PractitionerRole) {
                     val practitionerRole = awsPractitionerRole.get(newServiceRequest.requester, bundle)
                     if (practitionerRole != null) awsBundleProvider.updateReference(newServiceRequest.requester, practitionerRole.identifierFirstRep,practitionerRole )
@@ -78,10 +79,23 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
                     val practitioner = awsPractitioner.get(newServiceRequest.requester, bundle)
                     if (practitioner != null) awsBundleProvider.updateReference(newServiceRequest.requester, practitioner.identifierFirstRep,practitioner )
                 }
+            if (newServiceRequest.requester.hasIdentifier()) {
+                if (newServiceRequest.requester.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                    newServiceRequest.requester.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                    val dr = awsPractitioner.get(newServiceRequest.requester.identifier)
+                    if (dr != null) {
+                        awsBundleProvider.updateReference(newServiceRequest.requester, dr.identifierFirstRep, dr)
+                    }
+                }
+                if (newServiceRequest.requester.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                    val organisation = awsOrganization.get(newServiceRequest.requester.identifier)
+                    if (organisation != null) awsBundleProvider.updateReference(newServiceRequest.requester, organisation.identifierFirstRep, organisation)
+                }
+            }
         }
-        if (newServiceRequest.hasPerformer() && bundle != null) {
+        if (newServiceRequest.hasPerformer()) {
             for (performer in newServiceRequest.performer) {
-                if (performer.resource != null) {
+                if (performer.resource != null && bundle!=null) {
                     if (performer.resource is PractitionerRole) {
                         val practitionerRole = awsPractitionerRole.get(performer, bundle)
                         if (practitionerRole != null) awsBundleProvider.updateReference(
@@ -125,6 +139,23 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
             val awsEncounter = awsEncounter.createUpdate(encounter)
             if (awsEncounter != null) awsBundleProvider.updateReference(newServiceRequest.encounter, awsEncounter.identifierFirstRep ,awsEncounter)
         }
+        if (newServiceRequest.hasReasonReference()) {
+            for (reference in newServiceRequest.reasonReference) {
+                if (reference.hasType() && reference.hasIdentifier()) {
+                    when(reference.type) {
+                        "Condition" -> {
+                            val condition = awsCondition.get(reference.identifier)
+                            if (condition != null) awsBundleProvider.updateReference(
+                                reference,
+                                condition.identifierFirstRep,
+                                condition
+                            )
+                            break
+                        }
+                    }
+                }
+            }
+        }
         if (newServiceRequest.hasSupportingInfo()) {
             for (reference in newServiceRequest.supportingInfo) {
                 if (reference.resource != null) {
@@ -135,6 +166,19 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
                         if (awsDocumentReference != null) awsBundleProvider.updateReference(reference, awsDocumentReference.identifierFirstRep ,awsDocumentReference)
                     }
                 }
+               /* if (reference.hasType() && reference.hasIdentifier()) {
+                    when(reference.type) {
+                        "Condition" -> {
+                            val condition = awsCondition.get(reference.identifier)
+                            if (condition != null) awsBundleProvider.updateReference(
+                                reference,
+                                condition.identifierFirstRep,
+                                condition
+                            )
+                            break
+                        }
+                    }
+                }*/
             }
         }
         // This v3esquw data should have been processed into propoer resources so remove
@@ -152,7 +196,7 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
         }
     }
 
-    public fun search(identifier: Identifier): ServiceRequest? {
+    public fun get(identifier: Identifier): ServiceRequest? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {

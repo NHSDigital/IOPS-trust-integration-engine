@@ -34,8 +34,10 @@ class ServiceRequestProvider(var awsServiceRequest: AWSServiceRequest,
         @IdParam theId: IdType?,
         theRequestDetails: RequestDetails?
     ): MethodOutcome? {
+        val method = MethodOutcome().setCreated(false)
         if (!serviceRequest.hasIdentifier()) throw UnprocessableEntityException("ServiceRequest identifier is required")
-        return cognitoAuthInterceptor.updatePost(theRequest,serviceRequest)
+        method.resource = awsServiceRequest.createUpdate(serviceRequest,null)
+        return method
     }
 
 }

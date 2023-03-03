@@ -29,13 +29,12 @@ class CarePlanProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
         theRequestDetails: RequestDetails?
     ): MethodOutcome? {
         if (!carePlan.hasIdentifier()) throw UnprocessableEntityException("CarePlan identifier is required")
-        return cognitoAuthInterceptor.updatePost(theRequest,carePlan)
+        return awsCarePlan.update(carePlan,null,theId)
     }
     @Create
     fun create(theRequest: HttpServletRequest, @ResourceParam carePlan: CarePlan): MethodOutcome? {
         if (!carePlan.hasIdentifier()) throw UnprocessableEntityException("CarePlan identifier is required")
         return awsCarePlan.create(carePlan,null)
-
     }
 
     @Read
