@@ -774,10 +774,10 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         var examplesPOSTServiceRequest = LinkedHashMap<String,Example?>()
         examplesPOSTServiceRequest["Create ServiceRequest"] =
-            Example().value(FHIRExamples().loadExample("Task-formComplete.json",ctx))
+            Example().value(FHIRExamples().loadExample("ServiceRequest-virtualWards.json",ctx))
 
         val examplesPUTServiceRequest= LinkedHashMap<String,Example?>()
-        examplesPUTServiceRequest["Update ServiceRequest"] = Example().value(FHIRExamples().loadExample("Task-formComplete-completed.json",ctx))
+        examplesPUTServiceRequest["Update ServiceRequest"] = Example().value(FHIRExamples().loadExample("ServiceRequest-virtualWards.json",ctx))
 
         var serviceRequestItem = PathItem()
             .post(
