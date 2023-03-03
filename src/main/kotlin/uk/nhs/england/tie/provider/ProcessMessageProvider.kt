@@ -24,6 +24,7 @@ class ProcessMessageProvider(
     val awsEncounter: AWSEncounter,
     val awsBinary: AWSBinary,
     val awsDocumentReference: AWSDocumentReference,
+    val awsCondition: AWSCondition,
     val awsBundle: AWSBundle) {
 
     @Operation(name = "\$process-message", idempotent = true)

@@ -33,7 +33,7 @@ class EpisodeOfCarePlainProvider(var cognitoAuthInterceptor: CognitoAuthIntercep
         @OptionalParam(name = EpisodeOfCare.SP_RES_ID)  resid : StringParam?
     ): Bundle? {
 
-        var queryString = awsPatient.processQueryString(httpRequest.queryString,nhsNumber)
+        val queryString = awsPatient.processQueryString(httpRequest.queryString,nhsNumber)
 
         val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, queryString,"EpisodeOfCare")
         if (resource != null && resource is Bundle) {

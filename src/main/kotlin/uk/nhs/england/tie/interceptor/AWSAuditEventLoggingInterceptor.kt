@@ -8,6 +8,7 @@ import ca.uhn.fhir.rest.api.Constants
 import ca.uhn.fhir.rest.api.EncodingEnum
 import ca.uhn.fhir.rest.api.server.RequestDetails
 import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import ca.uhn.fhir.rest.server.servlet.ServletRequestDetails
 import org.apache.commons.lang3.StringUtils
 import org.hl7.fhir.instance.model.api.IBaseResource
@@ -118,7 +119,11 @@ class AWSAuditEventLoggingInterceptor(
                             if (baseResource is QuestionnaireResponse) {
                                 patientId = baseResource.subject.reference
                             }
-                        } finally {
+                        } catch(ex: Exception) {
+                            val auditEvent =
+                                createAudit(servletRequestDetails.servletRequest, fhirResourceName, patientId, fhirResource)
+                            addAWSOutComeException(auditEvent, ex)
+                           // throw UnprocessableEntityException(ex.message)
                         }
                     }
                 }

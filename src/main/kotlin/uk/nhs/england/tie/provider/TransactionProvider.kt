@@ -25,6 +25,7 @@ class TransactionProvider(
     val awsObservation: AWSObservation,
     val awsDiagnosticReport: AWSDiagnosticReport,
     val awsEncounter: AWSEncounter,
+    val awsCondition: AWSCondition,
     val awsBundle: AWSBundle) {
 
 
@@ -94,6 +95,12 @@ class TransactionProvider(
                         val appointment = awsAppointment.createUpdate(workerResource as Appointment)
                         if (appointment != null) {
                             returnBundle.add(appointment)
+                        }
+                    }
+                    if (workerResource is Condition) {
+                        val condition = awsCondition.createUpdate(workerResource as Condition,bundle)
+                        if (condition != null) {
+                            returnBundle.add(condition)
                         }
                     }
                     if (workerResource is Observation) {

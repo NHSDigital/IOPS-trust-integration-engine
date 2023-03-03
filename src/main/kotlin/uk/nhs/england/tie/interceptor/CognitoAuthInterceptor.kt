@@ -127,7 +127,6 @@ class CognitoAuthInterceptor(val messageProperties: MessageProperties,
                     `is`.close()
                 }
             } catch (ex: FileNotFoundException) {
-                retry--
                 throw ResourceNotFoundException(ex.message)
             } catch (ex: Exception) {
                 retry--
@@ -194,6 +193,8 @@ class CognitoAuthInterceptor(val messageProperties: MessageProperties,
                 } finally {
                     `is`.close()
                 }
+            } catch (ex: FileNotFoundException) {
+                throw ResourceNotFoundException(ex.message)
             } catch (ex: Exception) {
                 retry--
                 if (ex.message != null) {

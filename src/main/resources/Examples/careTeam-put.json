@@ -1,6 +1,6 @@
 {
   "resourceType": "CareTeam",
-  "id": "c4a7c5cb-ea81-4e52-8171-22f11fa5caf0",
+  "id": "0bd736ed-d9d5-44f3-8b93-73c1519191b1",
   "identifier": [
     {
       "value": "a85535c8-a0ba-4bae-bce9-8a245123ad8f"
@@ -18,7 +18,7 @@
       ]
     }
   ],
-  "name": "Mental health crisis plan",
+  "name": "Diabetes Care Team",
   "subject": {
     "reference": "Patient/073eef49-81ee-4c2e-893b-bc2e4efd2630",
     "identifier" : {
@@ -40,7 +40,10 @@
         "display": "Dorothy Dietition"
       },
       "onBehalfOf": {
-        "reference": "Organization/d29a1753-c5df-49a6-8d5d-8b4db4ef941c1"
+        "identifier" : {
+          "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+          "value": "RR8"
+        }
       },
       "period": {
         "end": "2023-03-02T13:34:00+01:00"
@@ -49,10 +52,9 @@
   ],
   "managingOrganization": [
     {
-      "reference": "Organization/d29a1753-c5df-49a6-8d5d-8b4db4ef941c",
       "identifier" : {
         "system": "https://fhir.nhs.uk/Id/ods-organization-code",
-        "value": "RGD"
+        "value": "RR8"
       }
     }
   ]

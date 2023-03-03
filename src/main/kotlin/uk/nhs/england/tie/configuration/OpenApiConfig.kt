@@ -31,7 +31,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
     var MHD = "Documents"
     var FORMS = "Structured Data Capture"
     var APIM = "Security and API Management"
-    var WORKFLOW = "FHIR Workflow"
+    var WORKFLOW = "Workflow"
     var CARE = "Care Team, Episodes and Plans"
     @Bean
     open fun customOpenAPI(
@@ -421,7 +421,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         examples = LinkedHashMap<String,Example?>()
 
         examples.put("Create Diabetes CarePlan",
-            Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Hypertension.json",ctx))
+            Example().value(FHIRExamples().loadExample("CarePlan-Diabetes.json",ctx))
         )
         carePlanItem
             .post(
@@ -540,7 +540,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         examples = LinkedHashMap<String,Example?>()
 
         examples.put("Create Diabetes (virtual ward) Episode",
-            Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Hypertension.json",ctx))
+            Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Diabetes.json",ctx))
         )
         episodeOfCareItem
             .post(
@@ -579,11 +579,11 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                         .style(Parameter.StyleEnum.SIMPLE)
                         .description("The ID of the resource")
                         .schema(StringSchema())
-                        .example("c4a7c5cb-ea81-4e52-8171-22f11fa5caf0")
+                        .example("0bd736ed-d9d5-44f3-8b93-73c1519191b1")
                     )
             )
         val examplesPUT = LinkedHashMap<String,Example?>()
-        examplesPUT.put("Update a Patient Care Team",
+        examplesPUT.put("Update a Patient Care Team (Acute Trust)",
             Example().value(FHIRExamples().loadExample("careTeam-put.json",ctx))
         )
         careTeamItem.put(
@@ -600,7 +600,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .style(Parameter.StyleEnum.SIMPLE)
                     .description("The ID of the resource")
                     .schema(StringSchema())
-                    .example("c4a7c5cb-ea81-4e52-8171-22f11fa5caf0")
+                    .example("0bd736ed-d9d5-44f3-8b93-73c1519191b1")
                 )
                 .requestBody(
                     RequestBody().content(Content()
@@ -669,7 +669,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             )
 
         examples = LinkedHashMap<String,Example?>()
-        examples.put("Create a Patient Care Team",
+        examples.put("Create a Patient Care Team (Acute Trust)",
             Example().value(FHIRExamples().loadExample("careTeam-post.json",ctx))
         )
         careTeamItem
@@ -768,6 +768,57 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
 
         oas.path("/FHIR/R4/QuestionnaireResponse",questionnaireResponseItem)
+
+
+        // ServiceRequest
+
+        var examplesPOSTServiceRequest = LinkedHashMap<String,Example?>()
+        examplesPOSTServiceRequest["Create ServiceRequest"] =
+            Example().value(FHIRExamples().loadExample("Task-formComplete.json",ctx))
+
+        val examplesPUTServiceRequest= LinkedHashMap<String,Example?>()
+        examplesPUTServiceRequest["Update ServiceRequest"] = Example().value(FHIRExamples().loadExample("Task-formComplete-completed.json",ctx))
+
+        var serviceRequestItem = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("Create Service Request")
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesPOSTServiceRequest )
+                                .schema(StringSchema()))
+                    )))
+
+        oas.path("/FHIR/R4/ServiceRequest",serviceRequestItem)
+
+        serviceRequestItem = PathItem()
+        serviceRequestItem.put(
+            Operation()
+                .addTagsItem(WORKFLOW)
+                .summary("Update ServiceRequest")
+                .description("This transaction is used to update a ServiceRequest")
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The ID of the resource")
+                    .schema(StringSchema())
+                    .example("0bd736ed-d9d5-44f3-8b93-73c1519191b1")
+                )
+                .requestBody(
+                    RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesPUTServiceRequest)
+                                .schema(StringSchema()))
+                    )))
+
+        oas.path("/FHIR/R4/ServiceRequest/{id}",serviceRequestItem)
 
 
         var examplesPOSTTask = LinkedHashMap<String,Example?>()
