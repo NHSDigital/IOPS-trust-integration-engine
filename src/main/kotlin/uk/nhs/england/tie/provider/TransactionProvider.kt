@@ -67,7 +67,7 @@ class TransactionProvider(
                                         val entry = awsBundle.findResource(bundle, "Binary", attachment.url)
                                         if (entry != null && entry is Binary) {
                                             val outcome = awsBinary.create(entry)
-                                            if (outcome != null && outcome.resource != null && outcome.resource is Binary)  content.attachment.url = fhirServerProperties.server.baseUrl + "/Binary/" +(outcome.resource as Binary).id
+                                            if (outcome != null && outcome.resource != null && outcome.resource is Binary)  content.attachment.url = fhirServerProperties.server.baseUrl + "/FHIR/R4/Binary/" +(outcome.resource as Binary).id
                                         }
                                     }
                                 }

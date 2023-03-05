@@ -223,7 +223,7 @@ class ProcessMessageProvider(
                                         if (entry != null && entry is Binary) {
                                             val outcome = awsBinary.create(entry)
                                             if (outcome != null && outcome.resource != null && outcome.resource is Binary) {
-                                                content.attachment.url = fhirServerProperties.server.baseUrl + "/Binary/" +(outcome.resource as Binary).id
+                                                content.attachment.url = fhirServerProperties.server.baseUrl + "/FHIR/R4/Binary/" +(outcome.resource as Binary).id
                                                 operationOutcome.issue.add(OperationOutcome.OperationOutcomeIssueComponent()
                                                     .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
                                                     .setCode(OperationOutcome.IssueType.INFORMATIONAL)
