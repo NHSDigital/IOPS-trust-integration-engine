@@ -7,6 +7,7 @@ import ca.uhn.fhir.interceptor.api.Pointcut
 import org.hl7.fhir.instance.model.api.IBaseConformance
 import org.hl7.fhir.r4.model.*
 import uk.nhs.england.tie.configuration.FHIRServerProperties
+import uk.nhs.england.tie.configuration.MessageProperties
 
 
 @Interceptor
@@ -28,16 +29,16 @@ class CapabilityStatementInterceptor(
         val packageExtension = Extension();
         packageExtension.url="openApi"
         packageExtension.extension.add(Extension().setUrl("documentation").setValue(UriType("https://simplifier.net/guide/NHSDigital/Home")))
-        packageExtension.extension.add(Extension().setUrl("description").setValue(StringType("NHS Digital FHIR Implementation Guide")))
+        packageExtension.extension.add(Extension().setUrl("description").setValue(StringType("NHS England FHIR Implementation Guide")))
         apiextension.extension.add(packageExtension)
         cs.extension.add(apiextension)
 
         cs.name = fhirServerProperties.server.name
         cs.software.name = fhirServerProperties.server.name
         cs.software.version = fhirServerProperties.server.version
-        cs.publisher = "NHS Digital"
-        cs.implementation.url = "https://simplifier.net/guide/nhsdigital"
-        cs.implementation.description = "NHS Digital FHIR Implementation Guide"
+        cs.publisher = "NHS England"
+        cs.implementation.url =  fhirServerProperties.server.baseUrl + "/FHIR/R4"
+        cs.implementation.description = "NHS England FHIR Implementation Guide"
     }
 
     fun getResourceComponent(type : String, cs : CapabilityStatement ) : CapabilityStatement.CapabilityStatementRestResourceComponent? {
