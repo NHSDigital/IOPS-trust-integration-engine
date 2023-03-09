@@ -37,7 +37,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
-    fun seach(
+    fun search(
        patient: ReferenceParam?,
        questionnaire : ReferenceParam?,
        status : TokenParam?
