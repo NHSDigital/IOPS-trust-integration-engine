@@ -26,6 +26,7 @@ class TransactionProvider(
     val awsDiagnosticReport: AWSDiagnosticReport,
     val awsEncounter: AWSEncounter,
     val awsCondition: AWSCondition,
+    val awsQuestionnaireResponse: AWSQuestionnaireResponse,
     val awsBundle: AWSBundle) {
 
 
@@ -95,6 +96,12 @@ class TransactionProvider(
                         val appointment = awsAppointment.createUpdate(workerResource as Appointment)
                         if (appointment != null) {
                             returnBundle.add(appointment)
+                        }
+                    }
+                    if (workerResource is QuestionnaireResponse) {
+                        val form = awsQuestionnaireResponse.createUpdate(workerResource as QuestionnaireResponse)
+                        if (form!= null) {
+                            returnBundle.add(form.resource as QuestionnaireResponse)
                         }
                     }
                     if (workerResource is Condition) {
