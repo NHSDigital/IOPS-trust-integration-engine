@@ -14,7 +14,7 @@ management:
 
 fhir:
   server:
-    name: Health Administration Events and Documents
+    name: Orchestration Services
     baseUrl: https://3cdzg7kbj4.execute-api.eu-west-2.amazonaws.com/poc/events
     version: 1.2.7
 
