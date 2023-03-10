@@ -4,8 +4,8 @@ mvn clean install
 docker build -t fhir-tie .
 
 docker tag fhir-tie:latest 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:latest
-docker tag fhir-tie:latest 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:1.2.10
+docker tag fhir-tie:latest 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:1.2.11
 
 docker push 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:latest
 
-docker push 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:1.2.10
+docker push 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:1.2.11

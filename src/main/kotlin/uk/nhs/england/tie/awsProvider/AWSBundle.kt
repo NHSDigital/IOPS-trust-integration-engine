@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.client.api.IGenericClient
 import ca.uhn.fhir.rest.param.TokenParam
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import org.hl7.fhir.r4.model.*
 import org.slf4j.LoggerFactory
@@ -29,7 +30,26 @@ class AWSBundle(val messageProperties: MessageProperties, val awsClient: IGeneri
                 val auditEvent = awsAuditEvent.createAudit(response, AuditEvent.AuditEventAction.C)
                 awsAuditEvent.writeAWS(auditEvent)
                 return response
-                break
+
+            } catch (ex: InvalidRequestException) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 1) {
+                    if (ex.responseBody != null) {
+                        try {
+                            val operation = ctx.newJsonParser().parseResource(ex.responseBody)
+                            if (operation is OperationOutcome && (operation as OperationOutcome).hasIssue()) {
+                                throw UnprocessableEntityException(operation.issueFirstRep.diagnostics)
+                            }
+                        } catch (exNew: Exception) {
+                            throw ex
+                        }
+                    }
+                    throw ex
+                }
+
+
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)

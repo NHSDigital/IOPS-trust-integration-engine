@@ -30,7 +30,6 @@
           ]
         },
         "subject":  {
-          "reference": "Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|9999999999",
           "identifier" : {
             "system": "https://fhir.nhs.uk/Id/nhs-number",
             "value": "9999999999"
@@ -39,7 +38,6 @@
         "receivedTime": "2022-07-13T09:00:00Z",
         "request": [
           {
-            "reference": "ServiceRequest?identifier=https://www.christie.nhs.uk/ehr|LabOrder123456",
             "identifier" : {
               "system": "https://www.christie.nhs.uk/ehr",
               "value": "LabOrder123456"
@@ -48,7 +46,6 @@
         ],
         "collection": {
           "collector": {
-            "reference": "Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|999999",
             "identifier" : {
               "system": "https://fhir.nhs.uk/Id/sds-user-id",
               "value": "999999"
@@ -96,7 +93,10 @@
                 "system": "https://www.christie.nhs.uk/path",
                 "value": "ASCN123456",
                 "assigner": {
-                  "reference": "Organization?identifier=https://fhir.nhs.uk/Id/ods-organization-code|RBV"
+                  "identifier" : {
+                    "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+                    "value": "RBV"
+                  }
                 }
               }
             ],

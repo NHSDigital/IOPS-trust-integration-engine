@@ -51,7 +51,8 @@ class TransactionProvider(
         if (!bundle.type.equals(BundleType.TRANSACTION)) throw UnprocessableEntityException("Payload is not a FHIR Transaction Bundle");
         val transaction = processTransaction(bundle)
 
-        return awsBundle.transaction(transaction)
+       val response = awsBundle.transaction(transaction)
+        return response
     }
 
 
@@ -96,110 +97,8 @@ class TransactionProvider(
                 }
             }
         }
-        logger.info(fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(transaction))
+      //  logger.info(fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToString(transaction))
         return transaction
-
-/*
-val returnBundle = ArrayList<Resource>()
-        if (bundle.hasEntry()) {
-            for (entry in bundle.entry) {
-                if (entry.hasResource()) {
-                    val workerResource = entry.resource
-                    if (workerResource is DocumentReference) {
-                        val document = workerResource as DocumentReference
-                        if (document.hasContent()) {
-                            for(content in document.content) {
-                                if (content.hasAttachment()) {
-                                    val attachment = content.attachment
-                                    if (attachment.hasUrl()) {
-                                        val entry = awsBundle.findResource(bundle, "Binary", attachment.url)
-                                        if (entry != null && entry is Binary) {
-                                            val outcome = awsBinary.create(entry)
-                                            if (outcome != null && outcome.resource != null && outcome.resource is Binary)  content.attachment.url = fhirServerProperties.server.baseUrl + "/FHIR/R4/Binary/" +(outcome.resource as Binary).id
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        val documentReference = awsDocumentReference.createUpdateAWSDocumentReference(
-                            workerResource as DocumentReference, bundle)
-                        if (documentReference != null) {
-                            returnBundle.add(documentReference)
-                        }
-                    }
-                    if (workerResource is ServiceRequest) {
-                        val serviceRequest = awsServiceRequest.createUpdate(workerResource as ServiceRequest,bundle)
-                        if (serviceRequest != null) {
-                            returnBundle.add(serviceRequest)
-                        }
-                    }
-                    if (workerResource is Task) {
-                        val task = awsTask.createUpdate(workerResource as Task,bundle)
-                        if (task != null) {
-                            returnBundle.add(task)
-                        }
-                    }
-                    if (workerResource is Appointment) {
-                        val appointment = awsAppointment.createUpdate(workerResource as Appointment)
-                        if (appointment != null) {
-                            returnBundle.add(appointment)
-                        }
-                    }
-                    if (workerResource is QuestionnaireResponse) {
-                        val form = awsQuestionnaireResponse.createUpdate(workerResource as QuestionnaireResponse)
-                        if (form!= null) {
-                            returnBundle.add(form.resource as QuestionnaireResponse)
-                        }
-                    }
-                    if (workerResource is Condition) {
-                        val condition = awsCondition.createUpdate(workerResource as Condition,bundle)
-                        if (condition != null) {
-                            returnBundle.add(condition)
-                        }
-                    }
-                    if (workerResource is Observation) {
-                        val observation = awsObservation.createUpdate(workerResource as Observation,bundle)
-                        if (observation != null) {
-                            returnBundle.add(observation)
-                        }
-                    }
-                    if (workerResource is DiagnosticReport) {
-                        val tempOperationOutcome = OperationOutcome()
-                        val diagnosticReport = awsDiagnosticReport.createUpdate(workerResource as DiagnosticReport,bundle, tempOperationOutcome)
-                        if (diagnosticReport != null) {
-                            returnBundle.add(diagnosticReport)
-                        }
-                    }
-                    if (workerResource is Specimen) {
-                        val specimen = awsSpecimen.createUpdate(workerResource as Specimen,bundle)
-                        if (specimen != null) {
-                            returnBundle.add(specimen)
-                        }
-                    }
-                    if (workerResource is Consent) {
-                        val consent = awsConsent.createUpdate(workerResource as Consent,bundle)
-                        if (consent != null) {
-                            returnBundle.add(consent)
-                        }
-                    }
-                    if (workerResource is PractitionerRole) {
-                        val practitionerRole = awsPractitionerRole.createUpdate(workerResource as PractitionerRole,bundle)
-                        if (practitionerRole != null ) {
-                            returnBundle.add(practitionerRole as Resource)
-                        }
-                    }
-                    if (workerResource is Encounter) {
-                        val encounter = awsEncounter.createUpdate(workerResource as Encounter)
-                        if (encounter != null ) {
-                            returnBundle.add(encounter as Resource)
-                        }
-                    }
-                }
-            }
-        }
-
- */
-
 
     }
     fun getIdentifier(identifier: Identifier) : String {
