@@ -208,4 +208,54 @@ class AWSCondition(val messageProperties: MessageProperties, val awsClient: IGen
         }
         return response
     }
+
+    fun transform(newCondition: Condition): Resource? {
+        val bundle : Bundle? = null
+        if (newCondition.hasSubject()) {
+
+                if (newCondition.subject.hasIdentifier()) {
+                    val patient = awsPatient.get(newCondition.subject.identifier)
+                    if (patient != null) awsBundleProvider.updateReference(newCondition.subject, patient.identifierFirstRep,patient)
+                }
+        }
+
+
+        if (newCondition.hasAsserter()) {
+            var performer = newCondition.asserter
+
+            if (performer.hasIdentifier()) {
+                if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                    performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                    val dr = awsPractitioner.get(performer.identifier)
+                    if (dr != null) {
+                        awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                    }
+                }
+                if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                    val organisation = awsOrganization.get(performer.identifier)
+                    if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                }
+            }
+        }
+        if (newCondition.hasRecorder()) {
+            var performer = newCondition.recorder
+
+            if (performer.hasIdentifier()) {
+                if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                    performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                    val dr = awsPractitioner.get(performer.identifier)
+                    if (dr != null) {
+                        awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                    }
+                }
+                if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                    val organisation = awsOrganization.get(performer.identifier)
+                    if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                }
+            }
+        }
+        // This v3esquw data should have been processed into propoer resources so remove
+       // newCondition.contained = ArrayList()
+        return newCondition
+    }
 }

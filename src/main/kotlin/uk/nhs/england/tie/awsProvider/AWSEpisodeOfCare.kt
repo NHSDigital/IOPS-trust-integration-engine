@@ -246,4 +246,67 @@ class AWSEpisodeOfCare(val messageProperties: MessageProperties, val awsClient: 
         }
         return response
     }
+
+    fun transform(newEpisodeOfCare: EpisodeOfCare): Resource? {
+        if (newEpisodeOfCare.hasManagingOrganization() && newEpisodeOfCare.managingOrganization.hasIdentifier()) {
+            val organisation = awsOrganization.get(newEpisodeOfCare.managingOrganization.identifier)
+            if (organisation != null) awsBundleProvider.updateReference(newEpisodeOfCare.managingOrganization, organisation.identifierFirstRep, organisation)
+        }
+        if (newEpisodeOfCare.hasPatient() && newEpisodeOfCare.patient.hasIdentifier()) {
+            val patient = awsPatient.get(newEpisodeOfCare.patient.identifier)
+            if (patient != null) awsBundleProvider.updateReference(newEpisodeOfCare.patient, patient.identifierFirstRep, patient)
+        }
+        if (newEpisodeOfCare.hasReferralRequest()) {
+            for (referral in newEpisodeOfCare.referralRequest) {
+                if (referral.hasIdentifier()) {
+                    val serviceRequest = awsServiceRequest.get(referral.identifier)
+                    if (serviceRequest != null) awsBundleProvider.updateReference(
+                        referral,
+                        serviceRequest.identifierFirstRep,
+                        serviceRequest
+                    )
+                }
+            }
+        }
+        for (participant in newEpisodeOfCare.team) {
+            if (participant.hasIdentifier()) {
+                val dr = awsCareTeam.search(TokenParam()
+                    .setSystem(participant.identifier.system)
+                    .setValue(participant.identifier.value))
+                if (dr.size>0 ) {
+                    awsBundleProvider.updateReference(participant,dr.get(0).identifierFirstRep,dr.get(0))
+                }
+            }
+        }
+
+        if (newEpisodeOfCare.hasCareManager() && newEpisodeOfCare.careManager.hasIdentifier()) {
+            if (newEpisodeOfCare.careManager.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                newEpisodeOfCare.careManager.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
+                val dr = awsPractitioner.get(newEpisodeOfCare.careManager.identifier)
+                if (dr != null) {
+                    awsBundleProvider.updateReference(newEpisodeOfCare.careManager,dr.identifierFirstRep,dr)
+                }
+            }
+        }
+        if (newEpisodeOfCare.hasDiagnosis()) {
+            for(diagnosis in newEpisodeOfCare.diagnosis) {
+                if (diagnosis.hasCondition()) {
+                    if (diagnosis.condition.hasType() && diagnosis.condition.hasIdentifier()) {
+                        when(diagnosis.condition.type) {
+                            "Condition" -> {
+                                val condition = awsCondition.get(diagnosis.condition.identifier)
+                                if (condition != null) awsBundleProvider.updateReference(
+                                    diagnosis.condition,
+                                    condition.identifierFirstRep,
+                                    condition
+                                )
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return newEpisodeOfCare
+    }
 }

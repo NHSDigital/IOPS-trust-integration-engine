@@ -234,5 +234,33 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
         return response
     }
 
+    fun transform(newPatient: Patient): Resource? {
+        if (newPatient.hasGeneralPractitioner()) {
+            var surgery : Organization? = null
+            var practitioner : Practitioner? = null
+            for (generalPractitioner in newPatient.generalPractitioner) {
+                if (generalPractitioner.hasIdentifier() ) {
+                    if (generalPractitioner.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                        surgery = awsOrganization.get(generalPractitioner.identifier)
+                        if (surgery != null) awsBundleProvider.updateReference(generalPractitioner, surgery.identifierFirstRep, surgery)
+                    }
+                    if (generalPractitioner.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER) || generalPractitioner.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
+                        practitioner = awsPractitioner.get(generalPractitioner.identifier)
+                        if (practitioner != null) awsBundleProvider.updateReference(generalPractitioner, practitioner.identifierFirstRep, practitioner)
+                    }
+                }
+            }
+        }
+        if (newPatient.hasLink()) {
+            for(linkedPatient in newPatient.link) {
+                if (linkedPatient.hasOther() && linkedPatient.other.hasIdentifier()) {
+                    var awsPatient = get(linkedPatient.other.identifier)
+                    if (awsPatient != null) awsBundleProvider.updateReference(linkedPatient.other,linkedPatient.other.identifier,awsPatient)
+                }
+            }
+        }
+        return newPatient
+    }
+
 
 }

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
+import uk.nhs.england.tie.util.FhirSystems
 import java.util.*
 
 @Component
@@ -113,7 +114,7 @@ class AWSConsent(val messageProperties: MessageProperties, val awsClient: IGener
         }
     }
 
-    public fun search(identifier: Identifier): Consent? {
+    public fun get(identifier: Identifier): Consent? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -202,5 +203,51 @@ class AWSConsent(val messageProperties: MessageProperties, val awsClient: IGener
             }
         }
         return response
+    }
+
+    fun transform(newConsent: Consent): Resource? {
+        if (newConsent.hasPatient()) {
+
+                if (newConsent.patient.hasIdentifier()) {
+                    val patient = awsPatient.get(newConsent.patient.identifier)
+                    if (patient != null) awsBundleProvider.updateReference(newConsent.patient, patient.identifierFirstRep, patient )
+                }
+        }
+        if (newConsent.hasOrganization()) {
+            for (performer in newConsent.organization) {
+                if (performer.hasIdentifier()) {
+                    if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                        performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                        val dr = awsPractitioner.get(performer.identifier)
+                        if (dr != null) {
+                            awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                        }
+                    }
+                    if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                        val organisation = awsOrganization.get(performer.identifier)
+                        if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                    }
+                }
+            }
+        }
+        if (newConsent.hasPerformer()) {
+            for (performer in newConsent.performer) {
+                if (performer.hasIdentifier()) {
+                    if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                        performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                        val dr = awsPractitioner.get(performer.identifier)
+                        if (dr != null) {
+                            awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                        }
+                    }
+                    if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                        val organisation = awsOrganization.get(performer.identifier)
+                        if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                    }
+                }
+            }
+        }
+        return newConsent
+
     }
 }

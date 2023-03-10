@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
+import uk.nhs.england.tie.util.FhirSystems
 
 @Component
 class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClient: IGenericClient,
@@ -184,6 +185,25 @@ class AWSPractitionerRole(val messageProperties: MessageProperties, val awsClien
         } else {
             return create(newPractitionerRole)!!.resource as PractitionerRole
         }
+    }
+
+    fun transform(newPractitionerRole: PractitionerRole): Resource? {
+        if (newPractitionerRole.hasPractitioner() && newPractitionerRole.practitioner.hasIdentifier()) {
+            if (newPractitionerRole.practitioner.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                newPractitionerRole.practitioner.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                val dr = awsPractitioner.get(newPractitionerRole.practitioner.identifier)
+                if (dr != null) {
+                    awsBundle.updateReference(newPractitionerRole.practitioner, dr.identifierFirstRep, dr)
+                }
+            }
+        }
+        if (newPractitionerRole.hasOrganization() && newPractitionerRole.organization.hasIdentifier()) {
+            if (newPractitionerRole.organization.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                val organisation = awsOrganization.get(newPractitionerRole.organization.identifier)
+                if (organisation != null) awsBundle.updateReference(newPractitionerRole.organization, organisation.identifierFirstRep, organisation)
+            }
+        }
+        return newPractitionerRole
     }
 
 

@@ -91,4 +91,8 @@ class AWSPractitioner(val messageProperties: MessageProperties, val awsClient: I
         }
         return response
     }
+
+    fun transform(practitioner: Practitioner): Resource? {
+        return practitioner
+    }
 }

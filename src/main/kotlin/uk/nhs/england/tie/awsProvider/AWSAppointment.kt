@@ -28,6 +28,31 @@ class AWSAppointment(val messageProperties: MessageProperties, val awsClient: IG
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
+    public fun get(identifier: Identifier): Appointment? {
+        var bundle: Bundle? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = awsClient
+                    .search<IBaseBundle>()
+                    .forResource(Appointment::class.java)
+                    .where(
+                        Appointment.IDENTIFIER.exactly()
+                            .systemAndCode(identifier.system, identifier.value)
+                    )
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (bundle == null || !bundle.hasEntry()) return null
+        return bundle.entryFirstRep.resource as Appointment
+    }
 
     fun createUpdate(newAppointment: Appointment): Appointment? {
         var awsBundle: Bundle? = null
@@ -161,5 +186,37 @@ class AWSAppointment(val messageProperties: MessageProperties, val awsClient: IG
             }
         }
         return response
+    }
+
+    fun transform(newAppointment: Appointment): Resource? {
+        for (participant in newAppointment.participant) {
+            if (participant.hasActor() && participant.actor.hasIdentifier()) {
+                if (participant.actor.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                    participant.actor.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
+                    val dr = awsPractitioner.get(participant.actor.identifier)
+                    if (dr != null) {
+                        awsBundleProvider.updateReference(participant.actor,dr.identifierFirstRep,dr)
+                    }
+                }
+                if (participant.actor.identifier.system.equals(FhirSystems.NHS_NUMBER)) {
+                    val patient = awsPatient.get(participant.actor.identifier)
+                    if (patient != null) {
+                        awsBundleProvider.updateReference(participant.actor,patient.identifierFirstRep,patient)
+                    }
+                }
+            }
+        }
+        for (basedOn in newAppointment.basedOn) {
+            if (basedOn.hasIdentifier() && basedOn.identifier.hasSystem()) {
+                if (basedOn.identifier.system.equals(FhirSystems.UBRN)) {
+                    val serviceRequest = awsServiceRequest.get(basedOn.identifier)
+                    if (serviceRequest != null) {
+                        val canonical = basedOn.identifier
+                        awsBundleProvider.updateReference(basedOn, basedOn.identifier, serviceRequest)
+                    }
+                }
+            }
+        }
+        return newAppointment
     }
 }

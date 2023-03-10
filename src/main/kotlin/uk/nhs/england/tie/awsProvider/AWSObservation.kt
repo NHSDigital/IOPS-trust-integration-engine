@@ -224,4 +224,47 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
         }
         return response
     }
+
+    fun transform(newObservation : Observation): Observation {
+        val bundle : Bundle? = null
+        if (newObservation.hasSubject()) {
+                if (newObservation.subject.hasIdentifier()) {
+                    val patient = awsPatient.get(newObservation.subject.identifier)
+                    if (patient != null) awsBundleProvider.updateReference(newObservation.subject, patient.identifierFirstRep,patient)
+                }
+        }
+        if (newObservation.hasEncounter()) {
+                if (newObservation.encounter.hasIdentifier()) {
+                    val encounter = awsEncounter.get(newObservation.encounter.identifier)
+                    if (encounter != null) awsBundleProvider.updateReference(newObservation.encounter, encounter.identifierFirstRep,encounter)
+                }
+        }
+        if (newObservation.hasDerivedFrom()) {
+            for (derived in newObservation.derivedFrom) {
+                if (derived.resource != null && derived.hasIdentifier()) {
+                    val observation = get(derived.identifier)
+                    if (observation != null) awsBundleProvider.updateReference(derived, observation.identifierFirstRep,observation)
+                }
+            }
+        }
+        if (newObservation.hasPerformer()) {
+            for (performer in newObservation.performer) {
+                    if (performer.hasIdentifier()) {
+                        if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                            performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                            val dr = awsPractitioner.get(performer.identifier)
+                            if (dr != null) {
+                                awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                            }
+                        }
+                        if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                            val organisation = awsOrganization.get(performer.identifier)
+                            if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                        }
+                    }
+            }
+
+        }
+        return newObservation
+    }
 }

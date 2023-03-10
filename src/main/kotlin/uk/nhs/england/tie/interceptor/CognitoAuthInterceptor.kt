@@ -1,6 +1,7 @@
 package uk.nhs.england.tie.interceptor
 
 import ca.uhn.fhir.context.FhirContext
+import ca.uhn.fhir.rest.api.EncodingEnum
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.client.api.IClientInterceptor
 import ca.uhn.fhir.rest.client.api.IHttpRequest
@@ -374,4 +375,23 @@ class CognitoAuthInterceptor(val messageProperties: MessageProperties,
             throw UnprocessableEntityException(ex.message)
         }
     }
+
+    private fun getErrorStreamMessage(conn: HttpURLConnection, ex: Exception) : String? {
+        if (conn.errorStream == null) return ex.message
+        val `is` = InputStreamReader(conn.errorStream)
+        try {
+            val rd = BufferedReader(`is`)
+            val resource: Resource = ctx.newJsonParser().parseResource(IOUtils.toString(rd)) as Resource
+            if (resource != null && resource is org.hl7.fhir.r4.model.OperationOutcome) {
+                return resource.issueFirstRep.diagnostics
+            }
+        }
+        catch (exOther: Exception) {
+            throw ex
+        } finally {
+            `is`.close()
+        }
+        return ex.message
+    }
+
 }

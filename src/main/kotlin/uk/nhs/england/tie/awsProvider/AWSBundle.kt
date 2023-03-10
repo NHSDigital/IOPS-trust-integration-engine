@@ -1,16 +1,44 @@
 package uk.nhs.england.tie.awsProvider
 
-import org.hl7.fhir.r4.model.Bundle
-import org.hl7.fhir.r4.model.DomainResource
-import org.hl7.fhir.r4.model.Extension
-import org.hl7.fhir.r4.model.Identifier
-import org.hl7.fhir.r4.model.Reference
-import org.hl7.fhir.r4.model.Resource
+import ca.uhn.fhir.context.FhirContext
+import ca.uhn.fhir.rest.api.MethodOutcome
+import ca.uhn.fhir.rest.client.api.IGenericClient
+import ca.uhn.fhir.rest.param.TokenParam
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
+import org.hl7.fhir.r4.model.*
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
+import uk.nhs.england.tie.configuration.MessageProperties
 
 @Component
-class AWSBundle {
+class AWSBundle(val messageProperties: MessageProperties, val awsClient: IGenericClient,
+                val awsAuditEvent: AWSAuditEvent,
+                @Qualifier("R4") val ctx: FhirContext
+) {
+    private val log = LoggerFactory.getLogger("FHIRAudit")
+    fun transaction(bundle: Bundle): Bundle? {
+        var response: Bundle? = null
 
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .transaction().withBundle(bundle).execute()
+
+                val auditEvent = awsAuditEvent.createAudit(response, AuditEvent.AuditEventAction.C)
+                awsAuditEvent.writeAWS(auditEvent)
+                return response
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
     fun filterResources(bundle: Bundle, resourceType : String): List<Resource> {
         val resource = ArrayList<Resource>()
 

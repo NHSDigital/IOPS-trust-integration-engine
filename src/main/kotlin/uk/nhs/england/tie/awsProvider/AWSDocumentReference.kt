@@ -100,13 +100,40 @@ class AWSDocumentReference(val messageProperties: MessageProperties, val awsClie
         ) {
             val documentReference = awsBundle.entryFirstRep.resource as DocumentReference
             // Dont update for now - just return aws DocumentReference
-            return updateDocumentReference(documentReference, newDocumentReference)!!.resource as DocumentReference
+            return update(documentReference, newDocumentReference)!!.resource as DocumentReference
         } else {
-            return createDocumentReference(newDocumentReference)!!.resource as DocumentReference
+            return create(newDocumentReference)!!.resource as DocumentReference
         }
     }
 
-    private fun updateDocumentReference(documentReference: DocumentReference, newDocumentReference: DocumentReference): MethodOutcome? {
+    public fun get(identifier: Identifier): DocumentReference? {
+        var bundle: Bundle? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = awsClient
+                    .search<IBaseBundle>()
+                    .forResource(DocumentReference::class.java)
+                    .where(
+                        DocumentReference.IDENTIFIER.exactly()
+                            .systemAndCode(identifier.system, identifier.value)
+                    )
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (bundle == null || !bundle.hasEntry()) return null
+        return bundle.entryFirstRep.resource as DocumentReference
+    }
+
+
+    private fun update(documentReference: DocumentReference, newDocumentReference: DocumentReference): MethodOutcome? {
         var response: MethodOutcome? = null
 
         var retry = 3
@@ -128,7 +155,7 @@ class AWSDocumentReference(val messageProperties: MessageProperties, val awsClie
 
     }
 
-    private fun createDocumentReference(newDocumentReference: DocumentReference): MethodOutcome? {
+    private fun create(newDocumentReference: DocumentReference): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
 
@@ -151,5 +178,39 @@ class AWSDocumentReference(val messageProperties: MessageProperties, val awsClie
             }
         }
         return response
+    }
+
+    fun transform(newDocumentReference: DocumentReference): Resource? {
+        if (newDocumentReference.hasCustodian() && newDocumentReference.getCustodian().hasIdentifier()) {
+            val organisation = awsOrganization.get(newDocumentReference.custodian.identifier)
+            if (organisation != null) awsBundleProvider.updateReference(newDocumentReference.custodian, organisation.identifierFirstRep, organisation)
+        }
+        // Patient
+        if (newDocumentReference.hasSubject()) {
+            if (newDocumentReference.subject.hasIdentifier()) {
+                val patient = awsPatient.get(newDocumentReference.subject.identifier)
+                if (patient != null) awsBundleProvider.updateReference(newDocumentReference.subject, patient.identifierFirstRep, patient )
+            }
+        }
+        if (newDocumentReference.hasContext() && newDocumentReference.context.hasEncounter()) {
+            //TODO
+        }
+        // Author
+        for (participant in newDocumentReference.author) {
+            if (participant.hasIdentifier()) {
+                if (participant.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                    participant.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                    val dr = awsPractitioner.get(participant.identifier)
+                    if (dr != null) {
+                        awsBundleProvider.updateReference(participant, dr.identifierFirstRep, dr)
+                    }
+                }
+                if (participant.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                    val organisation = awsOrganization.get(participant.identifier)
+                    if (organisation != null) awsBundleProvider.updateReference(participant, organisation.identifierFirstRep, organisation)
+                }
+            }
+        }
+        return newDocumentReference
     }
 }

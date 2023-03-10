@@ -91,4 +91,8 @@ class AWSOrganization(val messageProperties: MessageProperties, val awsClient: I
         }
         return response
     }
+
+    fun transform(organization: Organization): Resource? {
+        return organization
+    }
 }

@@ -83,7 +83,7 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
             }
         }
         if (newMedicationDispense.hasAuthorizingPrescription() && newMedicationDispense.authorizingPrescriptionFirstRep.hasIdentifier()) {
-            val medicationRequest = awsMedicationRequest.getMedicationRequest(newMedicationDispense.authorizingPrescriptionFirstRep.identifier)
+            val medicationRequest = awsMedicationRequest.get(newMedicationDispense.authorizingPrescriptionFirstRep.identifier)
             if (medicationRequest != null) {
                 awsBundleProvider.updateReference(newMedicationDispense.authorizingPrescriptionFirstRep,
                     medicationRequest.identifierFirstRep,medicationRequest)
@@ -96,7 +96,7 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
             val domainResource = newMedicationDispense.authorizingPrescriptionFirstRep.resource as MedicationRequest
             if (domainResource.hasIdentifier()) {
                 val medicationRequest =
-                    awsMedicationRequest.getMedicationRequest(domainResource.identifierFirstRep)
+                    awsMedicationRequest.get(domainResource.identifierFirstRep)
                 if (medicationRequest != null) {
                     awsBundleProvider.updateReference(newMedicationDispense.authorizingPrescriptionFirstRep,
                         medicationRequest.identifierFirstRep,medicationRequest)
@@ -113,13 +113,13 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
         ) {
             val medicationDispense = awsBundle.entryFirstRep.resource as MedicationDispense
             // Dont update for now - just return aws MedicationDispense
-            return updateMedicationDispense(medicationDispense, newMedicationDispense)!!.resource as MedicationDispense
+            return update(medicationDispense, newMedicationDispense)!!.resource as MedicationDispense
         } else {
-            return createMedicationDispense(newMedicationDispense)!!.resource as MedicationDispense
+            return create(newMedicationDispense)!!.resource as MedicationDispense
         }
     }
 
-    private fun updateMedicationDispense(medicationDispense: MedicationDispense, newMedicationDispense: MedicationDispense): MethodOutcome? {
+    private fun update(medicationDispense: MedicationDispense, newMedicationDispense: MedicationDispense): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
         for (identifier in newMedicationDispense.identifier) {
@@ -159,7 +159,7 @@ class AWSMedicationDispense(val messageProperties: MessageProperties, val awsCli
 
     }
 
-    private fun createMedicationDispense(newMedicationDispense: MedicationDispense): MethodOutcome? {
+    private fun create(newMedicationDispense: MedicationDispense): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
 

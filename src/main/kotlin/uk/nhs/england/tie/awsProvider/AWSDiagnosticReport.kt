@@ -139,11 +139,11 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
             // Dont update for now - just return aws DiagnosticReport
             return updateDiagnosticReport(diagnosticReport, newDiagnosticReport)!!.resource as DiagnosticReport
         } else {
-            return createDiagnosticReport(newDiagnosticReport)!!.resource as DiagnosticReport
+            return create(newDiagnosticReport)!!.resource as DiagnosticReport
         }
     }
 
-    public fun getDiagnosticReport(identifier: Identifier): DiagnosticReport? {
+    public fun get(identifier: Identifier): DiagnosticReport? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -208,7 +208,7 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
 
     }
 
-    private fun createDiagnosticReport(newDiagnosticReport: DiagnosticReport): MethodOutcome? {
+    private fun create(newDiagnosticReport: DiagnosticReport): MethodOutcome? {
 
         var response: MethodOutcome? = null
 
@@ -231,5 +231,43 @@ class AWSDiagnosticReport(val messageProperties: MessageProperties, val awsClien
             }
         }
         return response
+    }
+
+    fun transform(newDiagnosticReport: DiagnosticReport): Resource? {
+        val bundle : Bundle? = null
+        if (newDiagnosticReport.hasSubject()) {
+                if (newDiagnosticReport.subject.hasIdentifier()) {
+                    val patient = awsPatient.get(newDiagnosticReport.subject.identifier)
+                    if (patient != null) awsBundleProvider.updateReference(newDiagnosticReport.subject, patient.identifierFirstRep,patient)
+                }
+        }
+        if (newDiagnosticReport.hasPerformer()) {
+            for (performer in newDiagnosticReport.performer) {
+                if (performer.hasIdentifier()) {
+                    if (performer.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                        performer.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                        val dr = awsPractitioner.get(performer.identifier)
+                        if (dr != null) {
+                            awsBundleProvider.updateReference(performer, dr.identifierFirstRep, dr)
+                        }
+                    }
+                    if (performer.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                        val organisation = awsOrganization.get(performer.identifier)
+                        if (organisation != null) awsBundleProvider.updateReference(performer, organisation.identifierFirstRep, organisation)
+                    }
+                }
+            }
+
+        }
+        if (newDiagnosticReport.hasEncounter()) {
+
+            if (newDiagnosticReport.encounter.hasIdentifier()) {
+                val encounter = awsEncounter.get(newDiagnosticReport.encounter.identifier)
+                if (encounter != null) awsBundleProvider.updateReference(newDiagnosticReport.encounter, encounter.identifierFirstRep,encounter)
+            }
+        }
+        // This v3esquw data should have been processed into propoer resources so remove
+       // newDiagnosticReport.contained = ArrayList()
+        return newDiagnosticReport
     }
 }

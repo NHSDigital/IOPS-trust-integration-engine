@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
+import uk.nhs.england.tie.util.FhirSystems
 import java.util.*
 
 @Component
@@ -21,6 +22,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
                            val awsOrganization: AWSOrganization,
                            val awsBundleProvider : AWSBundle,
                            val awsPractitionerRole: AWSPractitionerRole,
+                           val awsPractitioner: AWSPractitioner,
                            val awsPatient: AWSPatient,
                            val awsAuditEvent: AWSAuditEvent) {
 
@@ -84,7 +86,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
         }
     }
 
-    public fun getMedicationRequest(identifier: Identifier): MedicationRequest? {
+    public fun get(identifier: Identifier): MedicationRequest? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -173,5 +175,25 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
             }
         }
         return response
+    }
+
+    fun transform(newMedicationRequest: MedicationRequest): Resource? {
+        if (newMedicationRequest.hasSubject()) {
+
+                if (newMedicationRequest.subject.hasIdentifier()) {
+                    val patient = awsPatient.get(newMedicationRequest.subject.identifier)
+                    if (patient != null) awsBundleProvider.updateReference(newMedicationRequest.subject, patient.identifierFirstRep,patient)
+                }
+        }
+        if (newMedicationRequest.hasRequester() && newMedicationRequest.requester.hasIdentifier()) {
+            if (newMedicationRequest.requester.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                newMedicationRequest.requester.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
+                val dr = awsPractitioner.get(newMedicationRequest.requester.identifier)
+                if (dr != null) {
+                    awsBundleProvider.updateReference(newMedicationRequest.requester, dr.identifierFirstRep, dr)
+                }
+            }
+        }
+        return newMedicationRequest
     }
 }

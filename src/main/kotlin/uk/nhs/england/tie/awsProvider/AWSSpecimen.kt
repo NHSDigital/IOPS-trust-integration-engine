@@ -82,7 +82,7 @@ class AWSSpecimen(val messageProperties: MessageProperties, val awsClient: IGene
         }
     }
 
-    public fun getSpecimen(identifier: Identifier): Specimen? {
+    public fun get(identifier: Identifier): Specimen? {
         var bundle: Bundle? = null
         var retry = 3
         while (retry > 0) {
@@ -171,5 +171,15 @@ class AWSSpecimen(val messageProperties: MessageProperties, val awsClient: IGene
             }
         }
         return response
+    }
+
+    fun transform(newSpecimen: Specimen): Resource? {
+        if (newSpecimen.hasSubject()) {
+                if (newSpecimen.subject.hasIdentifier()) {
+                    val patient = awsPatient.get(newSpecimen.subject.identifier)
+                    if (patient != null) awsBundleProvider.updateReference(newSpecimen.subject, patient.identifierFirstRep,patient)
+                }
+        }
+        return newSpecimen
     }
 }

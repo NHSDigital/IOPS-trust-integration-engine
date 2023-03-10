@@ -109,6 +109,32 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
         }
         return list
     }
+
+    public fun get(identifier: Identifier): QuestionnaireResponse? {
+        var bundle: Bundle? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = awsClient
+                    .search<IBaseBundle>()
+                    .forResource(QuestionnaireResponse::class.java)
+                    .where(
+                        QuestionnaireResponse.IDENTIFIER.exactly()
+                            .systemAndCode(identifier.system, identifier.value)
+                    )
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (bundle == null || !bundle.hasEntry()) return null
+        return bundle.entryFirstRep.resource as QuestionnaireResponse
+    }
    
     fun createUpdate(newQuestionnaireResponse: QuestionnaireResponse): MethodOutcome? {
         var awsBundle: Bundle? = null
@@ -267,8 +293,62 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
             }
         }
         return response
-
     }
-    
+
+    fun transform(newQuestionnaireResponse: QuestionnaireResponse): Resource? {
+        if (newQuestionnaireResponse.hasSource()) {
+
+            // Bit crude refactor?
+
+            if (newQuestionnaireResponse.source.hasIdentifier()) {
+                val awsPatient = awsPatient.get(newQuestionnaireResponse.source.identifier)
+                if (awsPatient != null) {
+                    awsBundleProvider.updateReference(
+                        newQuestionnaireResponse.source,
+                        awsPatient.identifierFirstRep,
+                        awsPatient
+                    )
+                } else {
+                    val awsOrganization = awsOrganization.get(newQuestionnaireResponse.source.identifier)
+                    if (awsOrganization != null) {
+                        awsBundleProvider.updateReference(
+                            newQuestionnaireResponse.source,
+                            awsOrganization.identifierFirstRep,
+                            awsOrganization
+                        )
+                    } else {
+                        val awsPractitioner = awsPractitioner.get(newQuestionnaireResponse.source.identifier)
+                        if (awsPractitioner != null) {
+                            awsBundleProvider.updateReference(
+                                newQuestionnaireResponse.source,
+                                awsPractitioner.identifierFirstRep,
+                                awsPractitioner
+                            )
+                        }
+                    }
+                }
+
+            }
+        }
+
+        if (newQuestionnaireResponse.hasSubject()) {
+            if (newQuestionnaireResponse.subject.hasIdentifier()) {
+                val awsPatient = awsPatient.get(newQuestionnaireResponse.subject.identifier)
+                if (awsPatient != null) awsBundleProvider.updateReference(
+                    newQuestionnaireResponse.subject,
+                    awsPatient.identifierFirstRep,
+                    awsPatient
+                )
+            }
+        }
+        if (newQuestionnaireResponse.hasEncounter()) {
+            if (newQuestionnaireResponse.encounter.hasIdentifier()) {
+                val encounter = awsEncounter.get(newQuestionnaireResponse.encounter.identifier)
+                if (encounter != null) awsBundleProvider.updateReference(newQuestionnaireResponse.encounter, encounter.identifierFirstRep,encounter)
+            }
+        }
+        return newQuestionnaireResponse
+    }
+
 
 }

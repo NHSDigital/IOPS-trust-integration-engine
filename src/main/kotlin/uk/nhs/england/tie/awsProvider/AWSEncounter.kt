@@ -226,4 +226,33 @@ class AWSEncounter(val messageProperties: MessageProperties, val awsClient: IGen
         }
         return response
     }
+
+    fun transform(newEncounter: Encounter): Resource? {
+        if (newEncounter.hasServiceProvider() && newEncounter.getServiceProvider().hasIdentifier()) {
+            val organisation = awsOrganization.get(newEncounter.serviceProvider.identifier)
+            if (organisation != null) awsBundleProvider.updateReference(newEncounter.serviceProvider, organisation.identifierFirstRep, organisation)
+        }
+        if (newEncounter.hasSubject() && newEncounter.subject.hasIdentifier()) {
+            val patient = awsPatient.get(newEncounter.subject.identifier)
+            if (patient != null) awsBundleProvider.updateReference(newEncounter.subject, patient.identifierFirstRep, patient)
+        }
+        for (participant in newEncounter.participant) {
+            if (participant.hasIndividual() && participant.individual.hasIdentifier()) {
+                if (participant.individual.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
+                    participant.individual.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)) {
+                    val dr = awsPractitioner.get(participant.individual.identifier)
+                    if (dr != null) {
+                        awsBundleProvider.updateReference(participant.individual,dr.identifierFirstRep,dr)
+                    }
+                }
+                if (participant.individual.identifier.system.equals(FhirSystems.ODS_CODE)) {
+                    val org = awsOrganization.get(participant.individual.identifier)
+                    if (org != null) {
+                        awsBundleProvider.updateReference(participant.individual,org.identifierFirstRep,org)
+                    }
+                }
+            }
+        }
+        return newEncounter
+    }
 }

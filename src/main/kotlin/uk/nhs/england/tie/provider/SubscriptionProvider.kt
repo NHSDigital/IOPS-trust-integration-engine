@@ -23,7 +23,7 @@ class SubscriptionProvider(
 
     }
     @Delete
-    fun delate(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
+    fun delete(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
 
         return awsSubscription.delete(theId)
 
