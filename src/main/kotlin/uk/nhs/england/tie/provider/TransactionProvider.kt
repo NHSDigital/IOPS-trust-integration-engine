@@ -28,6 +28,7 @@ class TransactionProvider(
     val awsOrganization: AWSOrganization,
     val awsTask : AWSTask,
     val awsBinary: AWSBinary,
+    val awsCommunication: AWSCommunication,
     val awsDocumentReference: AWSDocumentReference,
     val awsAppointment: AWSAppointment,
     val awsSpecimen: AWSSpecimen,
@@ -110,6 +111,27 @@ class TransactionProvider(
             when (entry.resource.resourceType.name) {
                 "Condition" -> {
                     entry.resource = awsCondition.transform(entry.resource as Condition)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Condition).hasIdentifier()) {
+                        val result = awsCondition.get((entry.resource as Condition).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as Condition).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Condition/" + getId(result.idElement)
+                        }
+                    }
+                }
+                "Communication" -> {
+                    entry.resource = awsCommunication.transform(entry.resource as Communication)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Communication).hasIdentifier()) {
+                        val result = awsCommunication.get((entry.resource as Communication).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as Communication).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Communication/" + getId(result.idElement)
+                        }
+                    }
                 }
                 "DiagnosticReport" -> {
                     entry.resource = awsDiagnosticReport.transform(entry.resource as DiagnosticReport)

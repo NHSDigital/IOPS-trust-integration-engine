@@ -27,6 +27,7 @@ class FHIRR4RestfulServer(
     val encounterProvider: EncounterProvider,
     val communicationRequestProvider: CommunicationRequestProvider,
     val communicationProvider: CommunicationProvider,
+    val communicationPlainProvider: CommunicationPlainProvider,
     val questionnaireResponseProvider: QuestionnaireResponseProvider,
     val taskProvider: TaskProvider,
     val binaryProvider: BinaryProvider,
@@ -56,6 +57,7 @@ class FHIRR4RestfulServer(
         registerProvider(encounterProvider)
         registerProvider(communicationRequestProvider)
         registerProvider(communicationProvider)
+        registerProvider(communicationPlainProvider)
         registerProvider(questionnaireResponseProvider)
         registerProvider(taskProvider)
 

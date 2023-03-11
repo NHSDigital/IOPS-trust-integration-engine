@@ -23,7 +23,7 @@ import uk.nhs.england.tie.util.FHIRExamples
 
 
 @Configuration
-open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
+class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
     var PIX = "Patient Demographics Events"
     var ADT = "Admission and Discharge Events (ADT)"
@@ -33,8 +33,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
     var APIM = "Security and API Management"
     var WORKFLOW = "Workflow"
     var CARE = "Care Team, Episodes and Plans"
+    var COMMUNICATION = "Care Communication"
     @Bean
-    open fun customOpenAPI(
+    fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
        // restfulServer: FHIRR4RestfulServer
     ): OpenAPI? {
@@ -116,14 +117,14 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 .description("[HL7 FHIR Administration Module](https://www.hl7.org/fhir/R4/administration-module.html) \n"
                         + " [IHE DCTM](https://www.ihe.net/uploadedFiles/Documents/PCC/IHE_PCC_Suppl_DCTM.pdf)")
         )
-        /*
+
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name("UKCore Alert Communication Management")
+                .name(COMMUNICATION)
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE mACM](https://www.ihe.net/uploadedFiles/Documents/ITI/IHE_ITI_Suppl_mACM.pdf)")
         )
-*/
+
 /*
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
@@ -200,7 +201,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         // Patient
 
 
-        var patientItem = PathItem()
+        val patientItem = PathItem()
             .put(
                 Operation()
                     .addTagsItem(PIX)
@@ -320,7 +321,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         val binExampl = LinkedHashMap<String,Example?>()
         binExampl.put("Hello World",Example().value("Hello World"))
-        var binaryItem = PathItem()
+        val binaryItem = PathItem()
             .post(
                 Operation()
                     .addTagsItem(MHD)
@@ -354,7 +355,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         examplesDSUB["Document Notification (FHIR Document STU3)"] =
             Example().value(FHIRExamples().loadExample("documentReference-TOC-Notification.json",ctx))
 
-        var documentReferenceItem = PathItem()
+        val documentReferenceItem = PathItem()
             .post(
                 Operation()
                     .addTagsItem(MHD)
@@ -494,7 +495,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         // Case Load Episode of Care
 
-        var episodeOfCareItem = PathItem()
+        val episodeOfCareItem = PathItem()
             .get(
                 Operation()
                     .addTagsItem(CARE)
@@ -537,11 +538,10 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
             )
 
-        examples = LinkedHashMap<String,Example?>()
+        examples = LinkedHashMap()
 
-        examples.put("Create Diabetes (virtual ward) Episode",
+        examples["Create Diabetes (virtual ward) Episode"] =
             Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Diabetes.json",ctx))
-        )
         episodeOfCareItem
             .post(
                 Operation()
@@ -583,9 +583,8 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )
             )
         val examplesPUT = LinkedHashMap<String,Example?>()
-        examplesPUT.put("Update a Patient Care Team (Acute Trust)",
+        examplesPUT["Update a Patient Care Team (Acute Trust)"] =
             Example().value(FHIRExamples().loadExample("careTeam-put.json",ctx))
-        )
         careTeamItem.put(
             Operation()
                 .addTagsItem(CARE)
@@ -668,10 +667,9 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
             )
 
-        examples = LinkedHashMap<String,Example?>()
-        examples.put("Create a Patient Care Team (Acute Trust)",
+        examples = LinkedHashMap()
+        examples["Create a Patient Care Team (Acute Trust)"] =
             Example().value(FHIRExamples().loadExample("careTeam-post.json",ctx))
-        )
         careTeamItem
             .post(
                 Operation()
@@ -691,14 +689,57 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         oas.path("/FHIR/R4/CareTeam",careTeamItem)
 
 
-
-        /*
         val communicationRequestItem = PathItem()
+
+        communicationRequestItem.put(
+            Operation()
+                .addTagsItem(COMMUNICATION)
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The ID of the resource")
+                    .schema(StringSchema())
+
+                )
+                .requestBody(
+                    RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .schema(StringSchema()))
+                    )))
+        communicationRequestItem.delete(Operation()
+            .addTagsItem(COMMUNICATION)
+            .summary("Delete Communication")
+            .responses(getApiResponses())
+            .addParametersItem(Parameter()
+                .name("id")
+                .`in`("path")
+                .required(false)
+                .style(Parameter.StyleEnum.SIMPLE)
+                .description("The id of the Communication to be deleted")
+                .schema(StringSchema())))
+
+        communicationRequestItem.get(Operation()
+            .addTagsItem(COMMUNICATION)
+            .summary("Read Communication")
+            .responses(getApiResponses())
+            .addParametersItem(Parameter()
+                .name("id")
+                .`in`("path")
+                .required(false)
+                .style(Parameter.StyleEnum.SIMPLE)
+                .description("The id of the Communication")
+                .schema(StringSchema())))
+
+        oas.path("/FHIR/R4/Communication/{id}",communicationRequestItem)
+
+        val communicationItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem("UKCore Alert Communication Management")
-                    .summary("Mobile Report Alert (IHE ITI-84)")
-                    .description("This doesn't send the actual text message, that is down to system format (e.g. SMS, email, etc)")
+                    .addTagsItem(COMMUNICATION)
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
                         .addMediaType("application/fhir+json",
@@ -706,15 +747,25 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .examples(examplesCommunicationRequest)
                                 .schema(StringSchema()))
                     )))
-
-        oas.path("/FHIR/R4/CommunicationRequest",communicationRequestItem)
-
-        val communicationItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem("UKCore Alert Communication Management")
-                    .summary("Query Report Alert (IHE ITI-85)")
-                    .description("This allows querying results of a CommunicationRequest")
+                    .addTagsItem(COMMUNICATION)
+                    .addParametersItem(Parameter()
+                        .name("patient")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Message subject")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("patient:identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Message subject `https://fhir.nhs.uk/Id/nhs-number|{nhsNumber}` ")
+                        .schema(StringSchema())
+                    )
                     .addParametersItem(Parameter()
                         .name("recipient")
                         .`in`("query")
@@ -743,12 +794,11 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             )
 
         oas.path("/FHIR/R4/Communication",communicationItem)
-*/
+
         val examplesQuestionnaireResponse = LinkedHashMap<String,Example?>()
 
-        examplesQuestionnaireResponse .put("Simple Blood Pressure",
+        examplesQuestionnaireResponse["Simple Blood Pressure"] =
             Example().value(FHIRExamples().loadExample("QuestionnaireResponse-patient-simple-blood-pressure.json",ctx))
-        )
         val questionnaireResponseItem = PathItem()
             .post(
                 Operation()
@@ -772,7 +822,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         // ServiceRequest
 
-        var examplesPOSTServiceRequest = LinkedHashMap<String,Example?>()
+        val examplesPOSTServiceRequest = LinkedHashMap<String,Example?>()
         examplesPOSTServiceRequest["Create ServiceRequest"] =
             Example().value(FHIRExamples().loadExample("ServiceRequest-virtualWards.json",ctx))
 
@@ -821,7 +871,7 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         oas.path("/FHIR/R4/ServiceRequest/{id}",serviceRequestItem)
 
 
-        var examplesPOSTTask = LinkedHashMap<String,Example?>()
+        val examplesPOSTTask = LinkedHashMap<String,Example?>()
         examplesPOSTTask["Form Complete Task"] =
             Example().value(FHIRExamples().loadExample("Task-formComplete.json",ctx))
 
@@ -947,14 +997,15 @@ open class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         return oas
     }
 
-    fun getApiResponses() : ApiResponses {
+    fun getApiResponses(): ApiResponses {
 
         val response200 = ApiResponse()
         response200.description = "OK"
         val exampleList = mutableListOf<Example>()
         exampleList.add(Example().value("{}"))
-        response200.content = Content().addMediaType("application/fhir+json", MediaType().schema(StringSchema()._default("{}"))).addMediaType("application/fhir+xml", MediaType().schema(StringSchema()._default("")))
-        val apiResponses = ApiResponses().addApiResponse("200",response200)
-        return apiResponses
+        response200.content =
+            Content().addMediaType("application/fhir+json", MediaType().schema(StringSchema()._default("{}")))
+                .addMediaType("application/fhir+xml", MediaType().schema(StringSchema()._default("")))
+        return ApiResponses().addApiResponse("200", response200)
     }
 }
