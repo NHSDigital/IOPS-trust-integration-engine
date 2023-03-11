@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.client.api.IGenericClient
 import ca.uhn.fhir.rest.param.TokenParam
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
 import org.hl7.fhir.r4.model.CommunicationRequest
@@ -144,6 +145,10 @@ class AWSCommunication (val messageProperties: MessageProperties, val awsClient:
     fun create(newCommunication: Communication): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
+        if (newCommunication.hasIdentifier()) {
+            val communication = get(newCommunication.identifierFirstRep);
+            if (communication != null) throw UnprocessableEntityException("A communication with this identifier already exists")
+        }
         val communication = transform(newCommunication)
         var retry = 3
         while (retry > 0) {

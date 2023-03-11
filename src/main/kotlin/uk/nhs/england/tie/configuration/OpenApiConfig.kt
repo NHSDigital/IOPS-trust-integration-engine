@@ -270,9 +270,12 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         oas.path("/FHIR/R4/Encounter",encounterItem)
 
-        val examplesCommunicationRequest = LinkedHashMap<String,Example?>()
-        examplesCommunicationRequest.put("ITI-84 Appointment Reminder",
-            Example().value(FHIRExamples().loadExample("CommunicationRequest.json",ctx))
+        val examplesCommunication = LinkedHashMap<String,Example?>()
+        examplesCommunication.put("Appointment Reminder",
+            Example().value(FHIRExamples().loadExample("Communication-Appointment.json",ctx))
+        )
+        examplesCommunication.put("COVID-19 Alert",
+            Example().value(FHIRExamples().loadExample("Communication-COVID19.json",ctx))
         )
 
         val examples2 = LinkedHashMap<String,Example?>()
@@ -744,7 +747,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .requestBody(RequestBody().content(Content()
                         .addMediaType("application/fhir+json",
                             MediaType()
-                                .examples(examplesCommunicationRequest)
+                                .examples(examplesCommunication)
                                 .schema(StringSchema()))
                     )))
             .get(

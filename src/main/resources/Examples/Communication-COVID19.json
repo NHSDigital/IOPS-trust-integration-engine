@@ -1,0 +1,39 @@
+{
+  "resourceType": "Communication",
+  "id": "14256fa0-59c3-45b8-b363-e2ed10af93d2",
+  "identifier": [
+    {
+      "value": "62b6fa3e-6c17-414f-b161-1125b1a5319e"
+    }
+  ],
+  "status": "completed",
+  "payload": [
+    {
+      "contentString": "You have been in close contact with someone who has COVID-19"
+    }
+  ],
+  "sent" : "2022-06-20T07:28:30.404Z",
+  "subject": {
+    "type": "Patient",
+    "identifier": {
+      "system": "https://fhir.nhs.uk/Id/nhs-number",
+      "value": "9333333333"
+    }
+  },
+  "sender": {
+    "type": "Organization",
+    "identifier": {
+      "system": "https://fhir.nhs.uk/Id/ods-organization-code",
+      "value": "X26"
+    }
+  },
+  "recipient": [
+    {
+      "type": "Patient",
+      "identifier": {
+        "system": "https://fhir.nhs.uk/Id/nhs-number",
+        "value": "9333333333"
+      }
+    }
+  ]
+}
