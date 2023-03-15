@@ -46,8 +46,16 @@ class QuestionnaireResponseProvider(
         if (questionnaire == null || questionnaire.size==0) throw UnprocessableEntityException("Questionnaire not found");
         for(item in questionnaireResponse.item) {
            var questionItem = getItem(questionnaire[0], item.linkId)
-
-            if (questionItem.hasCode() && item.answerFirstRep != null) {
+            var generateObservation = false;
+            if (questionItem.hasExtension()) {
+                for (extension in questionItem.extension) {
+                    if (extension.url.equals("http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-observationExtract")
+                        && extension.value is BooleanType) {
+                        generateObservation = (extension.value as BooleanType).value
+                    }
+                }
+            }
+            if (generateObservation && questionItem.hasCode() && item.answerFirstRep != null) {
                 var observation = Observation()
                 observation.status = Observation.ObservationStatus.FINAL;
                 if (questionnaireResponse.hasIdentifier()) {

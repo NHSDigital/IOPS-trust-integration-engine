@@ -821,6 +821,29 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
 
         oas.path("/FHIR/R4/QuestionnaireResponse",questionnaireResponseItem)
+        val examplesQuestionnaireResponseExtract = LinkedHashMap<String,Example?>()
+
+        examplesQuestionnaireResponseExtract["Vital Signs"] =
+            Example().value(FHIRExamples().loadExample("QuestionnaireResponse-vital-signs.json",ctx))
+        val questionnaireResponseExtractItem = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem(FORMS)
+                    .summary("Convert to Observation transactions")
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesQuestionnaireResponseExtract )
+                                .schema(StringSchema()))
+                        .addMediaType("application/fhir+xml",
+                            MediaType()
+                                .schema(StringSchema()))
+                    )))
+
+
+        oas.path("/FHIR/R4/QuestionnaireResponse/\$extract",questionnaireResponseExtractItem)
+
 
 
         // ServiceRequest

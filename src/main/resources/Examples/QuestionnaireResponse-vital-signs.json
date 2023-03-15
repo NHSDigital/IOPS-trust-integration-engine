@@ -1,0 +1,93 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "41e304d8-4783-4bf6-9fe1-d3e8a08f7fb6",
+  "questionnaire": "https://example.fhir.nhs.uk/Questionnaire/118227000",
+  "status": "completed",
+  "subject": {
+    "reference": "Patient/0cd25141-2987-49d2-a038-2f8946e3b8b4",
+    "display": "FREDRICA SMITH"
+  },
+  "authored": "2023-03-15T12:33:45.809Z",
+  "item": [
+    {
+      "linkId": "/927981000000106",
+      "text": "Baseline SpO2 (oxygen saturation at periphery)",
+      "answer": [
+        {
+          "valueDecimal": 98
+        }
+      ]
+    },
+    {
+      "linkId": "/27113001",
+      "text": "Weight Measured",
+      "answer": [
+        {
+          "valueQuantity": {
+            "value": 81.155,
+            "unit": "kilogram",
+            "system": "http://unitsofmeasure.org",
+            "code": "kg"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "/363811000",
+      "text": "Head circumference",
+      "answer": [
+        {
+          "valueDecimal": 55
+        }
+      ]
+    },
+    {
+      "linkId": "/50373000",
+      "text": "Body height",
+      "answer": [
+        {
+          "valueQuantity": {
+            "value": 179,
+            "unit": "centimeters"
+          }
+        }
+      ]
+    },
+    {
+      "linkId": "/276885007",
+      "text": "Body temperature",
+      "answer": [
+        {
+          "valueDecimal": 36.787
+        }
+      ]
+    },
+    {
+      "linkId": "/364075005",
+      "text": "Heart rate",
+      "answer": [
+        {
+          "valueDecimal": 107
+        }
+      ]
+    },
+    {
+      "linkId": "/86290005",
+      "text": "Resp rate",
+      "answer": [
+        {
+          "valueDecimal": 20
+        }
+      ]
+    },
+    {
+      "linkId": "/60621009",
+      "text": "BMI",
+      "answer": [
+        {
+          "valueDecimal": 21
+        }
+      ]
+    }
+  ]
+}
