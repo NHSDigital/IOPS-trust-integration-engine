@@ -13,6 +13,7 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import org.apache.commons.io.IOUtils
 import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.r4.model.OperationOutcome
+import org.hl7.fhir.r4.model.OperationOutcome.OperationOutcomeIssueComponent
 import org.hl7.fhir.r4.model.Resource
 import org.slf4j.LoggerFactory
 import uk.nhs.england.tie.configuration.MessageProperties
@@ -59,12 +60,25 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
                                             issue.severity.equals(OperationOutcome.IssueSeverity.WARNING)
                                         )) {
                                 log.debug(issue.diagnostics)
-                                fail(validationResult)
+                                if (isFail(issue))
+                                    fail(validationResult)
                             }
                         }
                     }
                 }
             }
+        }
+        return true
+    }
+
+    private fun isFail(issue: OperationOutcomeIssueComponent): Boolean {
+        if (issue.hasDiagnostics()) {
+            if (issue.diagnostics.contains("'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire"))
+                return false
+        }
+        if (issue.hasLocation()) {
+            if (issue.location.get(0).value.contains("Questionnaire.meta"))
+                return false
         }
         return true
     }

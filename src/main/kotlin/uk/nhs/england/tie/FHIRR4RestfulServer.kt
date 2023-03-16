@@ -23,24 +23,30 @@ class FHIRR4RestfulServer(
     public val processMessageProvider: ProcessMessageProvider,
     val transactionProvider: TransactionProvider,
     val patientProvider: PatientProvider,
+    val patientSearchProvider: PatientSearchProvider,
+    val observationSearchProvider: ObservationSearchProvider,
    // val subscriptionProvider: SubscriptionProvider,
-    val encounterProvider: EncounterProvider,
+
+
     val communicationRequestProvider: CommunicationRequestProvider,
     val communicationProvider: CommunicationProvider,
     val communicationPlainProvider: CommunicationPlainProvider,
+
     val questionnaireResponseProvider: QuestionnaireResponseProvider,
+    private val questionnaireProvider: QuestionnaireProvider,
+    private val questionnairePlainProvider: QuestionnairePlainProvider,
+
     val taskProvider: TaskProvider,
     val binaryProvider: BinaryProvider,
     val documentReferenceProvider: DocumentReferenceProvider,
+
     val careTeamProvider: CareTeamProvider,
     val careTeamPlainProvider: CareTeamPlainProvider,
-
+    val encounterProvider: EncounterProvider,
     val episodeOfCarePlainProvider: EpisodeOfCarePlainProvider,
     val episodeOfCareProvider: EpisodeOfCareProvider,
-
     val carePlanPlainProvider: CarePlanPlainProvider,
     val carePlanProvider: CarePlanProvider,
-
     val serviceRequestProvider: ServiceRequestProvider
 
 ) : RestfulServer(fhirContext) {
@@ -53,26 +59,29 @@ class FHIRR4RestfulServer(
         registerProvider(processMessageProvider)
         registerProvider(transactionProvider)
         registerProvider(patientProvider)
+        registerProvider(patientSearchProvider)
+        registerProvider(observationSearchProvider)
        // registerProvider(subscriptionProvider)
-        registerProvider(encounterProvider)
+
         registerProvider(communicationRequestProvider)
         registerProvider(communicationProvider)
         registerProvider(communicationPlainProvider)
+
         registerProvider(questionnaireResponseProvider)
-        registerProvider(taskProvider)
+        registerProvider(questionnaireProvider)
+        registerProvider(questionnairePlainProvider)
 
         registerProvider(binaryProvider)
         registerProvider(documentReferenceProvider)
 
+        registerProvider(taskProvider)
         registerProvider(careTeamProvider)
         registerProvider(careTeamPlainProvider)
-
         registerProvider(episodeOfCareProvider)
         registerProvider(episodeOfCarePlainProvider)
-
+        registerProvider(encounterProvider)
         registerProvider(carePlanProvider)
         registerProvider(carePlanPlainProvider)
-
         registerProvider(serviceRequestProvider)
 
         registerInterceptor(CapabilityStatementInterceptor(this.fhirContext,fhirServerProperties))

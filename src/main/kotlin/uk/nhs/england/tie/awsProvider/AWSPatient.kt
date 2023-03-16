@@ -33,22 +33,30 @@ class AWSPatient (val messageProperties: MessageProperties, val awsClient: IGene
 
     fun processQueryString(httpString: String?, nhsNumber : TokenParam? ) : String? {
         var queryString: String? = httpString
-        if (queryString != null && nhsNumber != null) {
+        if (queryString != null) {
             val params: List<String> = queryString.split("&")
             val newParams = mutableListOf<String>()
-            if (nhsNumber.value == null || nhsNumber.system == null) throw UnprocessableEntityException("Malformed patient identifier parameter both system and value are required.")
-            val patient = get(Identifier().setSystem(nhsNumber.system).setValue(nhsNumber.value))
-            if (patient != null) {
-                for (param in params) {
-                    val name: String = param.split("=").get(0)
-                    if (java.net.URLDecoder.decode(name, StandardCharsets.UTF_8.name()).equals("patient:identifier")) {
-                        newParams.add( "patient=" + patient.idElement.idPart)
-                    } else {
-                        newParams.add(param)
-                    }
-                }
-                queryString = newParams.joinToString("&")
+            var patient : Patient? = null
+            if (nhsNumber != null) {
+                if (nhsNumber.value == null || nhsNumber.system == null) throw UnprocessableEntityException("Malformed patient identifier parameter both system and value are required.")
+                patient = get(Identifier().setSystem(nhsNumber.system).setValue(nhsNumber.value))
             }
+
+            for (param in params) {
+                val name: String = param.split("=").get(0)
+                val value: String = param.split("=").get(1)
+                if (patient != null && java.net.URLDecoder.decode(name, StandardCharsets.UTF_8.name()).equals("patient:identifier")) {
+                    newParams.add( "patient=" + patient.idElement.idPart)
+                } else if (name.equals("_content")) {
+                    newParams.add("title=$value")
+                } else if (name.equals("_total")) {
+                    //newParams.add("title=$value")
+                }
+                else {
+                    newParams.add(param)
+                }
+            }
+            queryString = newParams.joinToString("&")
         }
         return queryString
     }

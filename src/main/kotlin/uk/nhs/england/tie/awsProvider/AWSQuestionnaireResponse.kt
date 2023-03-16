@@ -37,6 +37,27 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
 
+    fun update(questionnaireResponse: QuestionnaireResponse, internalId: IdType?): MethodOutcome? {
+        var response: MethodOutcome? = null
+
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient!!.update().resource(questionnaireResponse).withId(internalId).execute()
+                log.info("AWS QuestionnaireResponse updated " + response.resource.idElement.value)
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+
+    }
+
+
     fun search(
        patient: ReferenceParam?,
        questionnaire : ReferenceParam?,
@@ -244,7 +265,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
             return create(newQuestionnaireResponse)
         }
     }
-    private fun create(newQuestionnaireResponse: QuestionnaireResponse): MethodOutcome? {
+    fun create(newQuestionnaireResponse: QuestionnaireResponse): MethodOutcome? {
         val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
 
