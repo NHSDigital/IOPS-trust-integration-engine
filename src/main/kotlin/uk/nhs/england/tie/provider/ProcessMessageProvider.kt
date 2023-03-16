@@ -27,7 +27,7 @@ class ProcessMessageProvider(
     val awsCondition: AWSCondition,
     val awsBundle: AWSBundle) {
 
-    @Operation(name = "\$process-message", idempotent = true)
+    @Operation(name = "\$process-message", idempotent = true, canonicalUrl = "http://hl7.org/fhir/OperationDefinition/MessageHeader-process-message")
     fun expand(@ResourceParam bundle:Bundle,
              ): OperationOutcome? {
         val filterMessageHeaders = awsBundle.filterResources(bundle,"MessageHeader")

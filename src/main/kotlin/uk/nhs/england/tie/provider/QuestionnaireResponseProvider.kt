@@ -36,7 +36,7 @@ class QuestionnaireResponseProvider(
         return awsQuestionnaireResponse.createUpdate(questionnaireResponse)
     }
 
-    @Operation(name = "\$extract", idempotent = true)
+    @Operation(name = "\$extract", idempotent = true, canonicalUrl = "http://hl7.org/fhir/uv/sdc/OperationDefinition/QuestionnaireResponse-extract")
     fun expand(@ResourceParam questionnaireResponse: QuestionnaireResponse
     ): Bundle {
         var bundle: Bundle = Bundle();

@@ -829,7 +829,8 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             .post(
                 Operation()
                     .addTagsItem(FORMS)
-                    .summary("Convert to Observation transactions")
+                    .summary("Form Data Extraction")
+                    .description("[Form Data Extraction](http://hl7.org/fhir/uv/sdc/extraction.html) Allows data captured in a QuestionnaireResponse to be extracted and used to create or update other FHIR resources - allowing the data to be more easily searched, compared and used by other FHIR systems")
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
                         .addMediaType("application/fhir+json",
@@ -840,7 +841,6 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                             MediaType()
                                 .schema(StringSchema()))
                     )))
-
 
         oas.path("/FHIR/R4/QuestionnaireResponse/\$extract",questionnaireResponseExtractItem)
 
