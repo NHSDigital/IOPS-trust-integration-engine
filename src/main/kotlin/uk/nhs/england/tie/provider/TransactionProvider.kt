@@ -32,6 +32,7 @@ class TransactionProvider(
     val awsDocumentReference: AWSDocumentReference,
     val awsAppointment: AWSAppointment,
     val awsSpecimen: AWSSpecimen,
+    val awsSchedule: AWSSchedule,
     val awsConsent: AWSConsent,
     val awsPractitionerRole: AWSPractitionerRole,
     val awsObservation: AWSObservation,
@@ -109,6 +110,18 @@ class TransactionProvider(
     fun lookupIdentifiers(entry : BundleEntryComponent) : BundleEntryComponent {
         if (entry.hasResource()) {
             when (entry.resource.resourceType.name) {
+                "Appointment" -> {
+                    entry.resource = awsAppointment.transform(entry.resource as Appointment)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Appointment).hasIdentifier()) {
+                        val result = awsAppointment.get((entry.resource as Appointment).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as Appointment).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Appointment/" + getId(result.idElement)
+                        }
+                    }
+                }
                 "Condition" -> {
                     entry.resource = awsCondition.transform(entry.resource as Condition)
                     if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Condition).hasIdentifier()) {
@@ -130,6 +143,18 @@ class TransactionProvider(
                             entry.request.method = Bundle.HTTPVerb.PUT
                             entry.request.url =
                                 "Communication/" + getId(result.idElement)
+                        }
+                    }
+                }
+                "Consent" -> {
+                    entry.resource = awsConsent.transform(entry.resource as Consent)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Consent).hasIdentifier()) {
+                        val result = awsConsent.get((entry.resource as Consent).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as Consent).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Consent/" + getId(result.idElement)
                         }
                     }
                 }
@@ -169,6 +194,30 @@ class TransactionProvider(
                         }
                     }
                 }
+                "EpisodeOfCare" -> {
+                    entry.resource = awsEpisodeOfCare.transform(entry.resource as EpisodeOfCare)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as EpisodeOfCare).hasIdentifier()) {
+                        val result = awsEpisodeOfCare.get((entry.resource as EpisodeOfCare).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as EpisodeOfCare).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "EpisodeOfCare/" + getId(result.idElement)
+                        }
+                    }
+                }
+                "MedicationRequest" -> {
+                    entry.resource = awsMedicationRequest.transform(entry.resource as MedicationRequest)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as MedicationRequest).hasIdentifier()) {
+                        val result = awsMedicationRequest.get((entry.resource as MedicationRequest).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as MedicationRequest).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "MedicationRequest/" + getId(result.idElement)
+                        }
+                    }
+                }
                 "Observation" -> {
                     entry.resource = awsObservation.transform(entry.resource as Observation)
                     if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Observation).hasIdentifier()) {
@@ -181,6 +230,56 @@ class TransactionProvider(
                         }
                     }
                 }
+                "Organization" -> {
+                    entry.resource = awsOrganization.transform(entry.resource as Organization)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Organization).hasIdentifier()) {
+                        val result = awsOrganization.get((entry.resource as Organization).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as Organization).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Organization/" + getId(result.idElement)
+                        }
+                    }
+                }
+
+                "Patient" -> {
+                    entry.resource = awsPatient.transform(entry.resource as Patient)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Patient).hasIdentifier()) {
+                        val result = awsPatient.get((entry.resource as Patient).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as Patient).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Patient/" + getId(result.idElement)
+                        }
+                    }
+                }
+                "Practitioner" -> {
+                    entry.resource = awsPractitioner.transform(entry.resource as Practitioner)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Practitioner).hasIdentifier()) {
+                        val result = awsPractitioner.get((entry.resource as Practitioner).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as Practitioner).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Practitioner/" + getId(result.idElement)
+                        }
+                    }
+                }
+                "PractitionerRole" -> {
+                    entry.resource = awsPractitionerRole.transform(entry.resource as PractitionerRole)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as PractitionerRole).hasIdentifier()) {
+                        val result = awsPractitionerRole.get((entry.resource as PractitionerRole).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as PractitionerRole).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "PractitionerRole/" + getId(result.idElement)
+                        }
+                    }
+                }
+
                 "QuestionnaireResponse" -> {
                     entry.resource = awsQuestionnaireResponse.transform(entry.resource as QuestionnaireResponse)
                     if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as QuestionnaireResponse).hasIdentifier()) {
@@ -205,27 +304,15 @@ class TransactionProvider(
                         }
                     }
                 }
-                "Task" -> {
-                    entry.resource = awsTask.transform(entry.resource as Task)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Task).hasIdentifier()) {
-                        val result = awsTask.get((entry.resource as Task).identifierFirstRep)
+                "Schedule" -> {
+                    entry.resource = awsSchedule.transform(entry.resource as Schedule)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Schedule).hasIdentifier()) {
+                        val result = awsSchedule.get((entry.resource as Schedule).identifierFirstRep)
                         if (result != null) {
-                            (entry.resource as Task).id = getId(result.idElement)
+                            (entry.resource as Schedule).id = getId(result.idElement)
                             entry.request.method = Bundle.HTTPVerb.PUT
                             entry.request.url =
-                                "Task/" + getId(result.idElement)
-                        }
-                    }
-                }
-                "Appointment" -> {
-                    entry.resource = awsAppointment.transform(entry.resource as Appointment)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Appointment).hasIdentifier()) {
-                        val result = awsAppointment.get((entry.resource as Appointment).identifierFirstRep)
-                        if (result != null) {
-                            (entry.resource as Appointment).id = getId(result.idElement)
-                            entry.request.method = Bundle.HTTPVerb.PUT
-                            entry.request.url =
-                                "Appointment/" + getId(result.idElement)
+                                "Schedule/" + getId(result.idElement)
                         }
                     }
                 }
@@ -241,90 +328,22 @@ class TransactionProvider(
                         }
                     }
                 }
-                "Consent" -> {
-                    entry.resource = awsConsent.transform(entry.resource as Consent)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Consent).hasIdentifier()) {
-                        val result = awsConsent.get((entry.resource as Consent).identifierFirstRep)
+                "Task" -> {
+                    entry.resource = awsTask.transform(entry.resource as Task)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Task).hasIdentifier()) {
+                        val result = awsTask.get((entry.resource as Task).identifierFirstRep)
                         if (result != null) {
-                            (entry.resource as Consent).id = getId(result.idElement)
+                            (entry.resource as Task).id = getId(result.idElement)
                             entry.request.method = Bundle.HTTPVerb.PUT
                             entry.request.url =
-                                "Consent/" + getId(result.idElement)
+                                "Task/" + getId(result.idElement)
                         }
                     }
                 }
-                "Practitioner" -> {
-                    entry.resource = awsPractitioner.transform(entry.resource as Practitioner)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Practitioner).hasIdentifier()) {
-                        val result = awsPractitioner.get((entry.resource as Practitioner).identifierFirstRep)
-                        if (result != null) {
-                            (entry.resource as Practitioner).id = getId(result.idElement)
-                            entry.request.method = Bundle.HTTPVerb.PUT
-                            entry.request.url =
-                                "Practitioner/" + getId(result.idElement)
-                        }
-                    }
-                }
-                "Patient" -> {
-                    entry.resource = awsPatient.transform(entry.resource as Patient)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Patient).hasIdentifier()) {
-                        val result = awsPatient.get((entry.resource as Patient).identifierFirstRep)
-                        if (result != null) {
-                            (entry.resource as Patient).id = getId(result.idElement)
-                            entry.request.method = Bundle.HTTPVerb.PUT
-                            entry.request.url =
-                                "Patient/" + getId(result.idElement)
-                        }
-                    }
-                }
-                "Organization" -> {
-                    entry.resource = awsOrganization.transform(entry.resource as Organization)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Organization).hasIdentifier()) {
-                        val result = awsOrganization.get((entry.resource as Organization).identifierFirstRep)
-                        if (result != null) {
-                            (entry.resource as Organization).id = getId(result.idElement)
-                            entry.request.method = Bundle.HTTPVerb.PUT
-                            entry.request.url =
-                                "Organization/" + getId(result.idElement)
-                        }
-                    }
-                }
-                "PractitionerRole" -> {
-                    entry.resource = awsPractitionerRole.transform(entry.resource as PractitionerRole)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as PractitionerRole).hasIdentifier()) {
-                        val result = awsPractitionerRole.get((entry.resource as PractitionerRole).identifierFirstRep)
-                        if (result != null) {
-                            (entry.resource as PractitionerRole).id = getId(result.idElement)
-                            entry.request.method = Bundle.HTTPVerb.PUT
-                            entry.request.url =
-                                "PractitionerRole/" + getId(result.idElement)
-                        }
-                    }
-                }
-                "MedicationRequest" -> {
-                    entry.resource = awsMedicationRequest.transform(entry.resource as MedicationRequest)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as MedicationRequest).hasIdentifier()) {
-                        val result = awsMedicationRequest.get((entry.resource as MedicationRequest).identifierFirstRep)
-                        if (result != null) {
-                            (entry.resource as MedicationRequest).id = getId(result.idElement)
-                            entry.request.method = Bundle.HTTPVerb.PUT
-                            entry.request.url =
-                                "MedicationRequest/" + getId(result.idElement)
-                        }
-                    }
-                }
-                "EpisodeOfCare" -> {
-                    entry.resource = awsEpisodeOfCare.transform(entry.resource as EpisodeOfCare)
-                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as EpisodeOfCare).hasIdentifier()) {
-                        val result = awsEpisodeOfCare.get((entry.resource as EpisodeOfCare).identifierFirstRep)
-                        if (result != null) {
-                            (entry.resource as EpisodeOfCare).id = getId(result.idElement)
-                            entry.request.method = Bundle.HTTPVerb.PUT
-                            entry.request.url =
-                                "EpisodeOfCare/" + getId(result.idElement)
-                        }
-                    }
-                }
+
+
+
+
             }
 
         }
