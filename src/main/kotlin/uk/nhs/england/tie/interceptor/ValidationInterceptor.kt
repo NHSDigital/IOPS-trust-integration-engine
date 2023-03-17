@@ -75,9 +75,15 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
         if (issue.hasDiagnostics()) {
             if (issue.diagnostics.contains("'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire"))
                 return false
+            if (issue.diagnostics.contains("so no validation can be performed against the base questionnaire"))
+                return false
+            if (issue.diagnostics.contains("Canonical URLs must be absolute URLs if they are not fragment references (Questionnaire"))
+                return false
         }
         if (issue.hasLocation()) {
             if (issue.location.get(0).value.contains("Questionnaire.meta"))
+                return false
+            if (issue.location.get(0).value.contains("QuestionnaireResponse.meta"))
                 return false
         }
         return true

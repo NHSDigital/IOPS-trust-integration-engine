@@ -33,6 +33,7 @@ class FHIRR4RestfulServer(
     val communicationPlainProvider: CommunicationPlainProvider,
 
     val questionnaireResponseProvider: QuestionnaireResponseProvider,
+    val questionnaireResponsePlainProvider: QuestionnaireResponsePlainProvider,
     private val questionnaireProvider: QuestionnaireProvider,
     private val questionnairePlainProvider: QuestionnairePlainProvider,
 
@@ -43,7 +44,6 @@ class FHIRR4RestfulServer(
     val careTeamProvider: CareTeamProvider,
     val careTeamPlainProvider: CareTeamPlainProvider,
     val encounterProvider: EncounterProvider,
-    val episodeOfCarePlainProvider: EpisodeOfCarePlainProvider,
     val episodeOfCareProvider: EpisodeOfCareProvider,
     val carePlanPlainProvider: CarePlanPlainProvider,
     val carePlanProvider: CarePlanProvider,
@@ -58,9 +58,13 @@ class FHIRR4RestfulServer(
 
         registerProvider(processMessageProvider)
         registerProvider(transactionProvider)
+
         registerProvider(patientProvider)
         registerProvider(patientSearchProvider)
-        registerProvider(observationSearchProvider)
+        registerProvider(episodeOfCareProvider)
+        registerProvider(encounterProvider)
+
+
        // registerProvider(subscriptionProvider)
 
         registerProvider(communicationRequestProvider)
@@ -68,8 +72,10 @@ class FHIRR4RestfulServer(
         registerProvider(communicationPlainProvider)
 
         registerProvider(questionnaireResponseProvider)
+        registerProvider(questionnaireResponsePlainProvider)
         registerProvider(questionnaireProvider)
         registerProvider(questionnairePlainProvider)
+        registerProvider(observationSearchProvider)
 
         registerProvider(binaryProvider)
         registerProvider(documentReferenceProvider)
@@ -77,9 +83,7 @@ class FHIRR4RestfulServer(
         registerProvider(taskProvider)
         registerProvider(careTeamProvider)
         registerProvider(careTeamPlainProvider)
-        registerProvider(episodeOfCareProvider)
-        registerProvider(episodeOfCarePlainProvider)
-        registerProvider(encounterProvider)
+
         registerProvider(carePlanProvider)
         registerProvider(carePlanPlainProvider)
         registerProvider(serviceRequestProvider)

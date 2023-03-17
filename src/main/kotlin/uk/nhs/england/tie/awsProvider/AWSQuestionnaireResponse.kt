@@ -90,12 +90,12 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
                 }
 
                 if (criteria1 == null) {
-                    awsBundle = awsClient!!.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
+                    awsBundle = awsClient.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
                         .returnBundle(Bundle::class.java)
                         .execute()
                 } else {
                     if (criteria2 != null) {
-                        awsBundle = awsClient!!.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
+                        awsBundle = awsClient.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
                             .where(
                                 criteria1
                             )
@@ -103,7 +103,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
                             .returnBundle(Bundle::class.java)
                             .execute()
                     } else {
-                        awsBundle = awsClient!!.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
+                        awsBundle = awsClient.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
                             .where(
                                 criteria1
                             )
@@ -160,34 +160,37 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
     fun createUpdate(newQuestionnaireResponse: QuestionnaireResponse): MethodOutcome? {
         var awsBundle: Bundle? = null
         var response: MethodOutcome? = null
-        if (!newQuestionnaireResponse.hasIdentifier()) throw UnprocessableEntityException("QuestionnaireResponse has no identifier")
+        if (!newQuestionnaireResponse.hasIdentifier()) {
+            // REVISIT throw UnprocessableEntityException("QuestionnaireResponse has no identifier")
+        } else {
 
 
-        var retry = 3
-        while (retry > 0) {
-            try {
+            var retry = 3
+            while (retry > 0) {
+                try {
 
-                awsBundle = awsClient!!.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
-                    .where(
-                        QuestionnaireResponse.IDENTIFIER.exactly()
-                            .systemAndCode(
-                                newQuestionnaireResponse.identifier.system,
-                                newQuestionnaireResponse.identifier.value
-                            )
-                    )
-                    .returnBundle(Bundle::class.java)
-                    .execute()
-                break
-            } catch (ex: Exception) {
-                // do nothing
-                log.error(ex.message)
-                retry--
-                if (retry == 0) throw ex
+                    awsBundle = awsClient!!.search<IBaseBundle>().forResource(QuestionnaireResponse::class.java)
+                        .where(
+                            QuestionnaireResponse.IDENTIFIER.exactly()
+                                .systemAndCode(
+                                    newQuestionnaireResponse.identifier.system,
+                                    newQuestionnaireResponse.identifier.value
+                                )
+                        )
+                        .returnBundle(Bundle::class.java)
+                        .execute()
+                    break
+                } catch (ex: Exception) {
+                    // do nothing
+                    log.error(ex.message)
+                    retry--
+                    if (retry == 0) throw ex
+                }
             }
-        }
-        if (awsBundle != null) {
-            if (awsBundle.hasEntry() && awsBundle.entry.size > 0) {
-                //   throw UnprocessableEntityException("QuestionnaireResponse already exists")
+            if (awsBundle != null) {
+                if (awsBundle.hasEntry() && awsBundle.entry.size > 0) {
+                    //   throw UnprocessableEntityException("QuestionnaireResponse already exists")
+                }
             }
         }
 
@@ -254,7 +257,7 @@ class AWSQuestionnaireResponse (val messageProperties: MessageProperties, val aw
             }
         }
 
-        if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
+        if (awsBundle !== null && awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.resource is QuestionnaireResponse
         ) {

@@ -25,15 +25,15 @@ import uk.nhs.england.tie.util.FHIRExamples
 @Configuration
 class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
-    var PIX = "Patient Demographics Events"
-    var ADT = "Admission and Discharge Events (ADT)"
+
+
     var BUNDLE = "Batch Record Transfer"
     var MHD = "Documents"
     var FORMS = "Structured Data Capture"
-    var APIM = "Security and API Management"
-    var WORKFLOW = "Workflow"
-    var CARE = "Care Team, Episodes and Plans"
-    var COMMUNICATION = "Care Communication"
+    var APIM = "Security"
+    var ADMINISTRATION = "Health Administration"
+    var CARE = "Patient Care Coordination"
+    var COMMUNICATION = "Patient Care Communication"
     @Bean
     fun customOpenAPI(
         fhirServerProperties: FHIRServerProperties,
@@ -71,7 +71,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         )
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name(PIX)
+                .name(ADMINISTRATION)
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE PIXm](https://profiles.ihe.net/ITI/PIXm/) \n"
                         + " [IHE PMIR](https://build.fhir.org/ig/IHE/ITI.PMIR/)")
@@ -87,8 +87,9 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
-                .name(ADT)
-                .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
+                .name(ADMINISTRATION)
+                .description(            "[HL7 FHIR Workflow](http://hl7.org/fhir/R4/workflow-module.html) \n"
+                        + " [HL7 FHIR Structure Data Capture](http://hl7.org/fhir/uv/sdc/workflow.html)"
                        )
         )
         oas.addTagsItem(
@@ -104,13 +105,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     "[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                             + " [IHE MHD ITI-67 and ITI-68](https://profiles.ihe.net/ITI/MHD/ITI-67.html)")
         )
-        oas.addTagsItem(
-            io.swagger.v3.oas.models.tags.Tag()
-                .name(WORKFLOW)
-                .description(
-                    "[HL7 FHIR Workflow](http://hl7.org/fhir/R4/workflow-module.html) \n"
-                            + " [HL7 FHIR Structure Data Capture](http://hl7.org/fhir/uv/sdc/workflow.html)")
-        )
+
         oas.addTagsItem(
             io.swagger.v3.oas.models.tags.Tag()
                 .name(CARE )
@@ -204,7 +199,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val patientItem = PathItem()
             .put(
                 Operation()
-                    .addTagsItem(PIX)
+                    .addTagsItem(ADMINISTRATION)
                     .summary("Add or Revise Patient (IHE ITI-104)")
                     .description("This message is implemented as an HTTP conditional update operation from the Patient Identity Source to the Patient Identifier Cross-reference Manager")
                     .responses(getApiResponses())
@@ -228,7 +223,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
             .post(
                 Operation()
-                    .addTagsItem(PIX)
+                    .addTagsItem(ADMINISTRATION)
                     .summary("Add/Update/Merge Patient (IHE ITI-93)")
                     .description("Note: PMIR suggests using a urn:ihe:iti:pmir:2019:patient-feed FHIR Message. This message contains a FHIR Bundle which holds the http method POST/PUT/DEL and a Patient resource. \n"
                     + "This example API is only showing a FHIR RESTful version")
@@ -253,7 +248,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val encounterItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem(ADT)
+                    .addTagsItem(ADMINISTRATION)
                     .summary("Encounter Event")
                     .description("Note: PMIR suggests using a urn:ihe:iti:pmir:2019:patient-feed FHIR Message. This message contains a FHIR Bundle which holds the http method POST/PUT/DEL and a Patient resource. \n"
                             + "This example API is only showing a FHIR RESTful version")
@@ -498,57 +493,18 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         // Case Load Episode of Care
 
-        val episodeOfCareItem = PathItem()
-            .get(
-                Operation()
-                    .addTagsItem(CARE)
-                    .summary("")
-                    .description("This transaction is used to find a Episode resource.")
-                    .responses(getApiResponses())
-                    .addParametersItem(Parameter()
-                        .name("patient")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("Who episode/stay is for")
-                        .schema(StringSchema())
-                        .example("073eef49-81ee-4c2e-893b-bc2e4efd2630")
-                    )
-                    .addParametersItem(Parameter()
-                        .name("patient:identifier")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("Who episode/stay is for. `https://fhir.nhs.uk/Id/nhs-number|{nhsNumber}` ")
-                        .schema(StringSchema())
-                    )
-                    .addParametersItem(Parameter()
-                        .name("date")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("Time period episode covers")
-                        .schema(StringSchema())
-                    )
-                    .addParametersItem(Parameter()
-                        .name("status")
-                        .`in`("query")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("planned | waitlist | active | onhold | finished | cancelled | entered-in-error")
-                        .schema(StringSchema())
-                    )
 
-            )
+
 
         examples = LinkedHashMap()
 
         examples["Create Diabetes (virtual ward) Episode"] =
             Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Diabetes.json",ctx))
+        val episodeOfCareItem = PathItem()
         episodeOfCareItem
             .post(
                 Operation()
-                    .addTagsItem(CARE)
+                    .addTagsItem(ADMINISTRATION)
                     .summary("")
                     .description("This transaction is used to update or to create a EpisodeOfCare resource.")
                     .responses(getApiResponses())
@@ -802,7 +758,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         examplesQuestionnaireResponse["Simple Blood Pressure"] =
             Example().value(FHIRExamples().loadExample("QuestionnaireResponse-patient-simple-blood-pressure.json",ctx))
-        val questionnaireResponseItem = PathItem()
+        var questionnaireResponseItem = PathItem()
             .post(
                 Operation()
                     .addTagsItem(FORMS)
@@ -818,6 +774,38 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                             MediaType()
                                 .schema(StringSchema()))
                     )))
+            .get(
+                Operation()
+                    .addTagsItem(FORMS)
+                    .summary("Query Form Results")
+                    .description("This allows querying results of a QuestionnaireResponse")
+                    .addParametersItem(Parameter()
+                        .name("patient")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The patient that is the subject of the questionnaire response")
+                        .schema(StringSchema().example("073eef49-81ee-4c2e-893b-bc2e4efd2630"))
+                    )
+                    .addParametersItem(Parameter()
+                        .name("patient:identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who/what is the subject of the questionnaire response. `https://fhir.nhs.uk/Id/nhs-number|{nhsNumber}` ")
+                        .schema(StringSchema())
+                    )
+                    /*    .addParametersItem(Parameter()
+                            .name("questionnaire")
+                            .`in`("query")
+                            .required(false)
+                            .style(Parameter.StyleEnum.SIMPLE)
+                            .description("The questionnaire the answers are provided for")
+                            .schema(StringSchema())
+                            .example("https://example.fhir.nhs.uk/Questionnaire/Simple-Blood-Pressure")
+                        )*/
+                    .responses(getApiResponses())
+            )
 
 
         oas.path("/FHIR/R4/QuestionnaireResponse",questionnaireResponseItem)
@@ -842,8 +830,49 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .schema(StringSchema()))
                     )))
 
+
+
         oas.path("/FHIR/R4/QuestionnaireResponse/\$extract",questionnaireResponseExtractItem)
 
+        // QuestionnaireResponse
+
+
+
+        questionnaireResponseItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(FORMS)
+                    .summary("Read Endpoint")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                    )
+            )
+            .put(
+                Operation()
+                    .addTagsItem(FORMS)
+                    .summary("Read Endpoint")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema()))
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesQuestionnaireResponse )
+                                .schema(StringSchema()))
+                    )))
+
+        oas.path("/FHIR/R4/QuestionnaireResponse/{id}",questionnaireResponseItem)
 
         // Questionnaire
 
@@ -999,7 +1028,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         var serviceRequestItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem(WORKFLOW)
+                    .addTagsItem(ADMINISTRATION)
                     .summary("Create Service Request")
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
@@ -1014,7 +1043,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         serviceRequestItem = PathItem()
         serviceRequestItem.put(
             Operation()
-                .addTagsItem(WORKFLOW)
+                .addTagsItem(ADMINISTRATION)
                 .summary("Update ServiceRequest")
                 .description("This transaction is used to update a ServiceRequest")
                 .responses(getApiResponses())
@@ -1048,7 +1077,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val taskItem = PathItem()
             .put(
                 Operation()
-                    .addTagsItem(WORKFLOW)
+                    .addTagsItem(ADMINISTRATION)
                     .summary("Complete Form Request (Task) - Completed")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
@@ -1068,7 +1097,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
             .post(
                 Operation()
-                    .addTagsItem(WORKFLOW)
+                    .addTagsItem(ADMINISTRATION)
                     .summary("Complete Form Request (Task)")
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
