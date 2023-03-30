@@ -427,7 +427,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 Operation()
                     .addTagsItem(CARE)
                     .summary("")
-                    .description("This transaction is used to update or to create a EpisodeOfCare resource.")
+                    .description("This transaction is used to update or to create a CarePLan resource.")
                     .responses(getApiResponses())
                     .requestBody(
                         RequestBody().content(Content()
@@ -459,8 +459,8 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         carePlanItem.put(
             Operation()
                 .addTagsItem(CARE)
-                .description("This transaction is used to update or to create a CareTeam resource. A CareTeam resource is " +
-                        "submitted to a Care Team Service where the update or creation is handled.")
+                .description("This transaction is used to update or to create a CarePlan resource. A CarePlan resource is " +
+                        "submitted to a Care Plan Service where the update or creation is handled.")
                 .responses(getApiResponses())
                 .addParametersItem(Parameter()
                     .name("id")
@@ -479,17 +479,127 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
         carePlanItem.delete(Operation()
             .addTagsItem(CARE)
-            .summary("Delete CareTeam")
+            .summary("Delete CarePlan")
             .responses(getApiResponses())
             .addParametersItem(Parameter()
                 .name("id")
                 .`in`("path")
                 .required(false)
                 .style(Parameter.StyleEnum.SIMPLE)
-                .description("The id of the CareTeam to be deleted")
+                .description("The id of the CarePlan to be deleted")
                 .schema(StringSchema())))
 
         oas.path("/FHIR/R4/CarePlan/{id}",carePlanItem)
+
+
+        //Care Plan
+
+        var goalItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(CARE)
+                    .summary("")
+                    .description("This transaction is used to find a Goal resource.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("patient")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who episode/stay is for")
+                        .schema(StringSchema())
+                        .example("073eef49-81ee-4c2e-893b-bc2e4efd2630")
+                    )
+                    .addParametersItem(Parameter()
+                        .name("patient:identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who episode/stay is for. `https://fhir.nhs.uk/Id/nhs-number|{nhsNumber}` ")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("lifecycle-status")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("proposed | planned | accepted | active | on-hold | completed | cancelled | entered-in-error | rejected")
+                        .schema(StringSchema())
+                    )
+
+            )
+
+        examples = LinkedHashMap<String,Example?>()
+
+
+        goalItem
+            .post(
+                Operation()
+                    .addTagsItem(CARE)
+                    .summary("")
+                    .description("This transaction is used to update or to create a Goal resource.")
+                    .responses(getApiResponses())
+                    .requestBody(
+                        RequestBody().content(Content()
+                            .addMediaType("application/fhir+json",
+                                MediaType()
+                                    .examples(examples)
+                                    .schema(StringSchema()))
+                        )))
+
+        oas.path("/FHIR/R4/Goal",goalItem)
+        goalItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(CARE)
+                    .description("This transaction is used to retrieve a specific Goal resource using a known FHIR Goal " +
+                            "resource id.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                        .example("b664a27a-2117-4b13-a0d1-cc0b98e4532b")
+                    )
+            )
+
+        goalItem.put(
+            Operation()
+                .addTagsItem(CARE)
+                .description("This transaction is used to update or to create a Goal resource. A Goal resource is " +
+                        "submitted to a Goal Service where the update or creation is handled.")
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The ID of the resource")
+                    .schema(StringSchema())
+                    .example("c4a7c5cb-ea81-4e52-8171-22f11fa5caf0")
+                )
+                .requestBody(
+                    RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .schema(StringSchema()))
+                    )))
+        goalItem.delete(Operation()
+            .addTagsItem(CARE)
+            .summary("Delete Goal")
+            .responses(getApiResponses())
+            .addParametersItem(Parameter()
+                .name("id")
+                .`in`("path")
+                .required(false)
+                .style(Parameter.StyleEnum.SIMPLE)
+                .description("The id of the Goal to be deleted")
+                .schema(StringSchema())))
+
+        oas.path("/FHIR/R4/Goal/{id}",goalItem)
 
         // Case Load Episode of Care
 

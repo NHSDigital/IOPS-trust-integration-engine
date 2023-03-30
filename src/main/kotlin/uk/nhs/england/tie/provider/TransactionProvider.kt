@@ -38,6 +38,8 @@ class TransactionProvider(
     val awsObservation: AWSObservation,
     val awsDiagnosticReport: AWSDiagnosticReport,
     val awsEncounter: AWSEncounter,
+    val awsGoal: AWSGoal,
+    val awsCarePlan: AWSCarePlan,
     val awsEpisodeOfCare: AWSEpisodeOfCare,
     val awsCondition: AWSCondition,
     val awsQuestionnaireResponse: AWSQuestionnaireResponse,
@@ -122,6 +124,18 @@ class TransactionProvider(
                         }
                     }
                 }
+                "CarePlan" -> {
+                    entry.resource = awsCarePlan.transform(entry.resource as CarePlan, null)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as CarePlan).hasIdentifier()) {
+                        val result = awsCarePlan.get((entry.resource as CarePlan).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as CarePlan).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "CarePlan/" + getId(result.idElement)
+                        }
+                    }
+                }
                 "Condition" -> {
                     entry.resource = awsCondition.transform(entry.resource as Condition)
                     if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Condition).hasIdentifier()) {
@@ -203,6 +217,18 @@ class TransactionProvider(
                             entry.request.method = Bundle.HTTPVerb.PUT
                             entry.request.url =
                                 "EpisodeOfCare/" + getId(result.idElement)
+                        }
+                    }
+                }
+                "Goal" -> {
+                    entry.resource = awsGoal.transform(entry.resource as Goal, null)
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Goal).hasIdentifier()) {
+                        val result = awsGoal.get((entry.resource as Goal).identifierFirstRep)
+                        if (result != null) {
+                            (entry.resource as Goal).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Goal/" + getId(result.idElement)
                         }
                     }
                 }

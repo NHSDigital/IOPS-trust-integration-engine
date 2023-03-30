@@ -1,8 +1,6 @@
 package uk.nhs.england.tie.awsProvider
 
 import ca.uhn.fhir.context.FhirContext
-import ca.uhn.fhir.rest.annotation.Delete
-import ca.uhn.fhir.rest.annotation.IdParam
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.client.api.IGenericClient
 import ca.uhn.fhir.rest.param.TokenParam
@@ -15,7 +13,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
 import uk.nhs.england.tie.util.FhirSystems
-import javax.servlet.http.HttpServletRequest
+
 
 @Component
 class AWSCarePlan(val messageProperties: MessageProperties, val awsClient: IGenericClient,
@@ -32,6 +30,12 @@ class AWSCarePlan(val messageProperties: MessageProperties, val awsClient: IGene
 ) {
 
     private val log = LoggerFactory.getLogger("FHIRAudit")
+
+    fun get(identifier: Identifier) : CarePlan? {
+        val results = search(TokenParam().setSystem(identifier.system).setValue(identifier.value))
+        if (results.size > 1) return results.get(0)
+        return null
+    }
     public fun search(identifier: TokenParam) : List<CarePlan> {
         var resources = mutableListOf<CarePlan>()
         var bundle: Bundle? = null
@@ -65,7 +69,7 @@ class AWSCarePlan(val messageProperties: MessageProperties, val awsClient: IGene
         var response: MethodOutcome? = null
         val duplicateCheck = search(TokenParam().setValue(newCarePlan.identifierFirstRep.value))
         if (duplicateCheck.size>0) throw UnprocessableEntityException("A CarePlan with this identifier already exists.")
-        val updatedCarePlan = updateReferences(newCarePlan, bundle)
+        val updatedCarePlan = transform(newCarePlan, bundle)
         var retry = 3
         while (retry > 0) {
             try {
@@ -88,7 +92,7 @@ class AWSCarePlan(val messageProperties: MessageProperties, val awsClient: IGene
     }
     fun update(newCarePlan: CarePlan, bundle: Bundle?,theId: IdType?): MethodOutcome? {
         var response: MethodOutcome? = null
-        val updatedCarePlan = updateReferences(newCarePlan, bundle)
+        val updatedCarePlan = transform(newCarePlan, bundle)
         var retry = 3
         while (retry > 0) {
             try {
@@ -110,7 +114,7 @@ class AWSCarePlan(val messageProperties: MessageProperties, val awsClient: IGene
         }
         return response
     }
-    fun updateReferences(newCarePlan: CarePlan, bundle: Bundle?): CarePlan {
+    fun transform(newCarePlan: CarePlan, bundle: Bundle?): CarePlan {
 
 
         if (newCarePlan.hasSubject() && newCarePlan.subject.hasIdentifier()) {
