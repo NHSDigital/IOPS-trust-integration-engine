@@ -45,6 +45,9 @@ class TaskProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,
         val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, null,"Task")
         return if (resource is Task) resource else null
     }
-
+    @Delete
+    fun delete(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
+        return awsTask.delete(theId)
+    }
 
 }
