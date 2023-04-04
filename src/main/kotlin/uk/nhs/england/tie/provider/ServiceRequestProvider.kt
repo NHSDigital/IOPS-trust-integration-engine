@@ -49,5 +49,10 @@ class ServiceRequestProvider(var awsServiceRequest: AWSServiceRequest,
         return if (resource is ServiceRequest) resource else null
     }
 
+    @Delete
+    fun delete(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
+        return awsServiceRequest.delete(theId)
+    }
+
 
 }
