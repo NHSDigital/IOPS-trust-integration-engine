@@ -515,7 +515,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         oas.path("/FHIR/R4/CarePlan/{id}",carePlanItem)
 
 
-        //Care Plan
+        // Goal
 
         var goalItem = PathItem()
             .get(
@@ -623,6 +623,115 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 .schema(StringSchema())))
 
         oas.path("/FHIR/R4/Goal/{id}",goalItem)
+
+        // ActivityDefinition
+
+        var activityDefinitionItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(CARE)
+                    .summary("")
+                    .description("This transaction is used to find a ActivityDefinition resource.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("title")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The human-friendly name of the activity definition")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("name")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Computationally friendly name of the activity definition")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("status")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("draft | active | retired | unknown")
+                        .schema(StringSchema())
+                    )
+
+            )
+
+        examples = LinkedHashMap<String,Example?>()
+
+        activityDefinitionItem
+            .post(
+                Operation()
+                    .addTagsItem(CARE)
+                    .summary("")
+                    .description("This transaction is used to update or to create a ActivityDefinition resource.")
+                    .responses(getApiResponses())
+                    .requestBody(
+                        RequestBody().content(Content()
+                            .addMediaType("application/fhir+json",
+                                MediaType()
+                                    .examples(examples)
+                                    .schema(StringSchema()))
+                        )))
+
+        oas.path("/FHIR/R4/ActivityDefinition",activityDefinitionItem)
+        activityDefinitionItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(CARE)
+                    .description("This transaction is used to retrieve a specific ActivityDefinition resource using a known FHIR ActivityDefinition " +
+                            "resource id.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                        .example("b664a27a-2117-4b13-a0d1-cc0b98e4532b")
+                    )
+            )
+
+        activityDefinitionItem.put(
+            Operation()
+                .addTagsItem(CARE)
+                .description("This transaction is used to update or to create a ActivityDefinition resource. ")
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The ID of the resource")
+                    .schema(StringSchema())
+                    .example("c4a7c5cb-ea81-4e52-8171-22f11fa5caf0")
+                )
+                .requestBody(
+                    RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .schema(StringSchema()))
+                    )))
+        activityDefinitionItem.delete(Operation()
+            .addTagsItem(CARE)
+            .summary("Delete ActivityDefinition")
+            .responses(getApiResponses())
+            .addParametersItem(Parameter()
+                .name("id")
+                .`in`("path")
+                .required(false)
+                .style(Parameter.StyleEnum.SIMPLE)
+                .description("The id of the ActivityDefinition to be deleted")
+                .schema(StringSchema())))
+
+        oas.path("/FHIR/R4/ActivityDefinition/{id}",activityDefinitionItem)
+
+
+
 
         // Case Load Episode of Care
 

@@ -53,7 +53,9 @@ class FHIRR4RestfulServer(
     val carePlanPlainProvider: CarePlanPlainProvider,
     val carePlanProvider: CarePlanProvider,
     val goalProvider: GoalProvider,
-    val goalPlainProvider: GoalPlainProvider
+    val goalPlainProvider: GoalPlainProvider,
+    val activityDefinitionProvider: ActivityDefinitionProvider,
+    val activityDefinitionPlainProvider: ActivityDefinitionPlainProvider
 
 
 ) : RestfulServer(fhirContext) {
@@ -99,6 +101,8 @@ class FHIRR4RestfulServer(
         registerProvider(carePlanPlainProvider)
         registerProvider(goalProvider)
         registerProvider(goalPlainProvider)
+        registerProvider(activityDefinitionProvider)
+        registerProvider(activityDefinitionPlainProvider)
 
 
         registerInterceptor(CapabilityStatementInterceptor(this.fhirContext,fhirServerProperties))
