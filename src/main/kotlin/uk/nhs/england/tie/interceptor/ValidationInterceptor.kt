@@ -79,6 +79,8 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
                 return false
             if (issue.diagnostics.contains("Canonical URLs must be absolute URLs if they are not fragment references (Questionnaire"))
                 return false
+            if (issue.diagnostics.contains("LOINC is not indexed!"))
+                return false
         }
         if (issue.hasLocation()) {
             if (issue.location.get(0).value.contains("Questionnaire.meta"))

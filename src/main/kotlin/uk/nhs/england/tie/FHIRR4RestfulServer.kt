@@ -41,6 +41,8 @@ class FHIRR4RestfulServer(
     val taskProvider: TaskProvider,
     val serviceRequestPlainProvider: ServiceRequestPlainProvider,
     val taskPlainProvider: TaskPlainProvider,
+    val diagnosticReportPlainProvider: DiagnosticReportPlainProvider,
+    val diagnosticReportProvider: DiagnosticReportProvider,
 
     val binaryProvider: BinaryProvider,
     val documentReferenceProvider: DocumentReferenceProvider,
@@ -93,6 +95,8 @@ class FHIRR4RestfulServer(
         registerProvider(taskPlainProvider)
         registerProvider(serviceRequestProvider)
         registerProvider(serviceRequestPlainProvider)
+        registerProvider(diagnosticReportProvider)
+        registerProvider(diagnosticReportPlainProvider)
 
         registerProvider(careTeamProvider)
         registerProvider(careTeamPlainProvider)

@@ -629,7 +629,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         var activityDefinitionItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem(CARE)
+                    .addTagsItem(WORKFLOW)
                     .summary("")
                     .description("This transaction is used to find a ActivityDefinition resource.")
                     .responses(getApiResponses())
@@ -665,7 +665,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         activityDefinitionItem
             .post(
                 Operation()
-                    .addTagsItem(CARE)
+                    .addTagsItem(WORKFLOW)
                     .summary("")
                     .description("This transaction is used to update or to create a ActivityDefinition resource.")
                     .responses(getApiResponses())
@@ -681,7 +681,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         activityDefinitionItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem(CARE)
+                    .addTagsItem(WORKFLOW)
                     .description("This transaction is used to retrieve a specific ActivityDefinition resource using a known FHIR ActivityDefinition " +
                             "resource id.")
                     .responses(getApiResponses())
@@ -698,7 +698,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         activityDefinitionItem.put(
             Operation()
-                .addTagsItem(CARE)
+                .addTagsItem(WORKFLOW)
                 .description("This transaction is used to update or to create a ActivityDefinition resource. ")
                 .responses(getApiResponses())
                 .addParametersItem(Parameter()
@@ -717,7 +717,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .schema(StringSchema()))
                     )))
         activityDefinitionItem.delete(Operation()
-            .addTagsItem(CARE)
+            .addTagsItem(WORKFLOW)
             .summary("Delete ActivityDefinition")
             .responses(getApiResponses())
             .addParametersItem(Parameter()
@@ -729,7 +729,6 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 .schema(StringSchema())))
 
         oas.path("/FHIR/R4/ActivityDefinition/{id}",activityDefinitionItem)
-
 
 
 
@@ -1520,6 +1519,121 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             )
 
         oas.path("/FHIR/R4/Task/{id}",taskItem)
+
+        // DiagnosticReport
+
+        val examplesPOSTDiagnosticReport = LinkedHashMap<String,Example?>()
+
+        val examplesPUTDiagnosticReport= LinkedHashMap<String,Example?>()
+
+        var diagnosticReportItem = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("Create DiagnosticReport")
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .examples(examplesPOSTDiagnosticReport )
+                                .schema(StringSchema()))
+                    )))
+            .delete(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("Delete DiagnosticReport")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                    )
+            )
+            .get(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("Query Reports")
+                    .addParametersItem(Parameter()
+                        .name("patient")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Search by patient")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("patient:identifier")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Who/what is the subject of the service request. `https://fhir.nhs.uk/Id/nhs-number|{nhsNumber}` ")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("category")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Classification of service")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("status")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Search by status")
+                        .schema(StringSchema())
+                    )
+                    .responses(getApiResponses())
+            )
+
+
+        oas.path("/FHIR/R4/DiagnosticReport",diagnosticReportItem)
+
+        diagnosticReportItem = PathItem()
+        diagnosticReportItem
+            .put(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("Update DiagnosticReport")
+                    .description("This transaction is used to update a DiagnosticReport")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                        .example("0bd736ed-d9d5-44f3-8b93-73c1519191b1")
+                    )
+                    .requestBody(
+                        RequestBody().content(Content()
+                            .addMediaType("application/fhir+json",
+                                MediaType()
+                                    .examples(examplesPUTDiagnosticReport)
+                                    .schema(StringSchema()))
+                        )))
+            .get(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("Read Endpoint")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                    )
+            )
+
+        oas.path("/FHIR/R4/DiagnosticReport/{id}",diagnosticReportItem)
 
         /*
 
