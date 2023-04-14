@@ -57,7 +57,8 @@ class FHIRR4RestfulServer(
     val goalProvider: GoalProvider,
     val goalPlainProvider: GoalPlainProvider,
     val activityDefinitionProvider: ActivityDefinitionProvider,
-    val activityDefinitionPlainProvider: ActivityDefinitionPlainProvider
+    val activityDefinitionPlainProvider: ActivityDefinitionPlainProvider,
+    val valueSetProvider: ValueSetProvider
 
 
 ) : RestfulServer(fhirContext) {
@@ -87,6 +88,7 @@ class FHIRR4RestfulServer(
         registerProvider(questionnaireProvider)
         registerProvider(questionnairePlainProvider)
         registerProvider(observationSearchProvider)
+        registerProvider(valueSetProvider)
 
         registerProvider(binaryProvider)
         registerProvider(documentReferenceProvider)

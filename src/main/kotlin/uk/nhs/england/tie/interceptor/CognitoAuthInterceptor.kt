@@ -82,8 +82,13 @@ class CognitoAuthInterceptor(val messageProperties: MessageProperties,
 
     @Throws(Exception::class)
     fun readFromUrl(path: String, queryParams: String?, resourceName: String?): Resource? {
-        val responseObject = ResponseObject()
         val url = messageProperties.getCdrFhirServer()
+        return readFromUrl(url,path, queryParams, resourceName)
+    }
+
+    @Throws(Exception::class)
+    fun readFromUrl(url: String?, path: String, queryParams: String?, resourceName: String?): Resource? {
+        val responseObject = ResponseObject()
         var myUrl: URL? = null
         myUrl = if (queryParams != null) {
             URL("$url$path?$queryParams")
@@ -114,9 +119,10 @@ class CognitoAuthInterceptor(val messageProperties: MessageProperties,
                         }
                         for (link in resource.link) {
                             if (link.hasUrl() && resourceName!=null) {
-                                val str= link.url.split(resourceName)
+                                var str : MutableList<String> = link.url.split(resourceName).toMutableList()
                                 if (str.size>1) {
-                                    link.url = fhirServerProperties.server.baseUrl + "/FHIR/R4/" + resourceName + str[1]
+                                    str.removeAt(0)
+                                    link.url = fhirServerProperties.server.baseUrl + "/FHIR/R4/" + resourceName + str.joinToString(resourceName)
                                 } else {
                                     link.url = fhirServerProperties.server.baseUrl + "/FHIR/R4/" + resourceName
                                 }
@@ -128,7 +134,7 @@ class CognitoAuthInterceptor(val messageProperties: MessageProperties,
                     `is`.close()
                 }
             } catch (ex: FileNotFoundException) {
-                throw ResourceNotFoundException(ex.message)
+                throw ResourceNotFoundException(getErrorStreamMessage(conn, ex))
             } catch (ex: Exception) {
                 retry--
                 if (ex.message != null) {
