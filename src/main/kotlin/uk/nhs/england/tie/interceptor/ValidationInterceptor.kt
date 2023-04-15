@@ -81,6 +81,8 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
                 return false
             if (issue.diagnostics.contains("LOINC is not indexed!"))
                 return false
+            if (issue.diagnostics.contains("The type 'ActivityDefinition' is not a valid Target"))
+                return false
         }
         if (issue.hasLocation()) {
             if (issue.location.get(0).value.contains("Questionnaire.meta"))
