@@ -23,4 +23,9 @@ class EpisodeOfCareProvider(var awsEpisodeOfCare: AWSEpisodeOfCare) : IResourceP
         return method
     }
 
+    @Delete
+    fun create(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
+        return awsEpisodeOfCare.delete(theId)
+    }
+
 }

@@ -376,7 +376,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         examplesDSUB["Document Notification (FHIR Document STU3)"] =
             Example().value(FHIRExamples().loadExample("documentReference-TOC-Notification.json",ctx))
 
-        val documentReferenceItem = PathItem()
+        var documentReferenceItem = PathItem()
             .post(
                 Operation()
                     .addTagsItem(MHD)
@@ -392,8 +392,21 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                             MediaType()
                                 .schema(StringSchema()))
                     )))
-        oas.path("/FHIR/R4/DocumentReference",documentReferenceItem)
 
+        oas.path("/FHIR/R4/DocumentReference",documentReferenceItem)
+        documentReferenceItem = PathItem()
+            .delete(Operation()
+                .addTagsItem(MHD)
+                .summary("Delete DocumentReference")
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The id of the DocumentReference to be deleted")
+                    .schema(StringSchema())))
+        oas.path("/FHIR/R4/DocumentReference/{id}",documentReferenceItem)
 
         //Care Plan
 
@@ -741,7 +754,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         examples["Create Diabetes (virtual ward) Episode"] =
             Example().value(FHIRExamples().loadExample("EpisodeOfCare-AcuteHospital-Diabetes.json",ctx))
-        val episodeOfCareItem = PathItem()
+        var episodeOfCareItem = PathItem()
         episodeOfCareItem
             .post(
                 Operation()
@@ -758,6 +771,21 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                         )))
 
         oas.path("/FHIR/R4/EpisodeOfCare",episodeOfCareItem)
+
+        episodeOfCareItem = PathItem()
+            .delete(Operation()
+                .addTagsItem(ADMINISTRATION)
+                .summary("Delete EpisodeOfCare")
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The id of the EpisodeOfCare to be deleted")
+                    .schema(StringSchema())))
+
+        oas.path("/FHIR/R4/EpisodeOfCare/{id}",episodeOfCareItem)
 
 
 
@@ -1112,6 +1140,17 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .examples(examplesQuestionnaireResponse )
                                 .schema(StringSchema()))
                     )))
+            .delete(Operation()
+                .addTagsItem(FORMS)
+                .summary("Delete QuestionnaireResponse")
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The id of the QuestionnaireResponse to be deleted")
+                    .schema(StringSchema())))
 
         oas.path("/FHIR/R4/QuestionnaireResponse/{id}",questionnaireResponseItem)
 
@@ -1278,20 +1317,6 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .examples(examplesPOSTServiceRequest )
                                 .schema(StringSchema()))
                     )))
-            .delete(
-                Operation()
-                    .addTagsItem(WORKFLOW)
-                    .summary("Delete ServiceRequest")
-                    .responses(getApiResponses())
-                    .addParametersItem(Parameter()
-                        .name("id")
-                        .`in`("path")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("The ID of the resource")
-                        .schema(StringSchema())
-                    )
-            )
             .get(
                 Operation()
                     .addTagsItem(WORKFLOW)
@@ -1387,7 +1412,21 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     .description("The ID of the resource")
                     .schema(StringSchema())
                 )
-        )
+            )
+            .delete(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("Delete ServiceRequest")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                    )
+            )
 
         oas.path("/FHIR/R4/ServiceRequest/{id}",serviceRequestItem)
 
@@ -1538,20 +1577,6 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                 .examples(examplesPOSTDiagnosticReport )
                                 .schema(StringSchema()))
                     )))
-            .delete(
-                Operation()
-                    .addTagsItem(WORKFLOW)
-                    .summary("Delete DiagnosticReport")
-                    .responses(getApiResponses())
-                    .addParametersItem(Parameter()
-                        .name("id")
-                        .`in`("path")
-                        .required(false)
-                        .style(Parameter.StyleEnum.SIMPLE)
-                        .description("The ID of the resource")
-                        .schema(StringSchema())
-                    )
-            )
             .get(
                 Operation()
                     .addTagsItem(WORKFLOW)
@@ -1618,6 +1643,20 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                                     .examples(examplesPUTDiagnosticReport)
                                     .schema(StringSchema()))
                         )))
+            .delete(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("Delete DiagnosticReport")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                    )
+            )
             .get(
                 Operation()
                     .addTagsItem(WORKFLOW)

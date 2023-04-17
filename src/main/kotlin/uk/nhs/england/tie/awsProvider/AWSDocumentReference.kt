@@ -213,4 +213,26 @@ class AWSDocumentReference(val messageProperties: MessageProperties, val awsClie
         }
         return newDocumentReference
     }
+
+    fun delete(theId: IdType): MethodOutcome? {
+        var response: MethodOutcome? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .delete()
+                    .resourceById(theId)
+                    .execute()
+
+                break
+
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
 }

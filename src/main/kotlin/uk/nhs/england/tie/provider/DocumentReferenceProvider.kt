@@ -26,5 +26,8 @@ val awsDocumentReference: AWSDocumentReference) : IResourceProvider {
         method.resource = awsDocumentReference.createUpdateAWSDocumentReference(documentReference, null)
         return method
     }
-
+    @Delete
+    fun create(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
+        return awsDocumentReference.delete(theId)
+    }
 }

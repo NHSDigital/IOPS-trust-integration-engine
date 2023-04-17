@@ -38,6 +38,11 @@ class QuestionnaireResponseProvider(
         return awsQuestionnaireResponse.createUpdate(questionnaireResponse)
     }
 
+    @Delete
+    fun create(theRequest: HttpServletRequest, @IdParam theId: IdType): MethodOutcome? {
+        return awsQuestionnaireResponse.delete(theId)
+    }
+
     @Update
     fun update(
         theRequest: HttpServletRequest,
