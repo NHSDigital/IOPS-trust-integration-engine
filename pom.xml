@@ -10,10 +10,9 @@
     </parent>
     <groupId>uk.nhs.england.tie</groupId>
     <artifactId>iops-integration-engine</artifactId>
-    <version>1.4.4</version>
+    <version>1.4.5</version>
     <name>iops-integration-engine</name>
     <description>IOPS FHIR Integration Engine</description>
-
     <properties>
         <java.version>1.8</java.version>
         <kotlin.version>1.5.10</kotlin.version>

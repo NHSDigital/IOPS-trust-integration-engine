@@ -743,6 +743,120 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         oas.path("/FHIR/R4/ActivityDefinition/{id}",activityDefinitionItem)
 
+        // PlanDefinition
+
+        var planDefinitionItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("")
+                    .description("This transaction is used to find a PlanDefinition resource.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("title")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The human-friendly name of the plan definition")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("name")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Computationally friendly name of the plan definition")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("definition")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Activity or plan definitions used by plan definition")
+                        .schema(StringSchema())
+                    )
+                    .addParametersItem(Parameter()
+                        .name("status")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("draft | active | retired | unknown")
+                        .schema(StringSchema())
+                    )
+
+            )
+
+        examples = LinkedHashMap<String,Example?>()
+
+        planDefinitionItem
+            .post(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .summary("")
+                    .description("This transaction is used to update or to create a PlanDefinition resource.")
+                    .responses(getApiResponses())
+                    .requestBody(
+                        RequestBody().content(Content()
+                            .addMediaType("application/fhir+json",
+                                MediaType()
+                                    .examples(examples)
+                                    .schema(StringSchema()))
+                        )))
+
+        oas.path("/FHIR/R4/PlanDefinition",planDefinitionItem)
+        planDefinitionItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(WORKFLOW)
+                    .description("This transaction is used to retrieve a specific PlanDefinition resource using a known FHIR PlanDefinition " +
+                            "resource id.")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("The ID of the resource")
+                        .schema(StringSchema())
+                        .example("b664a27a-2117-4b13-a0d1-cc0b98e4532b")
+                    )
+            )
+
+        planDefinitionItem.put(
+            Operation()
+                .addTagsItem(WORKFLOW)
+                .description("This transaction is used to update or to create a PlanDefinition resource. ")
+                .responses(getApiResponses())
+                .addParametersItem(Parameter()
+                    .name("id")
+                    .`in`("path")
+                    .required(false)
+                    .style(Parameter.StyleEnum.SIMPLE)
+                    .description("The ID of the resource")
+                    .schema(StringSchema())
+                    .example("c4a7c5cb-ea81-4e52-8171-22f11fa5caf0")
+                )
+                .requestBody(
+                    RequestBody().content(Content()
+                        .addMediaType("application/fhir+json",
+                            MediaType()
+                                .schema(StringSchema()))
+                    )))
+        planDefinitionItem.delete(Operation()
+            .addTagsItem(WORKFLOW)
+            .summary("Delete PlanDefinition")
+            .responses(getApiResponses())
+            .addParametersItem(Parameter()
+                .name("id")
+                .`in`("path")
+                .required(false)
+                .style(Parameter.StyleEnum.SIMPLE)
+                .description("The id of the PlanDefinition to be deleted")
+                .schema(StringSchema())))
+
+        oas.path("/FHIR/R4/PlanDefinition/{id}",planDefinitionItem)
+
 
 
         // Case Load Episode of Care
