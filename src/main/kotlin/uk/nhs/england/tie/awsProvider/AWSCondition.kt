@@ -144,7 +144,31 @@ class AWSCondition(val messageProperties: MessageProperties, val awsClient: IGen
         return bundle.entryFirstRep.resource as Condition
     }
 
-    private fun update(observation: Condition, newCondition: Condition): MethodOutcome? {
+    fun update(newCondition: Condition,theId: IdType?): MethodOutcome? {
+        var response: MethodOutcome? = null
+
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .update()
+                    .resource(newCondition)
+                    .withId(theId)
+                    .execute()
+                val Condition = response.resource as Condition
+                val auditEvent = awsAuditEvent.createAudit(Condition, AuditEvent.AuditEventAction.U)
+                awsAuditEvent.writeAWS(auditEvent)
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
+    fun update(observation: Condition, newCondition: Condition): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
         for (identifier in newCondition.identifier) {
@@ -184,7 +208,7 @@ class AWSCondition(val messageProperties: MessageProperties, val awsClient: IGen
 
     }
 
-    private fun create(newCondition: Condition): MethodOutcome? {
+    fun create(newCondition: Condition): MethodOutcome? {
 
         var response: MethodOutcome? = null
 
@@ -258,4 +282,30 @@ class AWSCondition(val messageProperties: MessageProperties, val awsClient: IGen
        // newCondition.contained = ArrayList()
         return newCondition
     }
+    fun delete(theId: IdType): MethodOutcome? {
+        var response: MethodOutcome? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .delete()
+                    .resourceById(theId)
+                    .execute()
+
+                /* TODO
+                  val auditEvent = awsAuditEvent.createAudit(storedQuestionnaire, AuditEvent.AuditEventAction.D)
+                  awsAuditEvent.writeAWS(auditEvent)
+                  */
+                break
+
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
+
 }

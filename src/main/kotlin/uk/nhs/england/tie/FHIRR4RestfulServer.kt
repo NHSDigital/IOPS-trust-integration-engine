@@ -25,6 +25,7 @@ class FHIRR4RestfulServer(
     val patientProvider: PatientProvider,
     val patientSearchProvider: PatientSearchProvider,
     val observationSearchProvider: ObservationSearchProvider,
+    val observationProvider: ObservationProvider,
    // val subscriptionProvider: SubscriptionProvider,
 
 
@@ -44,6 +45,7 @@ class FHIRR4RestfulServer(
     val diagnosticReportPlainProvider: DiagnosticReportPlainProvider,
     val diagnosticReportProvider: DiagnosticReportProvider,
 
+
     val binaryProvider: BinaryProvider,
     val documentReferenceProvider: DocumentReferenceProvider,
 
@@ -51,6 +53,7 @@ class FHIRR4RestfulServer(
     val careTeamPlainProvider: CareTeamPlainProvider,
     val encounterProvider: EncounterProvider,
     val episodeOfCareProvider: EpisodeOfCareProvider,
+    val conditionProvider: ConditionProvider,
 
     val carePlanPlainProvider: CarePlanPlainProvider,
     val carePlanProvider: CarePlanProvider,
@@ -77,6 +80,7 @@ class FHIRR4RestfulServer(
         registerProvider(patientSearchProvider)
         registerProvider(episodeOfCareProvider)
         registerProvider(encounterProvider)
+        registerProvider(conditionProvider)
 
 
        // registerProvider(subscriptionProvider)
@@ -90,6 +94,7 @@ class FHIRR4RestfulServer(
         registerProvider(questionnaireProvider)
         registerProvider(questionnairePlainProvider)
         registerProvider(observationSearchProvider)
+        registerProvider(observationProvider)
         registerProvider(valueSetProvider)
 
         registerProvider(binaryProvider)

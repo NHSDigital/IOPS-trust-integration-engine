@@ -267,4 +267,30 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
         }
         return newObservation
     }
+
+    fun delete(theId: IdType): MethodOutcome? {
+        var response: MethodOutcome? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .delete()
+                    .resourceById(theId)
+                    .execute()
+
+                /*
+                val auditEvent = awsAuditEvent.createAudit(storedQuestionnaire, AuditEvent.AuditEventAction.D)
+                awsAuditEvent.writeAWS(auditEvent)
+                */
+                break
+
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
 }
