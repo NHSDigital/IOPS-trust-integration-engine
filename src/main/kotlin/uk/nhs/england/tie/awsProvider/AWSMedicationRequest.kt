@@ -82,7 +82,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
             // Dont update for now - just return aws MedicationRequest
             return updateMedicationRequest(medicationRequest, newMedicationRequest)!!.resource as MedicationRequest
         } else {
-            return createMedicationRequest(newMedicationRequest)!!.resource as MedicationRequest
+            return create(newMedicationRequest)!!.resource as MedicationRequest
         }
     }
 
@@ -152,7 +152,7 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
 
     }
 
-    private fun createMedicationRequest(newMedicationRequest: MedicationRequest): MethodOutcome? {
+    fun create(newMedicationRequest: MedicationRequest): MethodOutcome? {
 
         var response: MethodOutcome? = null
 
@@ -195,5 +195,55 @@ class AWSMedicationRequest(val messageProperties: MessageProperties, val awsClie
             }
         }
         return newMedicationRequest
+    }
+
+    fun update(newMedicationRequest: MedicationRequest,theId: IdType?): MethodOutcome? {
+        var response: MethodOutcome? = null
+
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .update()
+                    .resource(newMedicationRequest)
+                    .withId(theId)
+                    .execute()
+                val MedicationRequest = response.resource as MedicationRequest
+                val auditEvent = awsAuditEvent.createAudit(MedicationRequest, AuditEvent.AuditEventAction.U)
+                awsAuditEvent.writeAWS(auditEvent)
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
+    fun delete(theId: IdType): MethodOutcome? {
+        var response: MethodOutcome? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .delete()
+                    .resourceById(theId)
+                    .execute()
+
+                /* TODO
+                  val auditEvent = awsAuditEvent.createAudit(storedQuestionnaire, AuditEvent.AuditEventAction.D)
+                  awsAuditEvent.writeAWS(auditEvent)
+                  */
+                break
+
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
     }
 }

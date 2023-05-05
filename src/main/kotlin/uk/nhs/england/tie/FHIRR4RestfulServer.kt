@@ -54,6 +54,7 @@ class FHIRR4RestfulServer(
     val encounterProvider: EncounterProvider,
     val episodeOfCareProvider: EpisodeOfCareProvider,
     val conditionProvider: ConditionProvider,
+    val medicationRequestProvider: MedicationRequestProvider,
 
     val carePlanPlainProvider: CarePlanPlainProvider,
     val carePlanProvider: CarePlanProvider,
@@ -81,6 +82,7 @@ class FHIRR4RestfulServer(
         registerProvider(episodeOfCareProvider)
         registerProvider(encounterProvider)
         registerProvider(conditionProvider)
+        registerProvider(medicationRequestProvider)
 
 
        // registerProvider(subscriptionProvider)
