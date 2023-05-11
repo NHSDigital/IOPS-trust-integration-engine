@@ -160,7 +160,32 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
         return bundle.entryFirstRep.resource as Observation
     }
 
-    private fun update(observation: Observation, newObservation: Observation): MethodOutcome? {
+    fun update(newObservation: Observation,theId: IdType?): MethodOutcome? {
+        var response: MethodOutcome? = null
+
+        var retry = 3
+        while (retry > 0) {
+            try {
+                response = awsClient
+                    .update()
+                    .resource(newObservation)
+                    .withId(theId)
+                    .execute()
+                val Observation = response.resource as Observation
+                val auditEvent = awsAuditEvent.createAudit(Observation, AuditEvent.AuditEventAction.U)
+                awsAuditEvent.writeAWS(auditEvent)
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return response
+    }
+
+    fun update(observation: Observation, newObservation: Observation): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
         for (identifier in newObservation.identifier) {
@@ -200,7 +225,7 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
 
     }
 
-    private fun create(newObservation: Observation): MethodOutcome? {
+    fun create(newObservation: Observation): MethodOutcome? {
 
         var response: MethodOutcome? = null
 

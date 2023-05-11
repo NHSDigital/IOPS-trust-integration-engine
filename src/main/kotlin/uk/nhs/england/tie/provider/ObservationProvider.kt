@@ -6,6 +6,7 @@ import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.api.server.RequestDetails
 
 import ca.uhn.fhir.rest.server.IResourceProvider
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import mu.KLogging
 import org.hl7.fhir.r4.model.*
 import org.springframework.beans.factory.annotation.Qualifier
@@ -30,7 +31,27 @@ class ObservationProvider (@Qualifier("R4") private val fhirContext: FhirContext
     }
 
     companion object : KLogging()
+    @Update
+    fun update(
+        theRequest: HttpServletRequest,
+        @ResourceParam observation: Observation,
+        @IdParam theId: IdType?,
+        theRequestDetails: RequestDetails?
+    ): MethodOutcome? {
+        if (!observation.hasIdentifier()) throw UnprocessableEntityException("observation identifier is required")
+        return awsObservation.update(observation,theId)
+    }
+    @Create
+    fun create(theRequest: HttpServletRequest, @ResourceParam observation: Observation): MethodOutcome? {
+        if (!observation.hasIdentifier()) throw UnprocessableEntityException("observation identifier is required")
+        return awsObservation.create(observation)
+    }
 
+    @Read
+    fun read(httpRequest : HttpServletRequest, @IdParam internalId: IdType): Observation? {
+        val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, null,"observation")
+        return if (resource is Observation) resource else null
+    }
 
     @Delete
     fun create(theRequest: HttpServletRequest,  @IdParam theId: IdType): MethodOutcome? {
