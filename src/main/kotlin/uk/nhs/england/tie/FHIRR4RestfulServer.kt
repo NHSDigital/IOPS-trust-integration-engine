@@ -24,27 +24,29 @@ class FHIRR4RestfulServer(
     val transactionProvider: TransactionProvider,
     val patientProvider: PatientProvider,
     val patientSearchProvider: PatientSearchProvider,
-    val observationSearchProvider: ObservationSearchProvider,
-    val observationProvider: ObservationProvider,
+
    // val subscriptionProvider: SubscriptionProvider,
-
-
-    val communicationRequestProvider: CommunicationRequestProvider,
-    val communicationProvider: CommunicationProvider,
-    val communicationPlainProvider: CommunicationPlainProvider,
 
     val questionnaireResponseProvider: QuestionnaireResponseProvider,
     val questionnaireResponsePlainProvider: QuestionnaireResponsePlainProvider,
     private val questionnaireProvider: QuestionnaireProvider,
     private val questionnairePlainProvider: QuestionnairePlainProvider,
 
+
+    val communicationRequestProvider: CommunicationRequestProvider,
+    val communicationProvider: CommunicationProvider,
+    val communicationPlainProvider: CommunicationPlainProvider,
     val serviceRequestProvider: ServiceRequestProvider,
     val taskProvider: TaskProvider,
     val serviceRequestPlainProvider: ServiceRequestPlainProvider,
     val taskPlainProvider: TaskPlainProvider,
+
     val diagnosticReportPlainProvider: DiagnosticReportPlainProvider,
     val diagnosticReportProvider: DiagnosticReportProvider,
+    val observationSearchProvider: ObservationSearchProvider,
+    val observationProvider: ObservationProvider,
 
+    val medicationRequestProvider: MedicationRequestProvider,
 
     val binaryProvider: BinaryProvider,
     val documentReferenceProvider: DocumentReferenceProvider,
@@ -54,7 +56,7 @@ class FHIRR4RestfulServer(
     val encounterProvider: EncounterProvider,
     val episodeOfCareProvider: EpisodeOfCareProvider,
     val conditionProvider: ConditionProvider,
-    val medicationRequestProvider: MedicationRequestProvider,
+
 
     val carePlanPlainProvider: CarePlanPlainProvider,
     val carePlanProvider: CarePlanProvider,

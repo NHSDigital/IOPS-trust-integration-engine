@@ -71,8 +71,13 @@ class QuestionnaireResponseProvider(
         if (!questionnaireResponse.hasQuestionnaire()) throw UnprocessableEntityException("Questionnaire must be supplied");
         val questionnaire = awsQuestionnaire.search(UriParam().setValue(questionnaireResponse?.questionnaire))
         if (questionnaire == null || questionnaire.size==0) throw UnprocessableEntityException("Questionnaire not found");
-        for(item in questionnaireResponse.item) {
-           var questionItem = getItem(questionnaire[0], item.linkId)
+        processItem(bundle, questionnaire[0], questionnaireResponse, questionnaireResponse.item)
+        return bundle;
+    }
+
+    private fun processItem(bundle: Bundle, questionnaire: Questionnaire, questionnaireResponse: QuestionnaireResponse, items: List<QuestionnaireResponse.QuestionnaireResponseItemComponent>) {
+        for(item in items) {
+            var questionItem = getItem(questionnaire, item.linkId)
             var generateObservation = false;
             if (questionItem.hasExtension()) {
                 for (extension in questionItem.extension) {
@@ -95,13 +100,18 @@ class QuestionnaireResponseProvider(
                     observation.addPerformer(questionnaireResponse.author)
                 }
                 observation.code = CodeableConcept()
-                    observation.code.coding = questionItem.code
+                observation.code.coding = questionItem.code
+                observation.setSubject(questionnaireResponse.subject)
+                if (questionnaireResponse.hasAuthored()) {
+                    observation.setEffective(DateTimeType().setValue(questionnaireResponse.authored ))
+                    observation.setIssued(questionnaireResponse.authored )
+                }
                 for (answer in item.answer) {
                     if (answer.hasValueQuantity()) {
                         observation.setValue(answer.valueQuantity)
                     }
                     if (answer.hasValueCoding()) {
-                        observation.setValue(answer.valueCoding)
+                        observation.setValue(CodeableConcept().addCoding(answer.valueCoding))
                     }
                     if (answer.hasValueDecimalType()) {
                         observation.setValue(Quantity().setValue(answer.valueDecimalType.value))
@@ -109,11 +119,14 @@ class QuestionnaireResponseProvider(
                     if (answer.hasValueIntegerType()) {
                         observation.setValue(answer.valueIntegerType)
                     }
+                    if (answer.hasValueDateType()) {
+                        observation.setEffective(DateTimeType().setValue(answer.valueDateType.value))
+                    }
+                    if (answer.hasValueDateTimeType()) {
+                        observation.setEffective(answer.valueDateTimeType)
+                    }
                 }
-                observation.setSubject(questionnaireResponse.subject)
-                if (questionnaireResponse.hasAuthored()) {
-                    observation.setEffective(DateTimeType().setValue(questionnaireResponse.authored ))
-                }
+
                 var entry = BundleEntryComponent()
                 var uuid = UUID.randomUUID();
                 entry.fullUrl = "urn:uuid:" + uuid.toString()
@@ -122,15 +135,27 @@ class QuestionnaireResponseProvider(
                 entry.request.method = Bundle.HTTPVerb.POST
                 bundle.entry.add(entry)
             }
+            if (item.hasItem()) {
+                processItem(bundle, questionnaire, questionnaireResponse, item.item)
+            }
         }
-        return bundle;
     }
 
     private fun getItem(questionnaire: Questionnaire, linkId: String): Questionnaire.QuestionnaireItemComponent {
-        for (item in questionnaire.item) {
-            if (linkId.equals(item.linkId)) return item;
-        }
+        var result = getSubItems(questionnaire.item, linkId)
+        if (result != null) return result
         throw UnprocessableEntityException("linkId not found " + linkId)
+    }
+
+    private fun getSubItems(items : List<Questionnaire.QuestionnaireItemComponent>, linkId: String): Questionnaire.QuestionnaireItemComponent? {
+        for (item in items) {
+            if (linkId.equals(item.linkId)) return item;
+            if (item.hasItem()) {
+                var result = getSubItems(item.item, linkId)
+                if (result != null) return result
+            }
+        }
+        return null
     }
 
 
