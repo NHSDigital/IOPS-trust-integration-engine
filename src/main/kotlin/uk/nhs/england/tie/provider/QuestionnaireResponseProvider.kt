@@ -96,25 +96,26 @@ class QuestionnaireResponseProvider(
                 }
             }
             if (generateObservation && questionItem.hasCode() && item.answerFirstRep != null) {
-                var observation = Observation()
-                observation.status = Observation.ObservationStatus.FINAL;
-                if (questionnaireResponse.hasIdentifier()) {
-                    var identifier = Identifier()
-                    identifier.system = questionnaireResponse.identifier.system
-                    identifier.value = questionnaireResponse.identifier.value + item.linkId
-                    observation.addIdentifier(identifier)
-                }
-                if (questionnaireResponse.hasAuthor()) {
-                    observation.addPerformer(questionnaireResponse.author)
-                }
-                observation.code = CodeableConcept()
-                observation.code.coding = questionItem.code
-                observation.setSubject(questionnaireResponse.subject)
-                if (questionnaireResponse.hasAuthored()) {
-                    observation.setEffective(DateTimeType().setValue(questionnaireResponse.authored ))
-                    observation.setIssued(questionnaireResponse.authored )
-                }
+
                 for (answer in item.answer) {
+                    var observation = Observation()
+                    observation.status = Observation.ObservationStatus.FINAL;
+                    if (questionnaireResponse.hasIdentifier()) {
+                        var identifier = Identifier()
+                        identifier.system = questionnaireResponse.identifier.system
+                        identifier.value = questionnaireResponse.identifier.value + item.linkId
+                        observation.addIdentifier(identifier)
+                    }
+                    if (questionnaireResponse.hasAuthor()) {
+                        observation.addPerformer(questionnaireResponse.author)
+                    }
+                    observation.code = CodeableConcept()
+                    observation.code.coding = questionItem.code
+                    observation.setSubject(questionnaireResponse.subject)
+                    if (questionnaireResponse.hasAuthored()) {
+                        observation.setEffective(DateTimeType().setValue(questionnaireResponse.authored ))
+                        observation.setIssued(questionnaireResponse.authored )
+                    }
                     if (answer.hasValueQuantity()) {
                         observation.setValue(answer.valueQuantity)
                     }
@@ -133,15 +134,14 @@ class QuestionnaireResponseProvider(
                     if (answer.hasValueDateTimeType()) {
                         observation.setEffective(answer.valueDateTimeType)
                     }
+                    var entry = BundleEntryComponent()
+                    var uuid = UUID.randomUUID();
+                    entry.fullUrl = "urn:uuid:" + uuid.toString()
+                    entry.resource = observation
+                    entry.request.url = "Observation"
+                    entry.request.method = Bundle.HTTPVerb.POST
+                    bundle.entry.add(entry)
                 }
-
-                var entry = BundleEntryComponent()
-                var uuid = UUID.randomUUID();
-                entry.fullUrl = "urn:uuid:" + uuid.toString()
-                entry.resource = observation
-                entry.request.url = "Observation"
-                entry.request.method = Bundle.HTTPVerb.POST
-                bundle.entry.add(entry)
             }
             if (item.hasItem()) {
                 processItem(bundle, questionnaire, questionnaireResponse, item.item)
