@@ -148,7 +148,7 @@ class AWSQuestionnaire(val awsClient: IGenericClient,
         return response
     }
 
-    /*
+
     fun read(theId: IdType): MethodOutcome? {
         var response = MethodOutcome()
         var retry = 3
@@ -172,5 +172,5 @@ class AWSQuestionnaire(val awsClient: IGenericClient,
             }
         }
         return response
-    }*/
+    }
 }

@@ -70,8 +70,16 @@ class QuestionnaireResponseProvider(
         bundle.type = Bundle.BundleType.TRANSACTION;
         if (!questionnaireResponse.hasQuestionnaire()) throw UnprocessableEntityException("Questionnaire must be supplied");
         val questionnaire = awsQuestionnaire.search(UriParam().setValue(questionnaireResponse?.questionnaire))
-        if (questionnaire == null || questionnaire.size==0) throw UnprocessableEntityException("Questionnaire not found");
-        processItem(bundle, questionnaire[0], questionnaireResponse, questionnaireResponse.item)
+        if (questionnaire == null || questionnaire.size==0) {
+            var result = awsQuestionnaire.read(IdType().setValue(questionnaireResponse.questionnaire))
+            if (result !== null && result.resource !== null) {
+                processItem(bundle, result.resource as Questionnaire, questionnaireResponse, questionnaireResponse.item)
+            } else {
+                throw UnprocessableEntityException("Questionnaire not found")
+            }
+        } else {
+            processItem(bundle, questionnaire[0], questionnaireResponse, questionnaireResponse.item)
+        }
         return bundle;
     }
 
