@@ -2,7 +2,10 @@ package uk.nhs.england.tie.awsProvider
 
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.MethodOutcome
+import ca.uhn.fhir.rest.api.SortOrderEnum
+import ca.uhn.fhir.rest.api.SortSpec
 import ca.uhn.fhir.rest.client.api.IGenericClient
+import ca.uhn.fhir.rest.param.TokenParam
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
 import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
@@ -317,5 +320,38 @@ class AWSObservation(val messageProperties: MessageProperties, val awsClient: IG
             }
         }
         return response
+    }
+
+    public fun search(subject : Reference, coding: List<Coding>) : List<Observation> {
+        var resources = mutableListOf<Observation>()
+        var bundle: Bundle? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = awsClient
+                    .search<IBaseBundle>()
+                    .forResource(Observation::class.java)
+                    .where(
+                        Observation.PATIENT.hasId(subject.reference.replace("Patient/",""))
+
+                    )
+                    .and(Observation.CODE.exactly().systemAndCode(coding[0].system,coding[0].code))
+                    .sort(SortSpec().setParamName("date").setOrder(SortOrderEnum.DESC))
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break;
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (bundle!=null && bundle.hasEntry()) {
+            for (entry in bundle.entry) {
+                if (entry.hasResource() && entry.resource is Observation) resources.add(entry.resource as Observation)
+            }
+        }
+        return resources
     }
 }
