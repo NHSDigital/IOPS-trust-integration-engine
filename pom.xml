@@ -10,7 +10,7 @@
     </parent>
     <groupId>uk.nhs.england.tie</groupId>
     <artifactId>iops-integration-engine</artifactId>
-    <version>6.6.4</version>
+    <version>6.6.6</version>
     <name>iops-integration-engine</name>
     <description>IOPS FHIR Integration Engine</description>
     <properties>

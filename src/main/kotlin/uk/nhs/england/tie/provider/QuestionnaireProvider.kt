@@ -8,6 +8,7 @@ import ca.uhn.fhir.rest.api.server.RequestDetails
 import ca.uhn.fhir.rest.server.IResourceProvider
 import mu.KLogging
 import org.hl7.fhir.r4.model.*
+import org.hl7.fhir.r4.model.QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSObservation
@@ -83,10 +84,9 @@ class QuestionnaireProvider (@Qualifier("R4") private val fhirContext: FhirConte
         if (questionnaire !== null) {
             if (questionnaire.hasItem()) {
                 for (item in questionnaire.item) {
-                    var qrItem = QuestionnaireResponse.QuestionnaireResponseItemComponent()
 
-                    questionnaireResponse.item.add(qrItem)
-                    processItems(subject, qrItem, item)
+                    var qrItem = processItems(subject,  item)
+                    if (qrItem !== null) questionnaireResponse.item.add(qrItem)
                 }
 
             }
@@ -95,23 +95,35 @@ class QuestionnaireProvider (@Qualifier("R4") private val fhirContext: FhirConte
         parameters.addParameter().setName("response").setResource(questionnaireResponse)
         return parameters
     }
-    fun processItems(subject: Reference?, qrItem: QuestionnaireResponse.QuestionnaireResponseItemComponent, item: Questionnaire.QuestionnaireItemComponent) {
-        qrItem.linkId = item.linkId
-        if (item.hasText()) qrItem.text = item.text
+    fun processItems(subject: Reference?,  item: Questionnaire.QuestionnaireItemComponent) : QuestionnaireResponse.QuestionnaireResponseItemComponent? {
+        var qrItem :QuestionnaireResponse.QuestionnaireResponseItemComponent? = null
+
         var extraction = item.getExtensionByUrl("http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-observationExtract")
         if (extraction !== null && extraction.hasValue() && (extraction.value is BooleanType) && (extraction.value as BooleanType).value) {
-            getAnswers(subject, item, qrItem)
+            var answers = getAnswers(subject, item)
+            if (answers.size>0) {
+                qrItem = QuestionnaireResponse.QuestionnaireResponseItemComponent()
+                qrItem.linkId = item.linkId
+                if (item.hasText()) qrItem.text = item.text
+                qrItem.answer = answers
+            }
         }
         if (item.hasItem()) {
             for (subitem in item.item) {
-                var qrSubItem = QuestionnaireResponse.QuestionnaireResponseItemComponent()
-                qrItem.item.add(qrSubItem)
-                processItems(subject, qrSubItem, subitem)
+                var qrSubItem = processItems(subject, subitem)
+                if (qrSubItem !== null) {
+                    if (qrItem === null) qrItem = QuestionnaireResponse.QuestionnaireResponseItemComponent()
+                    qrItem.item.add(qrSubItem)
+                    qrItem.linkId = item.linkId
+                    if (item.hasText()) qrItem.text = item.text
+                }
             }
         }
+        return qrItem
     }
 
-    private fun getAnswers(subject : Reference?, item: Questionnaire.QuestionnaireItemComponent, qrItem: QuestionnaireResponse.QuestionnaireResponseItemComponent) {
+    private fun getAnswers(subject : Reference?, item: Questionnaire.QuestionnaireItemComponent) : List<QuestionnaireResponseItemAnswerComponent> {
+        var answers = ArrayList<QuestionnaireResponseItemAnswerComponent>()
         if (item.hasCode() && subject !== null && subject.hasReference()) {
             var observations = awsObservation.search(subject, item.code)
             if (observations !== null && observations.size > 0) {
@@ -121,21 +133,28 @@ class QuestionnaireProvider (@Qualifier("R4") private val fhirContext: FhirConte
                     if (!doneFirstEntry || (item.hasRepeats() && item.repeats)) {
 
                         if (observation.hasValueQuantity()) {
-                            qrItem.answer.add(
+                            answers.add(
                                 QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent()
                                     .setValue(observation.valueQuantity)
                             )
                         }
                         if (observation.hasValueCodeableConcept()) {
-                            qrItem.answer.add(
-                                QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent()
-                                    .setValue(observation.valueCodeableConcept.codingFirstRep)
-                            )
+                            var exists = false
+                            for (answer in answers) {
+                                if (answer.hasValueCoding() && answer.valueCoding.code.equals(observation.valueCodeableConcept.codingFirstRep.code)) exists = true
+                            }
+                            if (!exists) {
+                                answers.add(
+                                    QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent()
+                                        .setValue(observation.valueCodeableConcept.codingFirstRep)
+                                )
+                            }
                         }
                         doneFirstEntry = true;
                     }
                 }
             }
         }
+        return answers
     }
 }
