@@ -117,7 +117,7 @@ class MessageProperties {
         return defaultValue
     }
 
-    private fun getPropertyBoolean(propertyName: String, defaultValue: Boolean): Boolean? {
+    private fun getPropertyBoolean(propertyName: String, defaultValue: Boolean): Boolean {
         val value: String? = getProperty(propertyName)
         return if (value == null || value.length == 0) {
             defaultValue
@@ -225,7 +225,7 @@ class MessageProperties {
         return getProperty(AWS_QUEUE_NAME)
     }
 
-    fun getAWSQueueEnabled(): Boolean? {
+    fun getAWSQueueEnabled(): Boolean {
         return getPropertyBoolean(AWS_QUEUE_ENABLED, false)
     }
 

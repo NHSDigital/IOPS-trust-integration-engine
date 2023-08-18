@@ -10,15 +10,16 @@
     </parent>
     <groupId>uk.nhs.england.tie</groupId>
     <artifactId>iops-integration-engine</artifactId>
-    <version>6.6.6</version>
+    <version>6.8.0</version>
     <name>iops-integration-engine</name>
     <description>IOPS FHIR Integration Engine</description>
     <properties>
         <java.version>1.8</java.version>
         <kotlin.version>1.5.10</kotlin.version>
-        <fhir.version>6.6.2</fhir.version>
+        <fhir.version>6.8.0</fhir.version>
         <swagger_version>2.1.12</swagger_version>
         <parser_version>2.0.30</parser_version>
+        <jackson_databind_version>2.15.2</jackson_databind_version>
     </properties>
 
     <dependencies>
@@ -37,7 +38,15 @@
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
+            <version>${jackson_databind_version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson_databind_version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-reflect</artifactId>

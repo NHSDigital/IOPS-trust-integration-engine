@@ -128,13 +128,28 @@ class QuestionnaireProvider (@Qualifier("R4") private val fhirContext: FhirConte
             var observations = awsObservation.search(subject, item.code)
             if (observations !== null && observations.size > 0) {
                 var doneFirstEntry = false;
+
                 for (observation in observations) {
+                    if (item.hasType()) {
+                        if (item.type.equals(Questionnaire.QuestionnaireItemType.DATE) && observation.hasEffectiveDateTimeType()) {
+                            answers.add(
+                                QuestionnaireResponseItemAnswerComponent()
+                                    .setValue(DateType().setValue(observation.effectiveDateTimeType.value))
+                            )
+                        }
+                        if (item.type.equals(Questionnaire.QuestionnaireItemType.DATETIME) && observation.hasEffectiveDateTimeType()) {
+                            answers.add(
+                                QuestionnaireResponseItemAnswerComponent()
+                                    .setValue(observation.effectiveDateTimeType)
+                            )
+                        }
+                    }
                     // Only one answer if item does not repeat
                     if (!doneFirstEntry || (item.hasRepeats() && item.repeats)) {
 
                         if (observation.hasValueQuantity()) {
                             answers.add(
-                                QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent()
+                                QuestionnaireResponseItemAnswerComponent()
                                     .setValue(observation.valueQuantity)
                             )
                         }
@@ -145,7 +160,7 @@ class QuestionnaireProvider (@Qualifier("R4") private val fhirContext: FhirConte
                             }
                             if (!exists) {
                                 answers.add(
-                                    QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent()
+                                    QuestionnaireResponseItemAnswerComponent()
                                         .setValue(observation.valueCodeableConcept.codingFirstRep)
                                 )
                             }

@@ -3,6 +3,7 @@ package uk.nhs.england.tie
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.EncodingEnum
 import ca.uhn.fhir.rest.server.RestfulServer
+import com.amazonaws.services.sqs.AmazonSQS
 import org.springframework.beans.factory.annotation.Qualifier
 import uk.nhs.england.tie.provider.BinaryProvider
 import uk.nhs.england.tie.provider.DocumentReferenceProvider
@@ -66,10 +67,10 @@ class FHIRR4RestfulServer(
     val activityDefinitionPlainProvider: ActivityDefinitionPlainProvider,
     val planDefinitionProvider: PlanDefinitionProvider,
     val planDefinitionPlainProvider: PlanDefinitionPlainProvider,
-    val valueSetProvider: ValueSetProvider
+    val valueSetProvider: ValueSetProvider,
+    val sqs : AmazonSQS
 
-
-) : RestfulServer(fhirContext) {
+    ) : RestfulServer(fhirContext) {
 
     override fun initialize() {
         super.initialize()
@@ -130,7 +131,9 @@ class FHIRR4RestfulServer(
         val awsAuditEventLoggingInterceptor =
             AWSAuditEventLoggingInterceptor(
                 this.fhirContext,
-                fhirServerProperties
+                fhirServerProperties,
+                messageProperties,
+                sqs
             )
         interceptorService.registerInterceptor(awsAuditEventLoggingInterceptor)
 

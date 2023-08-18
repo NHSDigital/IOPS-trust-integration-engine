@@ -100,6 +100,7 @@ class QuestionnaireResponseProvider(
                 for (answer in item.answer) {
                     var observation = Observation()
                     observation.status = Observation.ObservationStatus.FINAL;
+                    observation.derivedFrom.add(Reference().setReference(questionnaireResponse.id))
                     if (questionnaireResponse.hasIdentifier()) {
                         var identifier = Identifier()
                         identifier.system = questionnaireResponse.identifier.system

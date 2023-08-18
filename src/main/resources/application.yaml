@@ -16,7 +16,7 @@ fhir:
   server:
     name: Orchestration Services
     baseUrl: https://3cdzg7kbj4.execute-api.eu-west-2.amazonaws.com/poc/events
-    version: 6.6.6
+    version: 6.8.0
 
 ###Remote terminology validation:
 
