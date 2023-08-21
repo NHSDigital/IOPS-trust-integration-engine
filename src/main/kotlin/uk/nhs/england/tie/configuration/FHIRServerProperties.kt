@@ -11,6 +11,10 @@ data class FHIRServerProperties(
     data class Server(
         var baseUrl: String,
         var name: String,
-        var version: String
+        var version: String,
+        var authorize: String,
+        var token: String,
+        var introspect: String,
+        var smart: Boolean
     )
 }

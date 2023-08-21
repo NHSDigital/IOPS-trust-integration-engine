@@ -39,6 +39,17 @@ class CapabilityStatementInterceptor(
         cs.publisher = "NHS England"
         cs.implementation.url =  fhirServerProperties.server.baseUrl + "/FHIR/R4"
         cs.implementation.description = "NHS England FHIR Implementation Guide"
+        if (fhirServerProperties.server.smart && cs.hasRest()) {
+            var extension = Extension().setUrl("http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris")
+            extension.addExtension(Extension().setUrl("authorize").setValue(UriType().setValue(fhirServerProperties.server.authorize)))
+            extension.addExtension(Extension().setUrl("token").setValue(UriType().setValue(fhirServerProperties.server.token)))
+            extension.addExtension(Extension().setUrl("introspect").setValue(UriType().setValue(fhirServerProperties.server.introspect)))
+            cs.restFirstRep.security.extension.add(extension)
+            cs.restFirstRep.security.cors = true
+            cs.restFirstRep.security.service.add(
+                CodeableConcept().addCoding(Coding().setCode("SMART-on-FHIR").setDisplay("SMART-on-FHIR").setSystem("http://hl7.org/fhir/restful-security-service")).setText("OAuth2 using SMART-on-FHIR profile (see http://docs.smarthealthit.org)")
+            )
+        }
     }
 
     fun getResourceComponent(type : String, cs : CapabilityStatement ) : CapabilityStatement.CapabilityStatementRestResourceComponent? {

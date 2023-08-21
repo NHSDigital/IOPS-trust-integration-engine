@@ -147,21 +147,23 @@ class QuestionnaireProvider (@Qualifier("R4") private val fhirContext: FhirConte
                     // Only one answer if item does not repeat
                     if (!doneFirstEntry || (item.hasRepeats() && item.repeats)) {
 
-                        if (observation.hasValueQuantity()) {
-                            answers.add(
-                                QuestionnaireResponseItemAnswerComponent()
-                                    .setValue(observation.valueQuantity)
-                            )
-                        }
-                        if (observation.hasValueCodeableConcept()) {
-                            var exists = false
-                            for (answer in answers) {
-                                if (answer.hasValueCoding() && answer.valueCoding.code.equals(observation.valueCodeableConcept.codingFirstRep.code)) exists = true
-                            }
-                            if (!exists) {
+                        if (observation.hasValue()) {
+                            if (observation.hasValueCodeableConcept()) {
+                                var exists = false
+                                for (answer in answers) {
+                                    if (answer.hasValueCoding() && answer.valueCoding.code.equals(observation.valueCodeableConcept.codingFirstRep.code)) exists =
+                                        true
+                                }
+                                if (!exists) {
+                                    answers.add(
+                                        QuestionnaireResponseItemAnswerComponent()
+                                            .setValue(observation.valueCodeableConcept.codingFirstRep)
+                                    )
+                                }
+                            } else {
                                 answers.add(
                                     QuestionnaireResponseItemAnswerComponent()
-                                        .setValue(observation.valueCodeableConcept.codingFirstRep)
+                                        .setValue(observation.value)
                                 )
                             }
                         }

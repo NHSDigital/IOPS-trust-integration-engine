@@ -117,24 +117,27 @@ class QuestionnaireResponseProvider(
                         observation.setEffective(DateTimeType().setValue(questionnaireResponse.authored ))
                         observation.setIssued(questionnaireResponse.authored )
                     }
-                    if (answer.hasValueQuantity()) {
-                        observation.setValue(answer.valueQuantity)
-                    }
-                    if (answer.hasValueCoding()) {
-                        observation.setValue(CodeableConcept().addCoding(answer.valueCoding))
-                    }
-                    if (answer.hasValueDecimalType()) {
-                        observation.setValue(Quantity().setValue(answer.valueDecimalType.value))
-                    }
-                    if (answer.hasValueIntegerType()) {
-                        observation.setValue(answer.valueIntegerType)
-                    }
+
+                    // answers
+
                     if (answer.hasValueDateType()) {
                         observation.setEffective(DateTimeType().setValue(answer.valueDateType.value))
-                    }
-                    if (answer.hasValueDateTimeType()) {
+                        observation.setValue(DateTimeType().setValue(answer.valueDateType.value))
+                    } else if (answer.hasValueDateTimeType()) {
                         observation.setEffective(answer.valueDateTimeType)
+                        observation.setValue(answer.valueDateTimeType)
+                    } else if (answer.hasValueCoding()) {
+                        observation.setValue(CodeableConcept().addCoding(answer.valueCoding))
+                    } else if (answer.hasValueDecimalType()) {
+                        observation.setValue(Quantity().setValue(answer.valueDecimalType.value))
+                    } else {
+                        // fall through - may have some issues here
+                        if (answer.hasValue()) {
+                            observation.setValue(answer.value)
+                        }
                     }
+
+
                     var entry = BundleEntryComponent()
                     var uuid = UUID.randomUUID();
                     entry.fullUrl = "urn:uuid:" + uuid.toString()
