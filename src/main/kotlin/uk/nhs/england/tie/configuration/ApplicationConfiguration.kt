@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import uk.nhs.england.tie.interceptor.BasicAuthInterceptor
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import uk.nhs.england.tie.util.CorsFilter
 import javax.servlet.Filter
@@ -65,6 +66,11 @@ open class ApplicationConfiguration(val messageProperties: MessageProperties) {
         val client: IGenericClient = ctx.newRestfulGenericClient(mmessageProperties.getCdrFhirServer())
         client.registerInterceptor(cognitoIdpInterceptor)
         return client
+    }
+
+    @Bean
+    fun getBasicAuth(messageProperties: MessageProperties, fhirServerProperties: FHIRServerProperties,@Qualifier("R4") ctx : FhirContext) : BasicAuthInterceptor {
+        return BasicAuthInterceptor(messageProperties, fhirServerProperties , ctx)
     }
     @Bean
     fun corsFilter(): FilterRegistrationBean<*>? {

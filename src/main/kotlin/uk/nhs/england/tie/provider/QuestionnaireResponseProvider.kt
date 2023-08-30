@@ -13,6 +13,7 @@ import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.awsProvider.AWSQuestionnaire
 import uk.nhs.england.tie.awsProvider.AWSQuestionnaireResponse
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
+import uk.nhs.england.tie.interceptor.BasicAuthInterceptor
 import java.util.*
 
 
@@ -23,6 +24,7 @@ class QuestionnaireResponseProvider(
     var awsQuestionnaireResponse: AWSQuestionnaireResponse,
     var awsQuestionnaire: AWSQuestionnaire,
     var cognitoAuthInterceptor: CognitoAuthInterceptor,
+    var basicAuthInterceptor: BasicAuthInterceptor,
     val awsPatient: AWSPatient
 
 ) : IResourceProvider {
@@ -70,12 +72,29 @@ class QuestionnaireResponseProvider(
         bundle.type = Bundle.BundleType.TRANSACTION;
         if (!questionnaireResponse.hasQuestionnaire()) throw UnprocessableEntityException("Questionnaire must be supplied");
         val questionnaire = awsQuestionnaire.search(UriParam().setValue(questionnaireResponse?.questionnaire))
+
         if (questionnaire == null || questionnaire.size==0) {
-            var result = awsQuestionnaire.read(IdType().setValue(questionnaireResponse.questionnaire))
+            var result: MethodOutcome? = null
+            try {
+            result = awsQuestionnaire.read(IdType().setValue(questionnaireResponse.questionnaire))}
+            catch (ex: Exception) {
+
+            }
             if (result !== null && result.resource !== null) {
                 processItem(bundle, result.resource as Questionnaire, questionnaireResponse, questionnaireResponse.item)
             } else {
-                throw UnprocessableEntityException("Questionnaire not found")
+                    val questionnaireId = questionnaireResponse.questionnaire.split("/")
+                    val response = basicAuthInterceptor.readFromUrl(
+                        "/Questionnaire/" + questionnaireId[questionnaireId.size - 1],
+                        null,
+                        null
+                    )
+                    if (response is Questionnaire) {
+                        processItem(bundle, response, questionnaireResponse, questionnaireResponse.item)
+                    } else {
+
+                        throw UnprocessableEntityException("Questionnaire not found")
+                    }
             }
         } else {
             processItem(bundle, questionnaire[0], questionnaireResponse, questionnaireResponse.item)
@@ -95,6 +114,7 @@ class QuestionnaireResponseProvider(
                     }
                 }
             }
+            if (questionItem.hasCode() && questionItem.codeFirstRep.hasSystem() && questionItem.codeFirstRep.system.equals("http://loinc.org")) generateObservation = true
             if (generateObservation && questionItem.hasCode() && item.answerFirstRep != null) {
 
                 for (answer in item.answer) {

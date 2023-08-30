@@ -34,6 +34,7 @@ class MessageProperties {
     val AWS_QUEUE_ENABLED = "aws.queueEnabled"
     val CDR_FHIR_SERVER = "cdr.fhirServer"
     val VALIDATION_FHIR_SERVER = "validation.fhirServer"
+    val LOINC_FHIR_SERVER = "loinc.fhirServer"
 
     private var properties: Properties? = null
 
@@ -236,6 +237,9 @@ class MessageProperties {
 
     fun getCdrFhirServer(): String? {
         return getProperty(CDR_FHIR_SERVER)
+    }
+    fun getLOINCFhirServer(): String? {
+        return getProperty(LOINC_FHIR_SERVER)
     }
 
     fun getValidationFhirServer(): String? {
