@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
 import uk.nhs.england.tie.util.FhirSystems
-import java.util.*
+
 
 @Component
 class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericClient,
@@ -67,7 +67,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
         while (retry > 0) {
             try {
 
-                awsBundle = awsClient!!.search<IBaseBundle>().forResource(Task::class.java)
+                awsBundle = awsClient.search<IBaseBundle>().forResource(Task::class.java)
                     .where(
                         Task.IDENTIFIER.exactly()
                             .systemAndCode(nhsIdentifier.system, nhsIdentifier.value)
@@ -112,7 +112,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
                 if (newTask.focus.identifier.system.equals(FhirSystems.UBRN)) {
                     val serviceRequest = awsServiceRequest.get(newTask.focus.identifier)
                     if (serviceRequest != null ) {
-                        val canonical = newTask.focus.reference
+                        newTask.focus.reference
                         awsBundleProvider.updateReference(newTask.focus,newTask.focus.identifier,serviceRequest)
                     }
                 }
@@ -159,14 +159,14 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
 
 
 
-        if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
+        return if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.resource is Task
         ) {
-            return updateTask(awsBundle.entryFirstRep.resource as Task, newTask)?.resource as Task
+            updateTask(awsBundle.entryFirstRep.resource as Task, newTask)?.resource as Task
 
         } else {
-            return createTask(newTask)?.resource as Task
+            createTask(newTask)?.resource as Task
         }
     }
 
@@ -183,7 +183,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
         while (retry > 0) {
             try {
 
-                awsBundle = awsClient!!.search<IBaseBundle>().forResource(Task::class.java)
+                awsBundle = awsClient.search<IBaseBundle>().forResource(Task::class.java)
                     .where(
                         Task.IDENTIFIER.exactly()
                             .systemAndCode(nhsIdentifier.system, nhsIdentifier.value)
@@ -257,14 +257,14 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
 
 
 
-        if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
+        return if (awsBundle!!.hasEntry() && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.hasResource()
             && awsBundle.entryFirstRep.resource is Task
         ) {
-           return updateTask(awsBundle.entryFirstRep.resource as Task, newTask)
-            return null
+            updateTask(awsBundle.entryFirstRep.resource as Task, newTask)
+
         } else {
-            return createTask(newTask)
+            createTask(newTask)
         }
     }
 
@@ -280,7 +280,7 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
         var retry = 3
         while (retry > 0) {
             try {
-                response = awsClient!!.update().resource(newTask).withId(task.id).execute()
+                response = awsClient.update().resource(newTask).withId(task.id).execute()
                 log.info("AWS Task updated " + response.resource.idElement.value)
                 val auditEvent = awsAuditEvent.createAudit(task, AuditEvent.AuditEventAction.C)
                 awsAuditEvent.writeAWS(auditEvent)
@@ -297,7 +297,6 @@ class AWSTask(val messageProperties: MessageProperties, val awsClient: IGenericC
     }
 
     private fun createTask(newTask: Task): MethodOutcome? {
-        val awsBundle: Bundle? = null
         var response: MethodOutcome? = null
 
         var retry = 3

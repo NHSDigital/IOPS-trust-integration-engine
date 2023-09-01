@@ -69,11 +69,12 @@ class QuestionnaireResponseProvider(
     fun expand(@ResourceParam questionnaireResponse: QuestionnaireResponse
     ): Bundle {
         var bundle: Bundle = Bundle();
+        var questionnaire : Questionnaire?
         bundle.type = Bundle.BundleType.TRANSACTION;
         if (!questionnaireResponse.hasQuestionnaire()) throw UnprocessableEntityException("Questionnaire must be supplied");
-        val questionnaire = awsQuestionnaire.search(UriParam().setValue(questionnaireResponse?.questionnaire))
+        val questionnaires = awsQuestionnaire.search(UriParam().setValue(questionnaireResponse?.questionnaire))
 
-        if (questionnaire == null || questionnaire.size==0) {
+        if (questionnaires == null || questionnaires.size==0) {
             var result: MethodOutcome? = null
             try {
             result = awsQuestionnaire.read(IdType().setValue(questionnaireResponse.questionnaire))}
@@ -81,7 +82,8 @@ class QuestionnaireResponseProvider(
 
             }
             if (result !== null && result.resource !== null) {
-                processItem(bundle, result.resource as Questionnaire, questionnaireResponse, questionnaireResponse.item)
+                questionnaire = result.resource as Questionnaire
+
             } else {
                     val questionnaireId = questionnaireResponse.questionnaire.split("/")
                     val response = basicAuthInterceptor.readFromUrl(
@@ -90,14 +92,53 @@ class QuestionnaireResponseProvider(
                         null
                     )
                     if (response is Questionnaire) {
-                        processItem(bundle, response, questionnaireResponse, questionnaireResponse.item)
+                        questionnaire = response as Questionnaire
                     } else {
 
                         throw UnprocessableEntityException("Questionnaire not found")
                     }
             }
         } else {
-            processItem(bundle, questionnaire[0], questionnaireResponse, questionnaireResponse.item)
+            questionnaire = questionnaires[0]
+        }
+        if (questionnaire !== null) {
+            // This deals with the members
+            processItem(bundle, questionnaire, questionnaireResponse, questionnaireResponse.item)
+            // This adds a top level observation which is pathology is called a Test Group
+            if (questionnaire.hasCode()) {
+                var observation = Observation()
+                observation.status = Observation.ObservationStatus.FINAL;
+                observation.derivedFrom.add(Reference().setReference(questionnaireResponse.id))
+                if (questionnaireResponse.hasIdentifier()) {
+                    var identifier = Identifier()
+                    identifier.system = questionnaireResponse.identifier.system
+                    identifier.value = questionnaireResponse.identifier.value
+                    observation.addIdentifier(identifier)
+                }
+                if (questionnaireResponse.hasAuthor()) {
+                    observation.addPerformer(questionnaireResponse.author)
+                }
+                observation.code = CodeableConcept()
+                observation.code.coding = questionnaire.code
+                observation.setSubject(questionnaireResponse.subject)
+                if (questionnaireResponse.hasAuthored()) {
+                    observation.setEffective(DateTimeType().setValue(questionnaireResponse.authored ))
+                    observation.setIssued(questionnaireResponse.authored )
+                }
+
+                for (entry in bundle.entry) {
+                    observation.addHasMember(Reference().setReference(entry.fullUrl))
+                }
+
+
+                var entry = BundleEntryComponent()
+                var uuid = UUID.randomUUID();
+                entry.fullUrl = "urn:uuid:" + uuid.toString()
+                entry.resource = observation
+                entry.request.url = "Observation"
+                entry.request.method = Bundle.HTTPVerb.POST
+                bundle.entry.add(entry)
+            }
         }
         return bundle;
     }

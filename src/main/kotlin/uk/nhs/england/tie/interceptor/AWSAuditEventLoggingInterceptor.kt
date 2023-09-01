@@ -38,7 +38,7 @@ class AWSAuditEventLoggingInterceptor(
 
     @Hook(Pointcut.SERVER_PROCESSING_COMPLETED_NORMALLY)
     fun processingCompletedNormally(theRequestDetails: ServletRequestDetails) {
-        var fhirResource: String? = null
+
         var patientId: String? = null
         val fhirResourceName = theRequestDetails.requestPath
         if (theRequestDetails.parameters.size > 0) {

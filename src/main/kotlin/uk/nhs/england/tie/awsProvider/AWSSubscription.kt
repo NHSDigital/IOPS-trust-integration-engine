@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
-import java.util.*
+
 
 @Component
 class AWSSubscription(val messageProperties: MessageProperties, val awsClient: IGenericClient,
@@ -28,7 +28,7 @@ class AWSSubscription(val messageProperties: MessageProperties, val awsClient: I
 
 
 
-    public fun read(identifier: IdType): Subscription? {
+    fun read(identifier: IdType): Subscription? {
         var subscription :Subscription? = null
         var retry = 3
         while (retry > 0) {
@@ -49,7 +49,7 @@ class AWSSubscription(val messageProperties: MessageProperties, val awsClient: I
        return subscription
     }
 
-    public fun delete(identifier: IdType): MethodOutcome? {
+    fun delete(identifier: IdType): MethodOutcome? {
         var methodOutcome = MethodOutcome().setCreated(false)
         var retry = 3
         while (retry > 0) {
@@ -70,7 +70,7 @@ class AWSSubscription(val messageProperties: MessageProperties, val awsClient: I
         return methodOutcome
     }
 
-    public fun update(subscription: Subscription,
+    fun update(subscription: Subscription,
                       theId: IdType): MethodOutcome? {
         var response: MethodOutcome? = null
         var changed = false
@@ -79,7 +79,7 @@ class AWSSubscription(val messageProperties: MessageProperties, val awsClient: I
         while (retry > 0) {
             try {
                 subscription.id = theId.value
-                response = awsClient!!.update().resource(subscription).withId(theId.value).execute()
+                response = awsClient.update().resource(subscription).withId(theId.value).execute()
                 log.info("AWS Subscription updated " + response.resource.idElement.value)
                 val auditEvent = awsAuditEvent.createAudit(subscription, AuditEvent.AuditEventAction.C)
                 awsAuditEvent.writeAWS(auditEvent)
