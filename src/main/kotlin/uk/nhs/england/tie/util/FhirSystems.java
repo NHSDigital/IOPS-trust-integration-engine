@@ -47,6 +47,30 @@ public final class FhirSystems {
 
     public static final String V3_PARTICIPANT_TYPE = "http://terminology.hl7.org/CodeSystem/v3-ParticipationType";
 
+
+    public static final String SDC_UNIT_OPTION = "http://hl7.org/fhir/StructureDefinition/questionnaire-unitOption";
+
+    public static final String SDC_PERIOD = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-observationLinkPeriod";
+    public static final String SDC_EXTRACT = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-observationExtract";
+    public static final String SDC_EXTRACT_CONTEXT = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-itemExtractionContext";
+    public static final String SDC_QTY_MIN = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-minQuantity";
+    public static final String SDC_QTY_MAX = "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-maxQuantity";
+
+    public static final String SDC_VALUE_MAX = "http://hl7.org/fhir/StructureDefinition/maxValue";
+    public static final String SDC_VALUE_MIN = "http://hl7.org/fhir/StructureDefinition/minValue";
+
+    public static final String SDC_ORDINAL_VALUE = "http://hl7.org/fhir/StructureDefinition/ordinalValue";
+
+    public static final String UNITS_OF_MEASURE = "http://unitsofmeasure.org";
+    public static final String OPENEHR_CODESYSTEM = "http://openehr.example.org/CodeSystem";
+
+    public static final String OPENEHR_VALUESET = "http://fhir.openehr.example.org/ValueSet";
+    public static final String OPENEHR_ARCHETYPE_EXT = "http://fhir.openehr.example.org/Archetype";
+
+    public static final String OPENEHR_TEMPLATE = "https://fhir.openehr.example.org/Questionnaire";
+    public static final String OPENEHR_DATATYPE_EXT = "http://openehr.example.org/Datatype";
+
+
     public static final String stripBrace(String str) {
         return str.replace("{","").replace("}","");
     }

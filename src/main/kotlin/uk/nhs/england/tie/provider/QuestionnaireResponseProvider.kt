@@ -14,6 +14,7 @@ import uk.nhs.england.tie.awsProvider.AWSQuestionnaire
 import uk.nhs.england.tie.awsProvider.AWSQuestionnaireResponse
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import uk.nhs.england.tie.interceptor.BasicAuthInterceptor
+import uk.nhs.england.tie.util.FhirSystems
 import java.util.*
 
 
@@ -69,97 +70,56 @@ class QuestionnaireResponseProvider(
     fun expand(@ResourceParam questionnaireResponse: QuestionnaireResponse
     ): Bundle {
         var bundle: Bundle = Bundle();
-        var questionnaire : Questionnaire?
         bundle.type = Bundle.BundleType.TRANSACTION;
         if (!questionnaireResponse.hasQuestionnaire()) throw UnprocessableEntityException("Questionnaire must be supplied");
-        val questionnaires = awsQuestionnaire.search(UriParam().setValue(questionnaireResponse?.questionnaire))
-
-        if (questionnaires == null || questionnaires.size==0) {
-            var result: MethodOutcome? = null
-            try {
-            result = awsQuestionnaire.read(IdType().setValue(questionnaireResponse.questionnaire))}
-            catch (ex: Exception) {
-
-            }
+        val questionnaire = awsQuestionnaire.search(UriParam().setValue(questionnaireResponse?.questionnaire))
+        if (questionnaire == null || questionnaire.size==0) {
+            var result = awsQuestionnaire.read(IdType().setValue(questionnaireResponse.questionnaire))
             if (result !== null && result.resource !== null) {
-                questionnaire = result.resource as Questionnaire
-
+                processItem(bundle, result.resource as Questionnaire, questionnaireResponse, questionnaireResponse.item, null)
             } else {
-                    val questionnaireId = questionnaireResponse.questionnaire.split("/")
-                    val response = basicAuthInterceptor.readFromUrl(
-                        "/Questionnaire/" + questionnaireId[questionnaireId.size - 1],
-                        null,
-                        null
-                    )
-                    if (response is Questionnaire) {
-                        questionnaire = response as Questionnaire
-                    } else {
-
-                        throw UnprocessableEntityException("Questionnaire not found")
-                    }
+                throw UnprocessableEntityException("Questionnaire not found")
             }
         } else {
-            questionnaire = questionnaires[0]
-        }
-        if (questionnaire !== null) {
-            // This deals with the members
-            processItem(bundle, questionnaire, questionnaireResponse, questionnaireResponse.item)
-            // This adds a top level observation which is pathology is called a Test Group
-            if (questionnaire.hasCode()) {
-                var observation = Observation()
-                observation.status = Observation.ObservationStatus.FINAL;
-                observation.derivedFrom.add(Reference().setReference(questionnaireResponse.id))
-                if (questionnaireResponse.hasIdentifier()) {
-                    var identifier = Identifier()
-                    identifier.system = questionnaireResponse.identifier.system
-                    identifier.value = questionnaireResponse.identifier.value
-                    observation.addIdentifier(identifier)
-                }
-                if (questionnaireResponse.hasAuthor()) {
-                    observation.addPerformer(questionnaireResponse.author)
-                }
-                observation.code = CodeableConcept()
-                observation.code.coding = questionnaire.code
-                observation.setSubject(questionnaireResponse.subject)
-                if (questionnaireResponse.hasAuthored()) {
-                    observation.setEffective(DateTimeType().setValue(questionnaireResponse.authored ))
-                    observation.setIssued(questionnaireResponse.authored )
-                }
-
-                for (entry in bundle.entry) {
-                    observation.addHasMember(Reference().setReference(entry.fullUrl))
-                }
-
-
-                var entry = BundleEntryComponent()
-                var uuid = UUID.randomUUID();
-                entry.fullUrl = "urn:uuid:" + uuid.toString()
-                entry.resource = observation
-                entry.request.url = "Observation"
-                entry.request.method = Bundle.HTTPVerb.POST
-                bundle.entry.add(entry)
-            }
+            processItem(bundle, questionnaire[0], questionnaireResponse, questionnaireResponse.item, null)
         }
         return bundle;
     }
 
-    private fun processItem(bundle: Bundle, questionnaire: Questionnaire, questionnaireResponse: QuestionnaireResponse, items: List<QuestionnaireResponse.QuestionnaireResponseItemComponent>) {
+    private fun processItem(bundle: Bundle, questionnaire: Questionnaire, questionnaireResponse: QuestionnaireResponse, items: List<QuestionnaireResponse.QuestionnaireResponseItemComponent>, parentObservation : Resource?) {
+        var mainResource = parentObservation
+        var isOpenEHR = false
         for(item in items) {
             var questionItem = getItem(questionnaire, item.linkId)
             var generateObservation = false;
             if (questionItem.hasExtension()) {
+                var tempIsOpenEHR = false
                 for (extension in questionItem.extension) {
                     if (extension.url.equals("http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-observationExtract")
                         && extension.value is BooleanType) {
                         generateObservation = (extension.value as BooleanType).value
                     }
+                    if (extension.url.equals(FhirSystems.OPENEHR_DATATYPE_EXT)) {
+                        tempIsOpenEHR = true
+                    }
                 }
+                if (generateObservation) isOpenEHR = tempIsOpenEHR
             }
-            if (questionItem.hasCode() && questionItem.codeFirstRep.hasSystem() && questionItem.codeFirstRep.system.equals("http://loinc.org")) generateObservation = true
             if (generateObservation && questionItem.hasCode() && item.answerFirstRep != null) {
 
                 for (answer in item.answer) {
+
                     var observation = Observation()
+                    var entry = BundleEntryComponent()
+                    var uuid = UUID.randomUUID();
+                    entry.fullUrl = "urn:uuid:" + uuid.toString()
+                    entry.resource = observation
+                    entry.request.url = "Observation"
+                    entry.request.method = Bundle.HTTPVerb.POST
+                    bundle.entry.add(entry)
+
+                    if (isOpenEHR) mainResource = observation
+
                     observation.status = Observation.ObservationStatus.FINAL;
                     observation.derivedFrom.add(Reference().setReference(questionnaireResponse.id))
                     if (questionnaireResponse.hasIdentifier()) {
@@ -197,20 +157,101 @@ class QuestionnaireResponseProvider(
                             observation.setValue(answer.value)
                         }
                     }
+                    //
+                    if (item.hasItem()) {
+                        processItem(bundle, questionnaire, questionnaireResponse, item.item, observation)
+                    }
 
+                }
+            } else {
+                // Need to capture the mapping here
+                if (questionItem.hasDefinition()) {
+                    when (questionItem.definition) {
+                        "Condition" -> {
+                            var condition = Condition()
+                            var entry = BundleEntryComponent()
+                            var uuid = UUID.randomUUID();
+                            entry.fullUrl = "urn:uuid:" + uuid.toString()
+                            entry.resource = condition
+                            entry.request.url = "Condition"
+                            entry.request.method = Bundle.HTTPVerb.POST
+                            bundle.entry.add(entry)
 
-                    var entry = BundleEntryComponent()
-                    var uuid = UUID.randomUUID();
-                    entry.fullUrl = "urn:uuid:" + uuid.toString()
-                    entry.resource = observation
-                    entry.request.url = "Observation"
-                    entry.request.method = Bundle.HTTPVerb.POST
-                    bundle.entry.add(entry)
+                            if (questionnaireResponse.hasIdentifier()) {
+                                var identifier = Identifier()
+                                identifier.system = questionnaireResponse.identifier.system
+                                identifier.value = questionnaireResponse.identifier.value + item.linkId
+                                condition.addIdentifier(identifier)
+                            }
+                            if (questionnaireResponse.hasAuthor()) {
+                                condition.recorder = questionnaireResponse.author
+                            }
+
+                            condition.setSubject(questionnaireResponse.subject)
+                            if (questionnaireResponse.hasAuthored()) {
+                                condition.setRecordedDate(questionnaireResponse.authored )
+                            }
+
+                            mainResource = condition
+                        }
+                    }
+                }
+                if (mainResource !== null)
+                {
+                    if (mainResource is Observation && questionItem.hasDefinition()) {
+                        when (questionItem.definition) {
+                            "Observation.note" -> {
+                                if (item.hasAnswer() && item.answer.size > 0 && item.answerFirstRep.hasValueStringType()) mainResource.addNote(
+                                    Annotation().setText(item.answerFirstRep.valueStringType.value)
+                                )
+                            }
+
+                            "Observation.interpretation" -> {
+                                if (item.hasAnswer() && item.answer.size > 0 && item.answerFirstRep.hasValueStringType()) {
+                                    mainResource.addInterpretation(CodeableConcept().setText(item.answerFirstRep.valueStringType.value))
+                                }
+                            }
+
+                            else -> {
+                                System.out.println(questionItem.definition)
+                            }
+
+                        }
+                    }
+
+                    if (mainResource is Condition && questionItem.hasDefinition()) {
+                        when (questionItem.definition) {
+                            "Condition.code" -> {
+                                if (item.hasAnswer()) {
+                                    for (answer in item.answer) {
+                                        if (answer.hasValueCoding()) mainResource.code.coding.add(answer.valueCoding)
+                                    }
+                                }
+                            }
+
+                            "Condition.status" -> {
+                                if (item.hasAnswer()) {
+                                    for (answer in item.answer) {
+                                        if (answer.hasValueCoding()) {
+
+                                            (mainResource as Condition).clinicalStatus.coding.add(answer.valueCoding)
+                                        }
+                                    }
+                                }
+                            }
+
+                            else -> {
+                                System.out.println(questionItem.definition)
+                            }
+
+                        }
+                    }
+                }
+                if (item.hasItem()) {
+                    processItem(bundle, questionnaire, questionnaireResponse, item.item, mainResource)
                 }
             }
-            if (item.hasItem()) {
-                processItem(bundle, questionnaire, questionnaireResponse, item.item)
-            }
+
         }
     }
 

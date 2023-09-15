@@ -1270,6 +1270,27 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         // Questionnaire
 
+        val examplesQuestionnairePopulation = LinkedHashMap<String,Example?>()
+
+        examplesQuestionnairePopulation["Populate"] =
+            Example().value(FHIRExamples().loadExample("populate.json", ctx))
+
+        val questionnairePopulate = PathItem()
+            .post(
+                Operation()
+                    .addTagsItem(FORMS)
+                    .summary("Automatic population")
+                    .description("[FHIR Structured Data Capture Automatic population](https://build.fhir.org/ig/HL7/sdc/populate.html)")
+                    .responses(getApiResponses())
+                    .requestBody(RequestBody().content(Content()
+                        .addMediaType("application/json",
+                            MediaType()
+                                .examples(examplesQuestionnairePopulation)
+                                .schema(StringSchema()))
+                    )))
+
+        oas.path("/FHIR/R4/Questionnaire/\$populate",questionnairePopulate)
+
         val examplesQuestionnaire = LinkedHashMap<String,Example?>()
 
         examplesQuestionnaire["Vital Signs SDC"] =
