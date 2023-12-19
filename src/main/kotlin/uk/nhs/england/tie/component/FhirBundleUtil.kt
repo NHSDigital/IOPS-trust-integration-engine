@@ -145,7 +145,7 @@ class FhirBundleUtil internal constructor(value: Bundle.BundleType?) {
                     patient.setManagingOrganization(Reference(uuidtag + getNewReferenceUri(patient.managingOrganization.reference)))
                 }
                 for (reference in patient.generalPractitioner) {
-                    patient.generalPractitioner[0].setReference(uuidtag + getNewReferenceUri(reference.reference))
+                    if (reference.reference !== null) patient.generalPractitioner[0].setReference(uuidtag + getNewReferenceUri(reference.reference))
                 }
             }
             if (entry.resource is Practitioner) {

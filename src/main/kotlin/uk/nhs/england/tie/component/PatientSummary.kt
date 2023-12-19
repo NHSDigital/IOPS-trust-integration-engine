@@ -23,8 +23,8 @@ import javax.xml.transform.stream.StreamSource
 import org.xhtmlrenderer.pdf.ITextRenderer
 
 
-@Component
-class FhirDocumentApp(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : FhirContext, val templateEngine: TemplateEngine) {
+
+class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : FhirContext, val templateEngine: TemplateEngine) {
 
     private val contextClassLoader: ClassLoader
         private get() = Thread.currentThread().getContextClassLoader()
@@ -54,7 +54,7 @@ class FhirDocumentApp(val client: IGenericClient, @Qualifier("R4") val ctxFHIR :
     }*/
 
     @Throws(Exception::class)
-    private fun outputCareRecord(patientId: String) {
+    fun outputCareRecord(patientId: String) {
         val date = Date()
         val careRecord = getCareRecord(patientId)
         val xmlResult = this.ctxFHIR.newXmlParser().setPrettyPrint(true).encodeResourceToString(careRecord)
@@ -175,7 +175,7 @@ class FhirDocumentApp(val client: IGenericClient, @Qualifier("R4") val ctxFHIR :
     }
 
     @Throws(Exception::class)
-    private fun getCareRecord(patientId: String): Bundle {
+    fun getCareRecord(patientId: String): Bundle {
         // Create Bundle of type Document
         var patientId = patientId
         fhirBundleUtil = FhirBundleUtil(Bundle.BundleType.DOCUMENT)
@@ -371,7 +371,7 @@ class FhirDocumentApp(val client: IGenericClient, @Qualifier("R4") val ctxFHIR :
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(FhirDocumentApp::class.java)
+        private val log = LoggerFactory.getLogger(PatientSummary::class.java)
         const val SNOMEDCT = "http://snomed.info/sct"
     }
 }
