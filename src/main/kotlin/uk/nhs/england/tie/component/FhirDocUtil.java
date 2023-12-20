@@ -14,8 +14,6 @@ import java.util.ArrayList;
 
 public class FhirDocUtil {
 
-    public static final String SNOMEDCT = FhirSystems.SNOMED_CT;
-
     Context ctxThymeleaf = new Context();
 
     private TemplateEngine templateEngine;

@@ -1,7 +1,5 @@
 package uk.nhs.england.tie.util;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.math.BigInteger;
 import java.util.UUID;
 
