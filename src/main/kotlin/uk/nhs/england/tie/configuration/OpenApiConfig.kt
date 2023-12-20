@@ -252,7 +252,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 Operation()
                     .addTagsItem(MHD)
                     .summary("International Patient Summary")
-                    .description("This message is implemented as an HTTP conditional update operation from the Patient Identity Source to the Patient Identifier Cross-reference Manager")
+                    .description("Mock of [International Patient Summary](https://build.fhir.org/ig/HL7/fhir-ips/)")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
                         .name("id")
@@ -274,6 +274,35 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             )
 
         oas.path("/FHIR/R4/Patient/{id}/\$summary",patientSummaryItem)
+
+
+        val reportItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(MHD)
+                    .summary("Europe Laboratory Report")
+                    .description("Mock of [Europe Laboratory Report](https://build.fhir.org/ig/hl7-eu/laboratory/)")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(true)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("DiagnosticReport Id")
+                        .schema(StringSchema())
+                        .example("3ad6a979-e24f-4fc6-adb8-16f410cf8355")
+                    )
+                    .addParametersItem(Parameter()
+                        .name("_format")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Payload format")
+                        .schema(StringSchema()._enum(mutableListOf("application/fhir+json","application/pdf","text/html")))
+                    )
+            )
+
+        oas.path("/FHIR/R4/DiagnosticReport/{id}/\$document",reportItem)
 
         val examplesEncounter = LinkedHashMap<String,Example?>()
         examplesEncounter.put("Hospital admission",

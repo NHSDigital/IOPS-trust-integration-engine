@@ -55,17 +55,17 @@ class PatientProvider(var awsPatient: AWSPatient, var cognitoAuthInterceptor: Co
         var patientSummary = PatientSummary(client,ctxFHIR,templateEngine)
 
         var bundle = patientSummary.getCareRecord(patientId.idPart)
-        if (format !== null && (format.value.equals("application/pdf") || format.value.equals("text/html") )) {
+        if (format !== null && (format.value.contains("pdf") || format.value.contains("text") )) {
             val xmlResult = ctxFHIR.newXmlParser().setPrettyPrint(true).encodeResourceToString(bundle)
             val html = patientSummary.convertHTML(xmlResult, "XML/DocumentToHTML.xslt")
             if (html !== null) {
-                if (format.value.equals("text/html")) {
+                if (format.value.contains("text")) {
                     servletResponse.setContentType("text/html")
                     servletResponse.setCharacterEncoding("UTF-8")
                     servletResponse.writer.write(html)
                     servletResponse.writer.flush()
                     return
-                } else if (format.value.equals("application/pdf")) {
+                } else if (format.value.contains("pdf")) {
                     servletResponse.setContentType("application/pdf")
                     servletResponse.setCharacterEncoding("UTF-8")
                     var pdfOutputStream = patientSummary.convertPDF(html)

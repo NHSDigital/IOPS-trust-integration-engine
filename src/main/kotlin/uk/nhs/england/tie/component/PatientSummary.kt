@@ -102,6 +102,8 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         return os
     }
 
+
+/*
     @Throws(Exception::class)
     fun buildEncounterDocument(client: IGenericClient, encounterId: IdType): Bundle {
         fhirBundleUtil = FhirBundleUtil(Bundle.BundleType.DOCUMENT)
@@ -175,6 +177,82 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         if (section.entry.size > 0) composition!!.addSection(section)
         return fhirBundleUtil.fhirDocument
     }
+*/
+    fun getDiagnosticReport(reportId: String): Bundle {
+        fhirBundleUtil = FhirBundleUtil(Bundle.BundleType.DOCUMENT)
+        // Main resource of a FHIR Bundle is a Composition
+        val compositionBundle = Bundle()
+        composition = Composition()
+        composition!!.setId(UUID.randomUUID().toString())
+        compositionBundle.addEntry().setResource(composition)
+        composition!!.setTitle("Laboratory Report")
+        composition!!.setDate(Date())
+        composition!!.setStatus(Composition.CompositionStatus.FINAL)
+        composition!!.type = CodeableConcept().addCoding(Coding()
+            .setSystem(FhirSystems.LOINC)
+            .setCode("11502-2"))
+
+        val leedsTH = getOrganization(client, "RR8")
+        compositionBundle.addEntry().setResource(leedsTH)
+        composition!!.addAttester()
+            .setParty(Reference(leedsTH!!.id))
+            .setMode(Composition.CompositionAttestationMode.OFFICIAL)
+        val device = Device()
+        device.setId(UUID.randomUUID().toString())
+        device.type.addCoding()
+            .setSystem("http://snomed.info/sct")
+            .setCode("58153004")
+            .setDisplay("Android")
+        device.setOwner(Reference("Organization/" + leedsTH.idElement.idPart))
+        compositionBundle.addEntry().setResource(device)
+        composition!!.addAuthor(Reference("Device/" + device.idElement.idPart))
+        fhirBundleUtil.processBundleResources(compositionBundle)
+        fhirBundleUtil.processReferences()
+        val reportBundle = getDiagnosticReportBundleRev(reportId)
+        var diagnosticReport :DiagnosticReport? = null
+        for (entry in reportBundle.entry) {
+            val resource = entry.resource
+            if (diagnosticReport == null && entry.resource is DiagnosticReport) {
+                diagnosticReport = entry.resource as DiagnosticReport
+            }
+        }
+        var patientId: String? = null
+        if (diagnosticReport != null) {
+            patientId = diagnosticReport.subject.referenceElement.idPart
+            log.debug(diagnosticReport.subject.referenceElement.idPart)
+
+            fhirBundleUtil.processBundleResources(reportBundle)
+            if (fhirBundleUtil.patient == null) throw Exception("404 Patient not found")
+            composition!!.setSubject(Reference("Patient/$patientId"))
+        }
+        if (fhirBundleUtil.patient == null) throw UnprocessableEntityException()
+
+        fhirBundleUtil.processReferences()
+        val fhirDoc = FhirDocUtil(templateEngine)
+
+        fhirDoc.generatePatientHtml(fhirBundleUtil.patient, reportBundle)
+
+        var section: Composition.SectionComponent
+        for (entry in reportBundle.getEntry()) {
+            if (entry.resource is Observation) {
+                val observation = entry.resource as Observation
+
+                if (observation.hasMember.size>0) {
+                    //var obs = getObservationBundleRev(observation.idPart)
+                    //if (obs !== null) fhirBundleUtil.processBundleResources(obs)
+                    observation.hasMember.forEach({
+                        log.info(it.reference)
+                        var obs = getObservation(it.reference.replace("Observation/",""))
+                        log.info(obs.entry.size.toString())
+                        if (obs.entry.size>0) fhirBundleUtil.processBundleResources(obs)
+                    })
+                }
+            }
+        }
+        section = fhirDoc.getObservationSection(fhirBundleUtil.fhirDocument)
+        if (section.entry.size > 0) composition!!.addSection(section)
+        return fhirBundleUtil.fhirDocument
+    }
 
     @Throws(Exception::class)
     fun getCareRecord(patientId: String): Bundle {
@@ -242,7 +320,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         fhirBundleUtil.processBundleResources(encounterBundle)
         composition!!.addSection(fhirDoc.getEncounterSection(encounterBundle))
         fhirBundleUtil.processReferences()
-        log.debug(ctxFHIR.newJsonParser().setPrettyPrint(true).encodeResourceToString(fhirBundleUtil.fhirDocument))
+
         return fhirBundleUtil.fhirDocument
     }
 
@@ -268,7 +346,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             return client
                 .search<IBaseBundle>()
                 .forResource(Encounter::class.java)
-                .where(Patient.RES_ID.exactly().code(encounterId))
+                .where(Encounter.RES_ID.exactly().code(encounterId))
                 .revInclude(Include("*"))
                 .include(Include("*"))
                 .count(100) // be careful of this TODO
@@ -278,6 +356,58 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             return Bundle()
         }
     }
+
+    private fun getDiagnosticReportBundleRev(
+        reportId: String
+    ): Bundle {
+        if (client != null) {
+            return client
+                .search<IBaseBundle>()
+                .forResource(DiagnosticReport::class.java)
+                .where(DiagnosticReport.RES_ID.exactly().code(reportId))
+                .revInclude(Include("*"))
+                .include(Include("*"))
+                .count(100) // be careful of this TODO
+                .returnBundle(Bundle::class.java)
+                .execute()
+        } else {
+            return Bundle()
+        }
+    }
+
+    private fun getObservationBundleRev(
+        reportId: String
+    ): Bundle {
+        if (client != null) {
+            return client
+                .search<IBaseBundle>()
+                .forResource(Observation::class.java)
+                .where(Observation.RES_ID.exactly().code(reportId))
+                //.revInclude(Include("*"))
+                .include(Include("Observation:has-member"))
+                .count(100) // be careful of this TODO
+                .returnBundle(Bundle::class.java)
+                .execute()
+        } else {
+            return Bundle()
+        }
+    }
+    private fun getObservation(
+        reportId: String
+    ): Bundle {
+        if (client != null) {
+            return client
+                .search<IBaseBundle>()
+                .forResource(Observation::class.java)
+                .where(Observation.RES_ID.exactly().code(reportId))
+                .count(100) // be careful of this TODO
+                .returnBundle(Bundle::class.java)
+                .execute()
+        } else {
+            return Bundle()
+        }
+    }
+
 
     private fun getConditionBundle(patientId: String): Bundle {
         return client
@@ -379,6 +509,8 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         }
         return null
     }
+
+
 
     companion object {
         private val log = LoggerFactory.getLogger(PatientSummary::class.java)

@@ -34,6 +34,7 @@ class AWSBundle(val messageProperties: MessageProperties, val awsClient: IGeneri
             } catch (ex: InvalidRequestException) {
                 // do nothing
                 log.error(ex.message)
+                log.debug(ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(bundle))
                 retry--
                 if (retry == 1) {
                     if (ex.responseBody != null) {
@@ -53,8 +54,12 @@ class AWSBundle(val messageProperties: MessageProperties, val awsClient: IGeneri
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
+
                 retry--
-                if (retry == 0) throw ex
+                if (retry == 0) {
+                    log.debug(ctx.newJsonParser().setPrettyPrint(true).encodeResourceToString(bundle))
+                    throw ex
+                }
             }
         }
         return response
