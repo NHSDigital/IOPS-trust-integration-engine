@@ -230,7 +230,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         fhirBundleUtil.processReferences()
         val fhirDoc = FhirDocUtil(templateEngine)
 
-        fhirDoc.generatePatientHtml(fhirBundleUtil.patient, reportBundle)
+        fhirDoc.generatePatientHtml(fhirBundleUtil.patient!!, reportBundle)
 
         var section: Composition.SectionComponent
         for (entry in reportBundle.getEntry()) {
@@ -295,7 +295,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         composition!!.setSubject(Reference("Patient/$patientId"))
         val fhirDoc = FhirDocUtil(templateEngine)
 
-        fhirDoc.generatePatientHtml(fhirBundleUtil.patient, patientBundle)
+        fhirDoc.generatePatientHtml(fhirBundleUtil.patient!!, patientBundle)
 
         /* CONDITION */
         val conditionBundle = getConditionBundle(patientId)
@@ -475,10 +475,8 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
     fun convertHTML(xmlInput: String, styleSheet: String) : String? {
 
         // Input xml data file
-        val classLoader = contextClassLoader
-
-        // Input xsl (stylesheet) file
-        val xslInput = classLoader.getResource(styleSheet).file
+        val classLoader = javaClass.classLoader
+        val xslInput = classLoader.getResourceAsStream(styleSheet)
 
         // Set the property to use xalan processor
         System.setProperty(
@@ -490,13 +488,13 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         try {
             val xml: InputStream = ByteArrayInputStream(xmlInput.toByteArray(StandardCharsets.UTF_8))
             val os = ByteArrayOutputStream()
-            val xsl = FileInputStream(xslInput)
+
 
             // Instantiate a transformer factory
             val tFactory = TransformerFactory.newInstance()
 
             // Use the TransformerFactory to process the stylesheet source and produce a Transformer
-            val styleSource = StreamSource(xsl)
+            val styleSource = StreamSource(xslInput)
             val transformer = tFactory.newTransformer(styleSource)
 
             // Use the transformer and perform the transformation

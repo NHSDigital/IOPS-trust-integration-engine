@@ -1,250 +1,204 @@
-package uk.nhs.england.tie.component;
+package uk.nhs.england.tie.component
 
-import org.hl7.fhir.r4.model.*;
-import org.hl7.fhir.utilities.xhtml.XhtmlDocument;
-import org.hl7.fhir.utilities.xhtml.XhtmlNode;
-import org.hl7.fhir.utilities.xhtml.XhtmlParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-import uk.nhs.england.tie.util.FhirSystems;
+import org.hl7.fhir.r4.model.*
+import org.hl7.fhir.utilities.xhtml.XhtmlNode
+import org.hl7.fhir.utilities.xhtml.XhtmlParser
+import org.slf4j.LoggerFactory
+import org.thymeleaf.TemplateEngine
+import org.thymeleaf.context.Context
+import uk.nhs.england.tie.util.FhirSystems
 
-import java.util.ArrayList;
-
-public class FhirDocUtil {
-
-    Context ctxThymeleaf = new Context();
-
-    private TemplateEngine templateEngine;
-
-    private XhtmlParser xhtmlParser = new XhtmlParser();
-
-    private static final Logger log = LoggerFactory.getLogger(FhirDocUtil.class);
-
-    FhirDocUtil(TemplateEngine templateEngine) {
-        this.templateEngine = templateEngine;
-    }
-
-    public Composition.SectionComponent getConditionSection(Bundle bundle) {
-        Composition.SectionComponent section = new Composition.SectionComponent();
-
-        ArrayList<Condition> conditions = new ArrayList<>();
-
-        section.getCode()
-                .addCoding(new Coding().setSystem(FhirSystems.LOINC)
-                        .setCode("11450-4"))
-                .addCoding(new Coding().setSystem(FhirSystems.SNOMED_CT)
+class FhirDocUtil internal constructor(private val templateEngine: TemplateEngine) {
+    var ctxThymeleaf = Context()
+    private val xhtmlParser = XhtmlParser()
+    fun getConditionSection(bundle: Bundle): Composition.SectionComponent {
+        val section = Composition.SectionComponent()
+        val conditions = ArrayList<Condition>()
+        section.code
+            .addCoding(
+                Coding().setSystem(FhirSystems.LOINC)
+                    .setCode("11450-4")
+            )
+            .addCoding(
+                Coding().setSystem(FhirSystems.SNOMED_CT)
                     .setCode("887151000000100")
-                    .setDisplay("Problems and issues"))
-                ;
-        section.setTitle("Problems and issues");
-
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof Condition) {
-                Condition condition = (Condition) entry.getResource();
-                section.getEntry().add(new Reference("urn:uuid:"+condition.getId()));
-                conditions.add(condition);
+                    .setDisplay("Problems and issues")
+            )
+        section.setTitle("Problems and issues")
+        for (entry in bundle.entry) {
+            if (entry.resource is Condition) {
+                val condition = entry.resource as Condition
+                section.entry.add(Reference("urn:uuid:" + condition.id))
+                conditions.add(condition)
             }
         }
-        ctxThymeleaf.clearVariables();
-        ctxThymeleaf.setVariable("conditions", conditions);
-
-        section.getText().setDiv(getDiv("condition")).setStatus(Narrative.NarrativeStatus.GENERATED);
-
-        return section;
+        ctxThymeleaf.clearVariables()
+        ctxThymeleaf.setVariable("conditions", conditions)
+        section.text.setDiv(getDiv("condition")).setStatus(Narrative.NarrativeStatus.GENERATED)
+        return section
     }
 
-
-
-    public Composition.SectionComponent getAllergySection(Bundle bundle) {
-        Composition.SectionComponent section = new Composition.SectionComponent();
-
-        ArrayList<AllergyIntolerance>  allergyIntolerances = new ArrayList<>();
-
-        section.getCode()
-                .addCoding(new Coding().setSystem(FhirSystems.LOINC)
-                        .setCode("48765-2"))
-                .addCoding(new Coding().setSystem(FhirSystems.SNOMED_CT)
+    fun getAllergySection(bundle: Bundle): Composition.SectionComponent {
+        val section = Composition.SectionComponent()
+        val allergyIntolerances = ArrayList<AllergyIntolerance>()
+        section.code
+            .addCoding(
+                Coding().setSystem(FhirSystems.LOINC)
+                    .setCode("48765-2")
+            )
+            .addCoding(
+                Coding().setSystem(FhirSystems.SNOMED_CT)
                     .setCode("886921000000105")
-                    .setDisplay("Allergies and adverse reactions"))
-                ;
-        section.setTitle("Allergies and adverse reactions");
-
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof AllergyIntolerance) {
-                AllergyIntolerance allergyIntolerance = (AllergyIntolerance) entry.getResource();
-                section.getEntry().add(new Reference("urn:uuid:"+allergyIntolerance.getId()));
-                allergyIntolerances.add(allergyIntolerance);
+                    .setDisplay("Allergies and adverse reactions")
+            )
+        section.setTitle("Allergies and adverse reactions")
+        for (entry in bundle.entry) {
+            if (entry.resource is AllergyIntolerance) {
+                val allergyIntolerance = entry.resource as AllergyIntolerance
+                section.entry.add(Reference("urn:uuid:" + allergyIntolerance.id))
+                allergyIntolerances.add(allergyIntolerance)
             }
         }
-        ctxThymeleaf.clearVariables();
-
-        ctxThymeleaf.setVariable("allergies", allergyIntolerances);
-
-        section.getText().setDiv(getDiv("allergy")).setStatus(Narrative.NarrativeStatus.GENERATED);
-
-        return section;
+        ctxThymeleaf.clearVariables()
+        ctxThymeleaf.setVariable("allergies", allergyIntolerances)
+        section.text.setDiv(getDiv("allergy")).setStatus(Narrative.NarrativeStatus.GENERATED)
+        return section
     }
 
-    public Composition.SectionComponent getEncounterSection(Bundle bundle) {
-        Composition.SectionComponent section = new Composition.SectionComponent();
+    fun getEncounterSection(bundle: Bundle): Composition.SectionComponent {
+        val section = Composition.SectionComponent()
         // TODO Get Correct code.
-        ArrayList<Encounter>  encounters = new ArrayList<>();
-
-        section.getCode().addCoding()
-                .setSystem(FhirSystems.SNOMED_CT)
-                .setCode("713511000000103")
-                .setDisplay("Encounter administration");
-        section.setTitle("Encounters");
-
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof Encounter) {
-                Encounter encounter = (Encounter) entry.getResource();
-                section.getEntry().add(new Reference("urn:uuid:"+encounter.getId()));
-                encounters.add(encounter);
+        val encounters = ArrayList<Encounter>()
+        section.code.addCoding()
+            .setSystem(FhirSystems.SNOMED_CT)
+            .setCode("713511000000103")
+            .setDisplay("Encounter administration")
+        section.setTitle("Encounters")
+        for (entry in bundle.entry) {
+            if (entry.resource is Encounter) {
+                val encounter = entry.resource as Encounter
+                section.entry.add(Reference("urn:uuid:" + encounter.id))
+                encounters.add(encounter)
             }
         }
-        ctxThymeleaf.clearVariables();
-        ctxThymeleaf.setVariable("encounters", encounters);
-
-        section.getText().setDiv(getDiv("encounter")).setStatus(Narrative.NarrativeStatus.GENERATED);
-
-        return section;
+        ctxThymeleaf.clearVariables()
+        ctxThymeleaf.setVariable("encounters", encounters)
+        section.text.setDiv(getDiv("encounter")).setStatus(Narrative.NarrativeStatus.GENERATED)
+        return section
     }
 
-    public Composition.SectionComponent getMedicationsSection(Bundle medicationsRequests, Bundle medicationsStatements) {
-        Composition.SectionComponent section = new Composition.SectionComponent();
-
-        ArrayList<MedicationRequest>  medicationRequests = new ArrayList<>();
-        ArrayList<MedicationStatement>  medicationStatements = new ArrayList<>();
-
-        section.getCode()
-                .addCoding(new Coding().setSystem(FhirSystems.LOINC)
-                    .setCode("10160-0"))
-                .addCoding(new Coding().setSystem(SNOMEDCT)
-                        .setCode("933361000000108")
-                        .setDisplay("Medications and medical devices"));
-
-        section.setTitle("Medications and medical devices");
-
-        for (Bundle.BundleEntryComponent entry : medicationsRequests.getEntry()) {
-            if (entry.getResource() instanceof MedicationRequest) {
-                MedicationRequest medicationRequest = (MedicationRequest) entry.getResource();
+    fun getMedicationsSection(
+        medicationsRequests: Bundle,
+        medicationsStatements: Bundle
+    ): Composition.SectionComponent {
+        val section = Composition.SectionComponent()
+        val medicationRequests = ArrayList<MedicationRequest>()
+        val medicationStatements = ArrayList<MedicationStatement>()
+        section.code
+            .addCoding(
+                Coding().setSystem(FhirSystems.LOINC)
+                    .setCode("10160-0")
+            )
+            .addCoding(
+                Coding().setSystem(PatientSummary.SNOMEDCT)
+                    .setCode("933361000000108")
+                    .setDisplay("Medications and medical devices")
+            )
+        section.setTitle("Medications and medical devices")
+        for (entry in medicationsRequests.entry) {
+            if (entry.resource is MedicationRequest) {
+                val medicationRequest = entry.resource as MedicationRequest
                 //medicationStatement.getMedicationReference().getDisplay();
-                section.getEntry().add(new Reference("urn:uuid:"+medicationRequest.getId()));
-                medicationRequest.getAuthoredOn();
-                medicationRequests.add(medicationRequest);
-
+                section.entry.add(Reference("urn:uuid:" + medicationRequest.id))
+                medicationRequest.authoredOn
+                medicationRequests.add(medicationRequest)
             }
         }
-        for (Bundle.BundleEntryComponent entry : medicationsStatements.getEntry()) {
-            if (entry.getResource() instanceof MedicationStatement) {
-                MedicationStatement medicationStatement = (MedicationStatement) entry.getResource();
-                section.getEntry().add(new Reference("urn:uuid:"+medicationStatement.getId()));
-                medicationStatements.add(medicationStatement);
-
+        for (entry in medicationsStatements.entry) {
+            if (entry.resource is MedicationStatement) {
+                val medicationStatement = entry.resource as MedicationStatement
+                section.entry.add(Reference("urn:uuid:" + medicationStatement.id))
+                medicationStatements.add(medicationStatement)
             }
         }
-
-        ctxThymeleaf.clearVariables();
-        ctxThymeleaf.setVariable("medicationRequests", medicationRequests);
-        ctxThymeleaf.setVariable("medicationStatements", medicationStatements);
-
-        section.getText().setDiv(getDiv("medicationRequestAndStatement")).setStatus(Narrative.NarrativeStatus.GENERATED);
-
-        return section;
+        ctxThymeleaf.clearVariables()
+        ctxThymeleaf.setVariable("medicationRequests", medicationRequests)
+        ctxThymeleaf.setVariable("medicationStatements", medicationStatements)
+        section.text.setDiv(getDiv("medicationRequestAndStatement")).setStatus(Narrative.NarrativeStatus.GENERATED)
+        return section
     }
 
-
-    public Composition.SectionComponent getObservationSection(Bundle bundle) {
-        Composition.SectionComponent section = new Composition.SectionComponent();
-
-        ArrayList<Observation>  observations = new ArrayList<>();
-
-        section.getCode().addCoding()
-                .setSystem(SNOMEDCT)
-                .setCode("425044008")
-                .setDisplay("Physical exam section");
-        section.setTitle("Physical exam section");
-
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof Observation) {
-                Observation observation= (Observation) entry.getResource();
-
-                section.getEntry().add(new Reference("urn:uuid:"+observation.getId()));
-
-                observations.add(observation);
+    fun getObservationSection(bundle: Bundle): Composition.SectionComponent {
+        val section = Composition.SectionComponent()
+        val observations = ArrayList<Observation>()
+        section.code.addCoding()
+            .setSystem(PatientSummary.SNOMEDCT)
+            .setCode("425044008")
+            .setDisplay("Physical exam section")
+        section.setTitle("Physical exam section")
+        for (entry in bundle.entry) {
+            if (entry.resource is Observation) {
+                val observation = entry.resource as Observation
+                section.entry.add(Reference("urn:uuid:" + observation.id))
+                observations.add(observation)
             }
         }
-        ctxThymeleaf.clearVariables();
-
-        ctxThymeleaf.setVariable("observations", observations);
-
-        section.getText().setDiv(getDiv("observation")).setStatus(Narrative.NarrativeStatus.GENERATED);
-
-        return section;
+        ctxThymeleaf.clearVariables()
+        ctxThymeleaf.setVariable("observations", observations)
+        section.text.setDiv(getDiv("observation")).setStatus(Narrative.NarrativeStatus.GENERATED)
+        return section
     }
 
-    public Composition.SectionComponent getProcedureSection(Bundle bundle) {
-        Composition.SectionComponent section = new Composition.SectionComponent();
-
-        ArrayList<Procedure>  procedures = new ArrayList<>();
-
-        section.getCode().addCoding()
-                .setSystem(SNOMEDCT)
-                .setCode("887171000000109")
-                .setDisplay("Procedues");
-        section.setTitle("Procedures");
-
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof Procedure) {
-                Procedure procedure = (Procedure) entry.getResource();
-
-                section.getEntry().add(new Reference("urn:uuid:"+procedure.getId()));
-                procedures.add(procedure);
+    fun getProcedureSection(bundle: Bundle): Composition.SectionComponent {
+        val section = Composition.SectionComponent()
+        val procedures = ArrayList<Procedure>()
+        section.code.addCoding()
+            .setSystem(PatientSummary.SNOMEDCT)
+            .setCode("887171000000109")
+            .setDisplay("Procedues")
+        section.setTitle("Procedures")
+        for (entry in bundle.entry) {
+            if (entry.resource is Procedure) {
+                val procedure = entry.resource as Procedure
+                section.entry.add(Reference("urn:uuid:" + procedure.id))
+                procedures.add(procedure)
             }
         }
-        ctxThymeleaf.clearVariables();
-
-        ctxThymeleaf.setVariable("procedures", procedures);
-
-        section.getText().setDiv(getDiv("procedure")).setStatus(Narrative.NarrativeStatus.GENERATED);
-
-        return section;
+        ctxThymeleaf.clearVariables()
+        ctxThymeleaf.setVariable("procedures", procedures)
+        section.text.setDiv(getDiv("procedure")).setStatus(Narrative.NarrativeStatus.GENERATED)
+        return section
     }
 
-    public Patient generatePatientHtml(Patient patient, Bundle fhirDocument) {
+    fun generatePatientHtml(patient: Patient, fhirDocument: Bundle): Patient {
         if (!patient.hasText()) {
-
-            ctxThymeleaf.clearVariables();
-            ctxThymeleaf.setVariable("patient", patient);
-            for (Bundle.BundleEntryComponent entry : fhirDocument.getEntry()) {
-                if (entry.getResource() instanceof Practitioner) ctxThymeleaf.setVariable("gp", entry.getResource());
-                if (entry.getResource() instanceof Organization) ctxThymeleaf.setVariable("practice", entry.getResource());
-                Practitioner practice;
-
+            ctxThymeleaf.clearVariables()
+            ctxThymeleaf.setVariable("patient", patient)
+            for (entry in fhirDocument.entry) {
+                if (entry.resource is Practitioner) ctxThymeleaf.setVariable("gp", entry.resource)
+                if (entry.resource is Organization) ctxThymeleaf.setVariable("practice", entry.resource)
+                var practice: Practitioner
             }
-
-            patient.getText().setDiv(getDiv("patient")).setStatus(Narrative.NarrativeStatus.GENERATED);
-            log.debug(patient.getText().getDiv().getValueAsString());
+            patient.text.setDiv(getDiv("patient")).setStatus(Narrative.NarrativeStatus.GENERATED)
+            log.debug(patient.text.div.valueAsString)
         }
-        return patient;
+        return patient
     }
 
-    private XhtmlNode getDiv(String template) {
-        XhtmlNode xhtmlNode = null;
-        String processedHtml = templateEngine.process(template, ctxThymeleaf);
+    private fun getDiv(template: String): XhtmlNode? {
+        var xhtmlNode: XhtmlNode? = null
+        val processedHtml = templateEngine.process(template, ctxThymeleaf)
         try {
-            XhtmlDocument parsed = xhtmlParser.parse(processedHtml, null);
-            xhtmlNode = parsed.getDocumentElement();
-            log.debug(processedHtml);
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            val parsed = xhtmlParser.parse(processedHtml, null)
+            xhtmlNode = parsed.documentElement
+            log.debug(processedHtml)
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
-        return xhtmlNode;
+        return xhtmlNode
     }
 
-
-
+    companion object {
+        private val log = LoggerFactory.getLogger(FhirDocUtil::class.java)
+    }
 }
