@@ -8,8 +8,10 @@ import org.hl7.fhir.instance.model.api.IBaseBundle
 import org.hl7.fhir.r4.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.stereotype.Component
 import org.thymeleaf.TemplateEngine
+import org.w3c.dom.Document
+import org.xhtmlrenderer.pdf.ITextRenderer
+import org.xhtmlrenderer.resource.FSEntityResolver
 import java.io.*
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -17,11 +19,11 @@ import java.nio.file.Paths
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.xml.parsers.DocumentBuilder
+import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.stream.StreamResult
 import javax.xml.transform.stream.StreamSource
-import org.xhtmlrenderer.pdf.ITextRenderer
-
 
 
 class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : FhirContext, val templateEngine: TemplateEngine) {
@@ -77,18 +79,24 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
     }
 
     @Throws(Exception::class)
-    private fun outputPDF(processedHtml: String, outputFileName: String) {
-        var os: FileOutputStream? = null
+    public fun convertPDF(processedHtml: String) : ByteArrayOutputStream? {
+        var os: ByteArrayOutputStream? = null
         val fileName = UUID.randomUUID().toString()
         try {
-            val outputFile = File(outputFileName)
-            os = FileOutputStream(outputFile)
+
+            os = ByteArrayOutputStream()
+
+            val documentBuilderFactory = DocumentBuilderFactory.newInstance()
+            documentBuilderFactory.isValidating = false
+            val builder: DocumentBuilder = documentBuilderFactory.newDocumentBuilder()
+            builder.setEntityResolver(FSEntityResolver.instance())
+            val document: Document = builder.parse(ByteArrayInputStream(processedHtml.toByteArray()))
+
             val renderer = ITextRenderer()
-            renderer.setDocument(File(processedHtml))
+            renderer.setDocument(document, null)
             renderer.layout()
             renderer.createPDF(os, false)
             renderer.finishPDF()
-            //return outputFile.getAbsolutePath();
         } finally {
             if (os != null) {
                 try {
@@ -97,6 +105,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
                 }
             }
         }
+        return os
     }
 
     @Throws(Exception::class)
@@ -152,7 +161,6 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             fhirBundleUtil.processBundleResources(patientBundle)
             if (fhirBundleUtil.patient == null) throw Exception("404 Patient not found")
             composition!!.setSubject(Reference("Patient/$patientId"))
-            patientId = fhirBundleUtil.patient!!.getId()
         }
         if (fhirBundleUtil.patient == null) throw UnprocessableEntityException()
         fhirBundleUtil.processBundleResources(encounterBundle)
@@ -210,7 +218,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         if (fhirBundleUtil.patient == null) throw Exception("404 Patient not found")
         composition!!.setSubject(Reference("Patient/$patientId"))
         val fhirDoc = FhirDocUtil(templateEngine)
-        patientId = fhirBundleUtil.patient!!.getId()
+
         fhirDoc.generatePatientHtml(fhirBundleUtil.patient, patientBundle)
 
         /* CONDITION */
@@ -223,6 +231,9 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         fhirBundleUtil.processBundleResources(medicationStatementBundle)
         composition!!.addSection(fhirDoc.getMedicationStatementSection(medicationStatementBundle))
 
+        val medicationRequestBundle = getMedicationRequestBundle(patientId)
+        val section = fhirDoc.getMedicationRequestSection(medicationRequestBundle)
+        if (section.entry.size > 0) composition!!.addSection(section)
 
         /* ALLERGY INTOLERANCE */
         val allergyBundle = getAllergyBundle(patientId)
@@ -276,7 +287,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             .search<IBaseBundle>()
             .forResource(Condition::class.java)
             .where(Condition.PATIENT.hasId(patientId))
-            .and(Condition.CLINICAL_STATUS.exactly().code("active"))
+          //  .and(Condition.CLINICAL_STATUS.exactly().code("active"))
             .returnBundle(Bundle::class.java)
             .execute()
     }
@@ -315,10 +326,10 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             .execute()
     }
 
-    private fun getMedicationRequestBundle(client: IGenericClient, patientId: String): Bundle {
+    private fun getMedicationRequestBundle(patientId: String): Bundle {
         return client
             .search<IBaseBundle>()
-            .forResource(MedicationStatement::class.java)
+            .forResource(MedicationRequest::class.java)
             .where(MedicationRequest.PATIENT.hasId(patientId))
             .and(MedicationRequest.STATUS.exactly().code("active"))
             .returnBundle(Bundle::class.java)
@@ -334,7 +345,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             .execute()
     }
 
-    private fun performTransform(xmlInput: String, htmlOutput: String, styleSheet: String) {
+    fun convertHTML(xmlInput: String, styleSheet: String) : String? {
 
         // Input xml data file
         val classLoader = contextClassLoader
@@ -351,7 +362,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         // try with resources
         try {
             val xml: InputStream = ByteArrayInputStream(xmlInput.toByteArray(StandardCharsets.UTF_8))
-            val os = FileOutputStream(htmlOutput)
+            val os = ByteArrayOutputStream()
             val xsl = FileInputStream(xslInput)
 
             // Instantiate a transformer factory
@@ -365,9 +376,11 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             val xmlSource = StreamSource(xml)
             val result = StreamResult(os)
             transformer.transform(xmlSource, result)
+            return os.toString()
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
+        return null
     }
 
     companion object {

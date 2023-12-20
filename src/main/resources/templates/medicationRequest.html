@@ -17,7 +17,7 @@
                 <tbody>
                     <tr th:each="medicationRequest : ${medicationRequests}">
                        <td th:text="${#dates.format(medicationRequest.getAuthoredOn(),'dd MMM YYYY HH:mm')}"></td>
-                        <td th:text="${medicationRequest.getMedicationReference().getDisplay()}"></td>
+                        <td th:text="${medicationRequest.getMedicationCodeableConcept().getCodingFirstRep().getDisplay()}"></td>
                         <td></td>
                     </tr>
                 </tbody>

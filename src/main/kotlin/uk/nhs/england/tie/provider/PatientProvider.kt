@@ -13,6 +13,7 @@ import org.thymeleaf.TemplateEngine
 import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.component.PatientSummary
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
+import java.io.OutputStream
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -45,11 +46,51 @@ class PatientProvider(var awsPatient: AWSPatient, var cognitoAuthInterceptor: Co
         return method
     }
 
-    @Operation(name = "summary", idempotent = true)
-    fun convertOpenAPI(@IdParam patientId: IdType): Bundle? {
+    @Operation(name = "summary", idempotent = true, manualResponse = true)
+    fun convertOpenAPI(
+        servletRequest: HttpServletRequest,
+        servletResponse: HttpServletResponse,
+        @IdParam patientId: IdType,
+        @OperationParam(name= "_format") format: StringType?) {
         var patientSummary = PatientSummary(client,ctxFHIR,templateEngine)
-        return patientSummary.getCareRecord(patientId.idPart)
 
+        var bundle = patientSummary.getCareRecord(patientId.idPart)
+        if (format !== null && (format.value.equals("application/pdf") || format.value.equals("text/html") )) {
+            val xmlResult = ctxFHIR.newXmlParser().setPrettyPrint(true).encodeResourceToString(bundle)
+            val html = patientSummary.convertHTML(xmlResult, "XML/DocumentToHTML.xslt")
+            if (html !== null) {
+                if (format.value.equals("text/html")) {
+                    servletResponse.setContentType("text/html")
+                    servletResponse.setCharacterEncoding("UTF-8")
+                    servletResponse.writer.write(html)
+                    servletResponse.writer.flush()
+                    return
+                } else if (format.value.equals("application/pdf")) {
+                    servletResponse.setContentType("application/pdf")
+                    servletResponse.setCharacterEncoding("UTF-8")
+                    var pdfOutputStream = patientSummary.convertPDF(html)
+                    if (pdfOutputStream !== null) {
+                        val os: OutputStream = servletResponse.getOutputStream()
+                        val byteArray = pdfOutputStream.toByteArray()
+
+                        try {
+                            os.write(byteArray, 0, byteArray.size)
+                        } catch (excp: Exception) {
+                            //handle error
+                        } finally {
+                            os.close()
+                        }
+                    // has been flushed    servletResponse.writer.flush()
+                        return
+                    }
+                }
+            }
+        }
+        servletResponse.setContentType("application/json")
+        servletResponse.setCharacterEncoding("UTF-8")
+        servletResponse.writer.write(ctxFHIR.newJsonParser().setPrettyPrint(true).encodeResourceToString(bundle))
+        servletResponse.writer.flush()
+        return
     }
 
 }

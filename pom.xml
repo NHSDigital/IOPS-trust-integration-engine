@@ -202,7 +202,17 @@
             <artifactId>caffeine</artifactId>
             <version>2.5.5</version>
         </dependency>
-
+        <!-- For stylesheet transform -->
+        <dependency>
+            <groupId>xalan</groupId>
+            <artifactId>xalan</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+        <dependency>
+            <groupId>xalan</groupId>
+            <artifactId>serializer</artifactId>
+            <version>2.7.3</version>
+        </dependency>
         <!-- flying saucer pdf -->
         <dependency>
             <groupId>org.xhtmlrenderer</groupId>
