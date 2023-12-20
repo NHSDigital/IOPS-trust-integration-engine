@@ -13,6 +13,9 @@ import org.thymeleaf.TemplateEngine
 import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.component.PatientSummary
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -23,6 +26,8 @@ class PatientProvider(var awsPatient: AWSPatient, var cognitoAuthInterceptor: Co
     override fun getResourceType(): Class<Patient> {
         return Patient::class.java
     }
+
+    var df: DateFormat = SimpleDateFormat("HHmm_dd_MM_yyyy")
 
     @Update
     fun update(
@@ -45,11 +50,37 @@ class PatientProvider(var awsPatient: AWSPatient, var cognitoAuthInterceptor: Co
         return method
     }
 
-    @Operation(name = "summary", idempotent = true)
-    fun convertOpenAPI(@IdParam patientId: IdType): Bundle? {
+    @Operation(name = "summary", idempotent = true, manualResponse = true)
+    fun convertOpenAPI(
+        servletRequest: HttpServletRequest,
+        servletResponse: HttpServletResponse,
+        @IdParam patientId: IdType,
+        @OperationParam(name="_format") format : String?) {
         var patientSummary = PatientSummary(client,ctxFHIR,templateEngine)
-        return patientSummary.getCareRecord(patientId.idPart)
-
+        val summary = patientSummary.getCareRecord(patientId.idPart)
+        if (format !== null && (format.equals("application/pdf") || format.equals("text/html"))) {
+            val date = Date()
+            var xmlResult = ctxFHIR.newXmlParser().encodeResourceToString(summary)
+            var html = patientSummary.convertToHtml(xmlResult,"XML/DocumentToHTML.xslt");
+            if (html !== null && format.equals("text/html")) {
+                servletResponse.setContentType("text/html")
+                servletResponse.setCharacterEncoding("UTF-8")
+                servletResponse.writer.write(html)
+                servletResponse.writer.flush()
+            } else if (html !== null && format.equals("application/pdf")) {
+                servletResponse.setContentType("text/html")
+                servletResponse.setCharacterEncoding("UTF-8")
+                servletResponse.writer.write(html)
+                servletResponse.writer.flush()
+            }
+        }
+        else {
+            servletResponse.setContentType("application/json")
+            servletResponse.setCharacterEncoding("UTF-8")
+            servletResponse.writer.write(ctxFHIR.newJsonParser().setPrettyPrint(true).encodeResourceToString(summary))
+            servletResponse.writer.flush()
+        }
+        return
     }
 
 }

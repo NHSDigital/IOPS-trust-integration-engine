@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import uk.nhs.england.tie.util.FhirSystems;
 
 import java.util.ArrayList;
 
@@ -33,10 +34,10 @@ public class FhirDocUtil {
         ArrayList<Condition> conditions = new ArrayList<>();
 
         section.getCode().addCoding()
-                .setSystem("http://snomed.info/sct")
-                .setCode("887151000000100")
-                .setDisplay("Problems and issues");
-        section.setTitle("Problems and issues");
+                .setSystem(FhirSystems.LOINC)
+                .setCode("11450-4")
+                .setDisplay("Problem list Reported");
+        section.setTitle("Problem List");
 
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             if (entry.getResource() instanceof Condition) {
@@ -86,10 +87,9 @@ public class FhirDocUtil {
         ArrayList<AllergyIntolerance>  allergyIntolerances = new ArrayList<>();
 
         section.getCode().addCoding()
-                .setSystem("http://snomed.info/sct")
-                .setCode("886921000000105")
-                .setDisplay("Allergies and adverse reactions");
-        section.setTitle("Allergies and adverse reactions");
+                .setSystem(FhirSystems.LOINC)
+                .setCode("48765-2");
+        section.setTitle("Allergies and Intolerances");
 
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             if (entry.getResource() instanceof AllergyIntolerance) {
@@ -139,10 +139,9 @@ public class FhirDocUtil {
         ArrayList<MedicationRequest>  medicationRequests = new ArrayList<>();
 
         section.getCode().addCoding()
-                .setSystem(SNOMEDCT)
-                .setCode("933361000000108")
-                .setDisplay("Medications and medical devices");
-        section.setTitle("Medications and medical devices");
+                .setSystem(FhirSystems.LOINC)
+                .setCode("10160-0");
+        section.setTitle("Medication Summary");
 
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             if (entry.getResource() instanceof MedicationRequest) {
