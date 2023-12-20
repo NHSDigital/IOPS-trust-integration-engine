@@ -71,6 +71,8 @@ public final class FhirSystems {
     public static final String OPENEHR_DATATYPE_EXT = "http://openehr.example.org/Datatype";
 
 
+
+
     public static final String stripBrace(String str) {
         return str.replace("{","").replace("}","");
     }

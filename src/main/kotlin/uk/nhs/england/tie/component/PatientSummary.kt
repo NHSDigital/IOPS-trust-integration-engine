@@ -9,7 +9,9 @@ import org.hl7.fhir.r4.model.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.thymeleaf.TemplateEngine
+import org.w3c.dom.Document
 import org.xhtmlrenderer.pdf.ITextRenderer
+import org.xhtmlrenderer.resource.FSEntityResolver
 import uk.nhs.england.tie.util.FhirSystems
 import java.io.*
 import java.nio.charset.StandardCharsets
@@ -18,6 +20,8 @@ import java.nio.file.Paths
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.xml.parsers.DocumentBuilder
+import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.stream.StreamResult
 import javax.xml.transform.stream.StreamSource
@@ -65,29 +69,28 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             Paths.get("/Temp/" + df.format(date) + "+patientCareRecord-" + patientId + ".json"),
             ctxFHIR.newJsonParser().setPrettyPrint(true).encodeResourceToString(careRecord).toByteArray()
         )
-        /*
-        String htmlFilename = "/Temp/"+df.format(date)+"+patient-"+patientId+".html";
-        performTransform(xmlResult,htmlFilename,"XML/DocumentToHTML.xslt");
-        outputPDF(htmlFilename, "/Temp/"+df.format(date)+"+patient-"+patientId+".pdf");
 
-        IGenericClient clientTest = ctxFHIR.newRestfulGenericClient("http://127.0.0.1:8080/careconnect-gateway/STU3/");
-        clientTest.create().resource(careRecord).execute();
-        */
     }
 
     @Throws(Exception::class)
-    private fun outputPDF(processedHtml: String, outputFileName: String) {
-        var os: FileOutputStream? = null
-        val fileName = UUID.randomUUID().toString()
+    public fun convertPDF(processedHtml: String) : ByteArrayOutputStream? {
+        var os: ByteArrayOutputStream? = null
+
         try {
-            val outputFile = File(outputFileName)
-            os = FileOutputStream(outputFile)
+
+            os = ByteArrayOutputStream()
+
+            val documentBuilderFactory = DocumentBuilderFactory.newInstance()
+            documentBuilderFactory.isValidating = false
+            val builder: DocumentBuilder = documentBuilderFactory.newDocumentBuilder()
+            builder.setEntityResolver(FSEntityResolver.instance())
+            val document: Document = builder.parse(ByteArrayInputStream(processedHtml.toByteArray()))
+
             val renderer = ITextRenderer()
-            renderer.setDocument(File(processedHtml))
+            renderer.setDocument(document, null)
             renderer.layout()
             renderer.createPDF(os, false)
             renderer.finishPDF()
-            //return outputFile.getAbsolutePath();
         } finally {
             if (os != null) {
                 try {
@@ -96,6 +99,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
                 }
             }
         }
+        return os
     }
 
     @Throws(Exception::class)
@@ -151,7 +155,6 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             fhirBundleUtil.processBundleResources(patientBundle)
             if (fhirBundleUtil.patient == null) throw Exception("404 Patient not found")
             composition!!.setSubject(Reference("Patient/$patientId"))
-            patientId = fhirBundleUtil.patient!!.getId()
         }
         if (fhirBundleUtil.patient == null) throw UnprocessableEntityException()
         fhirBundleUtil.processBundleResources(encounterBundle)
@@ -160,9 +163,9 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         composition!!.addSection(fhirDoc.getEncounterSection(fhirBundleUtil.fhirDocument))
         var section: Composition.SectionComponent = fhirDoc.getConditionSection(fhirBundleUtil.fhirDocument)
         if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getMedicationStatementSection(fhirBundleUtil.fhirDocument)
+        section = fhirDoc.getMedicationsSection(Bundle(),fhirBundleUtil.fhirDocument)
         if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getMedicationRequestSection(fhirBundleUtil.fhirDocument)
+        section = fhirDoc.getMedicationsSection(fhirBundleUtil.fhirDocument, Bundle())
         if (section.entry.size > 0) composition!!.addSection(section)
         section = fhirDoc.getAllergySection(fhirBundleUtil.fhirDocument)
         if (section.entry.size > 0) composition!!.addSection(section)
@@ -183,14 +186,13 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         composition = Composition()
         composition!!.setId(UUID.randomUUID().toString())
         compositionBundle.addEntry().setResource(composition)
-        composition!!.setTitle("Patient Summary Care Record")
+        composition!!.setTitle("International Patient Summary")
         composition!!.setDate(Date())
         composition!!.setStatus(Composition.CompositionStatus.FINAL)
         composition!!.type = CodeableConcept().addCoding(Coding()
-            .setCode("60591-5")
             .setSystem(FhirSystems.LOINC)
-            .setDisplay("Patient Summary")
-        )
+            .setCode("60591-5"))
+
         val leedsTH = getOrganization(client, "RR8")
         compositionBundle.addEntry().setResource(leedsTH)
         composition!!.addAttester()
@@ -214,7 +216,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         if (fhirBundleUtil.patient == null) throw Exception("404 Patient not found")
         composition!!.setSubject(Reference("Patient/$patientId"))
         val fhirDoc = FhirDocUtil(templateEngine)
-       // patientId = fhirBundleUtil.patient!!.getId()
+
         fhirDoc.generatePatientHtml(fhirBundleUtil.patient, patientBundle)
 
         /* CONDITION */
@@ -222,15 +224,12 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         fhirBundleUtil.processBundleResources(conditionBundle)
         composition!!.addSection(fhirDoc.getConditionSection(conditionBundle))
 
-        /* MEDICATION STATEMENT */
+        /* MEDICATION STATEMENT AND REQUEST */
         val medicationStatementBundle = getMedicationStatementBundle(patientId)
         fhirBundleUtil.processBundleResources(medicationStatementBundle)
-        composition!!.addSection(fhirDoc.getMedicationStatementSection(medicationStatementBundle))
-
-        /* MEDICATION REQUEST */
         val medicationRequestBundle = getMedicationRequestBundle(patientId)
         fhirBundleUtil.processBundleResources(medicationRequestBundle)
-        val section = fhirDoc.getMedicationRequestSection(fhirBundleUtil.fhirDocument)
+        val section = fhirDoc.getMedicationsSection(medicationRequestBundle, medicationStatementBundle)
         if (section.entry.size > 0) composition!!.addSection(section)
 
         /* ALLERGY INTOLERANCE */
@@ -285,7 +284,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             .search<IBaseBundle>()
             .forResource(Condition::class.java)
             .where(Condition.PATIENT.hasId(patientId))
-            //     .and(Condition.CLINICAL_STATUS.exactly().code("active"))
+          //  .and(Condition.CLINICAL_STATUS.exactly().code("active"))
             .returnBundle(Bundle::class.java)
             .execute()
     }
@@ -343,7 +342,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             .execute()
     }
 
-    fun convertToHtml(xmlInput: String, styleSheet: String) : String? {
+    fun convertHTML(xmlInput: String, styleSheet: String) : String? {
 
         // Input xml data file
         val classLoader = contextClassLoader
@@ -374,10 +373,7 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             val xmlSource = StreamSource(xml)
             val result = StreamResult(os)
             transformer.transform(xmlSource, result)
-            ByteArrayInputStream(os.toByteArray()).use { `in` ->
-                val inContent = String(`in`.readAllBytes())
-                return inContent
-            }
+            return os.toString()
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
