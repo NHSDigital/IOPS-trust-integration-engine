@@ -12,6 +12,7 @@ import org.thymeleaf.TemplateEngine
 import org.w3c.dom.Document
 import org.xhtmlrenderer.pdf.ITextRenderer
 import org.xhtmlrenderer.resource.FSEntityResolver
+import uk.nhs.england.tie.util.FhirSystems
 import java.io.*
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -68,20 +69,13 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
             Paths.get("/Temp/" + df.format(date) + "+patientCareRecord-" + patientId + ".json"),
             ctxFHIR.newJsonParser().setPrettyPrint(true).encodeResourceToString(careRecord).toByteArray()
         )
-        /*
-        String htmlFilename = "/Temp/"+df.format(date)+"+patient-"+patientId+".html";
-        performTransform(xmlResult,htmlFilename,"XML/DocumentToHTML.xslt");
-        outputPDF(htmlFilename, "/Temp/"+df.format(date)+"+patient-"+patientId+".pdf");
 
-        IGenericClient clientTest = ctxFHIR.newRestfulGenericClient("http://127.0.0.1:8080/careconnect-gateway/STU3/");
-        clientTest.create().resource(careRecord).execute();
-        */
     }
 
     @Throws(Exception::class)
     public fun convertPDF(processedHtml: String) : ByteArrayOutputStream? {
         var os: ByteArrayOutputStream? = null
-        val fileName = UUID.randomUUID().toString()
+
         try {
 
             os = ByteArrayOutputStream()
@@ -169,9 +163,9 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         composition!!.addSection(fhirDoc.getEncounterSection(fhirBundleUtil.fhirDocument))
         var section: Composition.SectionComponent = fhirDoc.getConditionSection(fhirBundleUtil.fhirDocument)
         if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getMedicationStatementSection(fhirBundleUtil.fhirDocument)
+        section = fhirDoc.getMedicationsSection(Bundle(),fhirBundleUtil.fhirDocument)
         if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getMedicationRequestSection(fhirBundleUtil.fhirDocument)
+        section = fhirDoc.getMedicationsSection(fhirBundleUtil.fhirDocument, Bundle())
         if (section.entry.size > 0) composition!!.addSection(section)
         section = fhirDoc.getAllergySection(fhirBundleUtil.fhirDocument)
         if (section.entry.size > 0) composition!!.addSection(section)
@@ -192,9 +186,13 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         composition = Composition()
         composition!!.setId(UUID.randomUUID().toString())
         compositionBundle.addEntry().setResource(composition)
-        composition!!.setTitle("Patient Summary Care Record")
+        composition!!.setTitle("International Patient Summary")
         composition!!.setDate(Date())
         composition!!.setStatus(Composition.CompositionStatus.FINAL)
+        composition!!.type = CodeableConcept().addCoding(Coding()
+            .setSystem(FhirSystems.LOINC)
+            .setCode("60591-5"))
+
         val leedsTH = getOrganization(client, "RR8")
         compositionBundle.addEntry().setResource(leedsTH)
         composition!!.addAttester()
@@ -226,13 +224,12 @@ class PatientSummary(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : 
         fhirBundleUtil.processBundleResources(conditionBundle)
         composition!!.addSection(fhirDoc.getConditionSection(conditionBundle))
 
-        /* MEDICATION STATEMENT */
+        /* MEDICATION STATEMENT AND REQUEST */
         val medicationStatementBundle = getMedicationStatementBundle(patientId)
         fhirBundleUtil.processBundleResources(medicationStatementBundle)
-        composition!!.addSection(fhirDoc.getMedicationStatementSection(medicationStatementBundle))
-
         val medicationRequestBundle = getMedicationRequestBundle(patientId)
-        val section = fhirDoc.getMedicationRequestSection(medicationRequestBundle)
+        fhirBundleUtil.processBundleResources(medicationRequestBundle)
+        val section = fhirDoc.getMedicationsSection(medicationRequestBundle, medicationStatementBundle)
         if (section.entry.size > 0) composition!!.addSection(section)
 
         /* ALLERGY INTOLERANCE */

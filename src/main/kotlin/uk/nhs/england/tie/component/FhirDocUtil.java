@@ -8,12 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import uk.nhs.england.tie.util.FhirSystems;
 
 import java.util.ArrayList;
 
 public class FhirDocUtil {
 
-    public static final String SNOMEDCT = "http://snomed.info/sct";
+    public static final String SNOMEDCT = FhirSystems.SNOMED_CT;
 
     Context ctxThymeleaf = new Context();
 
@@ -32,10 +33,13 @@ public class FhirDocUtil {
 
         ArrayList<Condition> conditions = new ArrayList<>();
 
-        section.getCode().addCoding()
-                .setSystem("http://snomed.info/sct")
-                .setCode("887151000000100")
-                .setDisplay("Problems and issues");
+        section.getCode()
+                .addCoding(new Coding().setSystem(FhirSystems.LOINC)
+                        .setCode("11450-4"))
+                .addCoding(new Coding().setSystem(FhirSystems.SNOMED_CT)
+                    .setCode("887151000000100")
+                    .setDisplay("Problems and issues"))
+                ;
         section.setTitle("Problems and issues");
 
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -53,42 +57,20 @@ public class FhirDocUtil {
         return section;
     }
 
-    public Composition.SectionComponent getMedicationStatementSection(Bundle bundle) {
-        Composition.SectionComponent section = new Composition.SectionComponent();
 
-        ArrayList<MedicationStatement>  medicationStatements = new ArrayList<>();
-
-        section.getCode().addCoding()
-                .setSystem("http://snomed.info/sct")
-                .setCode("933361000000108")
-                .setDisplay("Medications and medical devices");
-        section.setTitle("Medications and medical devices");
-
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof MedicationStatement) {
-                MedicationStatement medicationStatement = (MedicationStatement) entry.getResource();
-                section.getEntry().add(new Reference("urn:uuid:"+medicationStatement.getId()));
-                medicationStatements.add(medicationStatement);
-
-            }
-        }
-        ctxThymeleaf.clearVariables();
-        ctxThymeleaf.setVariable("medicationStatements", medicationStatements);
-
-        section.getText().setDiv(getDiv("medicationStatement")).setStatus(Narrative.NarrativeStatus.GENERATED);
-
-        return section;
-    }
 
     public Composition.SectionComponent getAllergySection(Bundle bundle) {
         Composition.SectionComponent section = new Composition.SectionComponent();
 
         ArrayList<AllergyIntolerance>  allergyIntolerances = new ArrayList<>();
 
-        section.getCode().addCoding()
-                .setSystem("http://snomed.info/sct")
-                .setCode("886921000000105")
-                .setDisplay("Allergies and adverse reactions");
+        section.getCode()
+                .addCoding(new Coding().setSystem(FhirSystems.LOINC)
+                        .setCode("48765-2"))
+                .addCoding(new Coding().setSystem(FhirSystems.SNOMED_CT)
+                    .setCode("886921000000105")
+                    .setDisplay("Allergies and adverse reactions"))
+                ;
         section.setTitle("Allergies and adverse reactions");
 
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -113,7 +95,7 @@ public class FhirDocUtil {
         ArrayList<Encounter>  encounters = new ArrayList<>();
 
         section.getCode().addCoding()
-                .setSystem("http://snomed.info/sct")
+                .setSystem(FhirSystems.SNOMED_CT)
                 .setCode("713511000000103")
                 .setDisplay("Encounter administration");
         section.setTitle("Encounters");
@@ -133,18 +115,22 @@ public class FhirDocUtil {
         return section;
     }
 
-    public Composition.SectionComponent getMedicationRequestSection(Bundle bundle) {
+    public Composition.SectionComponent getMedicationsSection(Bundle medicationsRequests, Bundle medicationsStatements) {
         Composition.SectionComponent section = new Composition.SectionComponent();
 
         ArrayList<MedicationRequest>  medicationRequests = new ArrayList<>();
+        ArrayList<MedicationStatement>  medicationStatements = new ArrayList<>();
 
-        section.getCode().addCoding()
-                .setSystem(SNOMEDCT)
-                .setCode("933361000000108")
-                .setDisplay("Medications and medical devices");
+        section.getCode()
+                .addCoding(new Coding().setSystem(FhirSystems.LOINC)
+                    .setCode("10160-0"))
+                .addCoding(new Coding().setSystem(SNOMEDCT)
+                        .setCode("933361000000108")
+                        .setDisplay("Medications and medical devices"));
+
         section.setTitle("Medications and medical devices");
 
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+        for (Bundle.BundleEntryComponent entry : medicationsRequests.getEntry()) {
             if (entry.getResource() instanceof MedicationRequest) {
                 MedicationRequest medicationRequest = (MedicationRequest) entry.getResource();
                 //medicationStatement.getMedicationReference().getDisplay();
@@ -154,13 +140,24 @@ public class FhirDocUtil {
 
             }
         }
+        for (Bundle.BundleEntryComponent entry : medicationsStatements.getEntry()) {
+            if (entry.getResource() instanceof MedicationStatement) {
+                MedicationStatement medicationStatement = (MedicationStatement) entry.getResource();
+                section.getEntry().add(new Reference("urn:uuid:"+medicationStatement.getId()));
+                medicationStatements.add(medicationStatement);
+
+            }
+        }
+
         ctxThymeleaf.clearVariables();
         ctxThymeleaf.setVariable("medicationRequests", medicationRequests);
+        ctxThymeleaf.setVariable("medicationStatements", medicationStatements);
 
-        section.getText().setDiv(getDiv("medicationRequest")).setStatus(Narrative.NarrativeStatus.GENERATED);
+        section.getText().setDiv(getDiv("medicationRequestAndStatement")).setStatus(Narrative.NarrativeStatus.GENERATED);
 
         return section;
     }
+
 
     public Composition.SectionComponent getObservationSection(Bundle bundle) {
         Composition.SectionComponent section = new Composition.SectionComponent();

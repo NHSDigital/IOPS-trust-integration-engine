@@ -247,6 +247,34 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
 
         oas.path("/FHIR/R4/Patient",patientItem)
 
+        val patientSummaryItem = PathItem()
+            .get(
+                Operation()
+                    .addTagsItem(MHD)
+                    .summary("International Patient Summary")
+                    .description("This message is implemented as an HTTP conditional update operation from the Patient Identity Source to the Patient Identifier Cross-reference Manager")
+                    .responses(getApiResponses())
+                    .addParametersItem(Parameter()
+                        .name("id")
+                        .`in`("path")
+                        .required(true)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Patient Id")
+                        .schema(StringSchema())
+                        .example("aab1dbe3-9bae-4dd2-a0e0-1d67158c0365")
+                    )
+                    .addParametersItem(Parameter()
+                        .name("_format")
+                        .`in`("query")
+                        .required(false)
+                        .style(Parameter.StyleEnum.SIMPLE)
+                        .description("Payload format")
+                        .schema(StringSchema()._enum(mutableListOf("application/fhir+json","application/pdf","text/html")))
+                    )
+            )
+
+        oas.path("/FHIR/R4/Patient/{id}/\$summary",patientSummaryItem)
+
         val examplesEncounter = LinkedHashMap<String,Example?>()
         examplesEncounter.put("Hospital admission",
             Example().value(FHIRExamples().loadExample("Encounter.json",ctx))

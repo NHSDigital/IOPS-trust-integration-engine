@@ -1,5 +1,7 @@
 package uk.nhs.england.tie.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.math.BigInteger;
 import java.util.UUID;
 
@@ -34,7 +36,7 @@ public final class FhirSystems {
     public static final String EMIS_PRACTITIONER_IDENTIFIER = "https://emis.com/Id/Practitioner/DBID";
 
     public static final String SNOMED_CT = "http://snomed.info/sct";
-
+    public static final String LOINC = "http://loinc.org";
     public static final String DMandD= "https://dmd.nhs.uk";
 
     public static final String ISO_EHR_EVENTS = "http://terminology.hl7.org/CodeSystem/iso-21089-lifecycle";
@@ -69,6 +71,8 @@ public final class FhirSystems {
 
     public static final String OPENEHR_TEMPLATE = "https://fhir.openehr.example.org/Questionnaire";
     public static final String OPENEHR_DATATYPE_EXT = "http://openehr.example.org/Datatype";
+
+
 
 
     public static final String stripBrace(String str) {
