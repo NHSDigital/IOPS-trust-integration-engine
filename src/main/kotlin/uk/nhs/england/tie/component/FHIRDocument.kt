@@ -18,8 +18,6 @@ import org.xhtmlrenderer.resource.FSEntityResolver
 import uk.nhs.england.tie.util.FhirSystems
 import java.io.*
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -42,147 +40,9 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
     var composition: Composition? = null
     private var fhirBundleUtil: FhirBundleUtil = FhirBundleUtil(Bundle.BundleType.DOCUMENT)
 
-    /*
-    @Throws(Exception::class)
-    override fun run(vararg args: String) {
-        if (args.size > 0 && args[0] == "exitcode") {
-            throw Exception()
-        }
-        client = ctxFHIR.newRestfulGenericClient("https://data.developer.nhs.uk/ccri-fhir/STU3/")
-        client.setEncoding(EncodingEnum.XML)
-        outputCareRecord("1098")
-        //  outputCareRecord("1177");
-        val encounterBundle = buildEncounterDocument(client, IdType().setValue("1700"))
-        val date = Date()
-        val xmlResult = ctxFHIR.newXmlParser().setPrettyPrint(true).encodeResourceToString(encounterBundle)
-        Files.write(
-            Paths.get("/Temp/" + df.format(date) + "+encounter-" + "1700" + "-document.xml"),
-            xmlResult.toByteArray()
-        )
-    }*/
-
-    @Throws(Exception::class)
-    fun outputCareRecord(patientId: String) {
-        val date = Date()
-        val careRecord = getCareRecord(patientId)
-        val xmlResult = this.ctxFHIR.newXmlParser().setPrettyPrint(true).encodeResourceToString(careRecord)
-        Files.write(
-            Paths.get("/Temp/" + df.format(date) + "+patientCareRecord-" + patientId + ".xml"),
-            xmlResult.toByteArray()
-        )
-        Files.write(
-            Paths.get("/Temp/" + df.format(date) + "+patientCareRecord-" + patientId + ".json"),
-            ctxFHIR.newJsonParser().setPrettyPrint(true).encodeResourceToString(careRecord).toByteArray()
-        )
-
-    }
-
-    @Throws(Exception::class)
-    public fun convertPDF(processedHtml: String) : ByteArrayOutputStream? {
-        var os: ByteArrayOutputStream? = null
-
-        try {
-
-            os = ByteArrayOutputStream()
-
-            val documentBuilderFactory = DocumentBuilderFactory.newInstance()
-            documentBuilderFactory.isValidating = false
-            val builder: DocumentBuilder = documentBuilderFactory.newDocumentBuilder()
-            builder.setEntityResolver(FSEntityResolver.instance())
-            val document: Document = builder.parse(ByteArrayInputStream(processedHtml.toByteArray()))
-
-            val renderer = ITextRenderer()
-            renderer.setDocument(document, null)
-            renderer.layout()
-            renderer.createPDF(os, false)
-            renderer.finishPDF()
-        } finally {
-            if (os != null) {
-                try {
-                    os.close()
-                } catch (e: IOException) { /*ignore*/
-                }
-            }
-        }
-        return os
-    }
 
 
-/*
-    @Throws(Exception::class)
-    fun buildEncounterDocument(client: IGenericClient, encounterId: IdType): Bundle {
-        fhirBundleUtil = FhirBundleUtil(Bundle.BundleType.DOCUMENT)
-        val compositionBundle = Bundle()
 
-        // Main resource of a FHIR Bundle is a Composition
-        composition = Composition()
-        composition!!.setId(UUID.randomUUID().toString())
-        compositionBundle.addEntry().setResource(composition)
-
-        // composition.getMeta().addProfile(CareConnectProfile.Composition_1);
-        composition!!.setTitle("Encounter Document")
-        composition!!.setDate(Date())
-        composition!!.setStatus(Composition.CompositionStatus.FINAL)
-        val leedsTH = getOrganization(client, "RR8")
-        compositionBundle.addEntry().setResource(leedsTH)
-        composition!!.addAttester()
-            .setParty(Reference("Organization/" + leedsTH!!.idElement.idPart))
-            .setMode(Composition.CompositionAttestationMode.OFFICIAL)
-        val device = Device()
-        device.setId(UUID.randomUUID().toString())
-        device.type.addCoding()
-            .setSystem("http://snomed.info/sct")
-            .setCode("58153004")
-            .setDisplay("Android")
-        device.setOwner(Reference("Organization/" + leedsTH.idElement.idPart))
-        compositionBundle.addEntry().setResource(device)
-        composition!!.addAuthor(Reference("Device/" + device.idElement.idPart))
-        composition!!.type.addCoding()
-            .setCode("371531000")
-            .setDisplay("Report of clinical encounter")
-            .setSystem(SNOMEDCT)
-        fhirBundleUtil.processBundleResources(compositionBundle)
-        fhirBundleUtil.processReferences()
-        val encounterBundle = getEncounterBundleRev(client, encounterId.idPart)
-        var encounter: Encounter? = null
-        for (entry in encounterBundle.entry) {
-            val resource = entry.resource
-            if (encounter == null && entry.resource is Encounter) {
-                encounter = entry.resource as Encounter
-            }
-        }
-        var patientId: String? = null
-        if (encounter != null) {
-            patientId = encounter.subject.referenceElement.idPart
-            log.debug(encounter.subject.referenceElement.idPart)
-
-
-            // This is a synthea patient
-            val patientBundle = getPatientBundle(client, patientId)
-            fhirBundleUtil.processBundleResources(patientBundle)
-            if (fhirBundleUtil.patient == null) throw Exception("404 Patient not found")
-            composition!!.setSubject(Reference("Patient/$patientId"))
-        }
-        if (fhirBundleUtil.patient == null) throw UnprocessableEntityException()
-        fhirBundleUtil.processBundleResources(encounterBundle)
-        fhirBundleUtil.processReferences()
-        val fhirDoc = FhirDocUtil(templateEngine)
-        composition!!.addSection(fhirDoc.getEncounterSection(fhirBundleUtil.fhirDocument))
-        var section: Composition.SectionComponent = fhirDoc.getConditionSection(fhirBundleUtil.fhirDocument)
-        if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getMedicationsSection(Bundle(),fhirBundleUtil.fhirDocument)
-        if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getMedicationsSection(fhirBundleUtil.fhirDocument, Bundle())
-        if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getAllergySection(fhirBundleUtil.fhirDocument)
-        if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getObservationSection(fhirBundleUtil.fhirDocument)
-        if (section.entry.size > 0) composition!!.addSection(section)
-        section = fhirDoc.getProcedureSection(fhirBundleUtil.fhirDocument)
-        if (section.entry.size > 0) composition!!.addSection(section)
-        return fhirBundleUtil.fhirDocument
-    }
-*/
     fun getDiagnosticReport(reportId: String): Bundle {
         fhirBundleUtil = FhirBundleUtil(Bundle.BundleType.DOCUMENT)
         // Main resource of a FHIR Bundle is a Composition
@@ -216,7 +76,6 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
         val reportBundle = getDiagnosticReportBundleRev(reportId)
         var diagnosticReport :DiagnosticReport? = null
         for (entry in reportBundle.entry) {
-            val resource = entry.resource
             if (diagnosticReport == null && entry.resource is DiagnosticReport) {
                 diagnosticReport = entry.resource as DiagnosticReport
             }
@@ -236,6 +95,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
 
         generatePatientHtml(fhirBundleUtil.patient!!, reportBundle)
 
+        /*
         var section: Composition.SectionComponent
         for (entry in reportBundle.getEntry()) {
             if (entry.resource is Observation) {
@@ -254,6 +114,10 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
             }
         }
         section = getObservationSection(fhirBundleUtil.fhirDocument)
+        if (section.entry.size > 0) composition!!.addSection(section)
+
+         */
+        var section = getDiagnosticReportSection(fhirBundleUtil.fhirDocument)
         if (section.entry.size > 0) composition!!.addSection(section)
         return fhirBundleUtil.fhirDocument
     }
@@ -293,7 +157,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
         fhirBundleUtil.processReferences()
 
         // This is a synthea patient
-        val patientBundle = getPatientBundle(client, patientId)
+        val patientBundle = getPatientBundle(patientId)
         fhirBundleUtil.processBundleResources(patientBundle)
         if (fhirBundleUtil.patient == null) throw Exception("404 Patient not found")
         composition!!.setSubject(Reference("Patient/$patientId"))
@@ -318,6 +182,17 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
         fhirBundleUtil.processBundleResources(allergyBundle)
         composition!!.addSection(getAllergySection(allergyBundle))
 
+        /* DIAGNOSTIC REPORT */
+        val reportBundle = getDiagnosticReportBundle(patientId)
+        fhirBundleUtil.processBundleResources(reportBundle)
+        composition!!.addSection(getDiagnosticReportSection(reportBundle))
+
+        /* OBSERVATION */
+        val observationBundle = getObservationBundle(patientId)
+        fhirBundleUtil.processBundleResources(observationBundle)
+        composition!!.addSection(getObservationSection(observationBundle))
+
+
         /* ENCOUNTER */
         val encounterBundle = getEncounterBundle(patientId)
         fhirBundleUtil.processBundleResources(encounterBundle)
@@ -327,9 +202,12 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
         return fhirBundleUtil.fhirDocument
     }
 
-    private fun getPatientBundle(client: IGenericClient?, patientId: String?): Bundle {
-        if (client != null) {
-            return client
+    private fun getPatientBundle(patientId: String?): Bundle {
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
                 .search<IBaseBundle>()
                 .forResource(Patient::class.java)
                 .where(Patient.RES_ID.exactly().code(patientId))
@@ -337,16 +215,24 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .include(Patient.INCLUDE_ORGANIZATION)
                 .returnBundle(Bundle::class.java)
                 .execute()
-        } else
-        return Bundle()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return bundle
     }
 
     private fun getEncounterBundleRev(
-        client: IGenericClient?,
         encounterId: String
     ): Bundle {
-        if (client != null) {
-            return client
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
                 .search<IBaseBundle>()
                 .forResource(Encounter::class.java)
                 .where(Encounter.RES_ID.exactly().code(encounterId))
@@ -355,16 +241,24 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .count(100) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
-        } else {
-            return Bundle()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
         }
+        return bundle
     }
 
     private fun getDiagnosticReportBundleRev(
         reportId: String
     ): Bundle {
-        if (client != null) {
-            return client
+        var bundle: Bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
                 .search<IBaseBundle>()
                 .forResource(DiagnosticReport::class.java)
                 .where(DiagnosticReport.RES_ID.exactly().code(reportId))
@@ -373,73 +267,154 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .count(100) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
-        } else {
-            return Bundle()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
         }
+        return bundle
     }
 
-    private fun getObservationBundleRev(
-        reportId: String
+    private fun getDiagnosticReportBundle(
+        patientId: String
     ): Bundle {
-        if (client != null) {
-            return client
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
+                .search<IBaseBundle>()
+                .forResource(DiagnosticReport::class.java)
+                .where(DiagnosticReport.PATIENT.hasId(patientId))
+                .sort().descending("date")
+                .count(5) // be careful of this TODO
+                .returnBundle(Bundle::class.java)
+                .execute()
+        } catch (ex: Exception) {
+            // do nothing
+            log.error(ex.message)
+            retry--
+            if (retry == 0) throw ex
+        }
+    }
+    return bundle
+    }
+    private fun getObservationBundle(
+        patientId: String
+    ): Bundle {
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle =   client
                 .search<IBaseBundle>()
                 .forResource(Observation::class.java)
-                .where(Observation.RES_ID.exactly().code(reportId))
-                //.revInclude(Include("*"))
-                .include(Include("Observation:has-member"))
+                .where(Observation.PATIENT.hasId(patientId))
+                .sort().descending("date")
                 .count(100) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
-        } else {
-            return Bundle()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
         }
+        return bundle
     }
     private fun getObservation(
         reportId: String
     ): Bundle {
-        if (client != null) {
-            return client
+        var bundle: Bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle =  client
                 .search<IBaseBundle>()
                 .forResource(Observation::class.java)
                 .where(Observation.RES_ID.exactly().code(reportId))
                 .count(100) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
-        } else {
-            return Bundle()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
         }
+        return bundle
     }
 
 
     private fun getConditionBundle(patientId: String): Bundle {
-        return client
+
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
             .search<IBaseBundle>()
             .forResource(Condition::class.java)
             .where(Condition.PATIENT.hasId(patientId))
           //  .and(Condition.CLINICAL_STATUS.exactly().code("active"))
             .returnBundle(Bundle::class.java)
             .execute()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return bundle
     }
 
     private fun getEncounterBundle(patientId: String): Bundle {
-        return client
-            .search<IBaseBundle>()
-            .forResource(Encounter::class.java)
-            .where(Encounter.PATIENT.hasId(patientId))
-            .count(3) // Last 3 entries same as GP Connect
-            .returnBundle(Bundle::class.java)
-            .execute()
+
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
+                    .search<IBaseBundle>()
+                    .forResource(Encounter::class.java)
+                    .where(Encounter.PATIENT.hasId(patientId))
+                    .count(3) // Last 3 entries same as GP Connect
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return bundle
     }
 
     private fun getOrganization(client: IGenericClient, sdsCode: String): Organization? {
         var organization: Organization? = null
-        val bundle = client
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
             .search<IBaseBundle>()
             .forResource(Organization::class.java)
             .where(Organization.IDENTIFIER.exactly().code(sdsCode))
             .returnBundle(Bundle::class.java)
             .execute()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
         if (bundle.entry.size > 0) {
             if (bundle.entry[0].resource is Organization) organization = bundle.entry[0].resource as Organization
         }
@@ -447,33 +422,101 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
     }
 
     private fun getMedicationStatementBundle(patientId: String): Bundle {
-        return client
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
             .search<IBaseBundle>()
             .forResource(MedicationStatement::class.java)
             .where(MedicationStatement.PATIENT.hasId(patientId))
             .and(MedicationStatement.STATUS.exactly().code("active"))
             .returnBundle(Bundle::class.java)
             .execute()
+        } catch (ex: Exception) {
+            // do nothing
+            log.error(ex.message)
+            retry--
+            if (retry == 0) throw ex
+        }
+    }
+return bundle
     }
 
     private fun getMedicationRequestBundle(patientId: String): Bundle {
-        return client
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
             .search<IBaseBundle>()
             .forResource(MedicationRequest::class.java)
             .where(MedicationRequest.PATIENT.hasId(patientId))
             .and(MedicationRequest.STATUS.exactly().code("active"))
+            .sort().descending("date")
             .returnBundle(Bundle::class.java)
             .execute()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return bundle
     }
 
     private fun getAllergyBundle(patientId: String): Bundle {
-        return client
-            .search<IBaseBundle>()
-            .forResource(AllergyIntolerance::class.java)
-            .where(AllergyIntolerance.PATIENT.hasId(patientId))
-            .returnBundle(Bundle::class.java)
-            .execute()
+        var bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = client
+                    .search<IBaseBundle>()
+                    .forResource(AllergyIntolerance::class.java)
+                    .where(AllergyIntolerance.PATIENT.hasId(patientId))
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return bundle
     }
+
+    @Throws(Exception::class)
+    fun convertPDF(processedHtml: String) : ByteArrayOutputStream? {
+        var os: ByteArrayOutputStream? = null
+
+        try {
+
+            os = ByteArrayOutputStream()
+
+            val documentBuilderFactory = DocumentBuilderFactory.newInstance()
+            documentBuilderFactory.isValidating = false
+            val builder: DocumentBuilder = documentBuilderFactory.newDocumentBuilder()
+            builder.setEntityResolver(FSEntityResolver.instance())
+            val document: Document = builder.parse(ByteArrayInputStream(processedHtml.toByteArray()))
+
+            val renderer = ITextRenderer()
+            renderer.setDocument(document, null)
+            renderer.layout()
+            renderer.createPDF(os, false)
+            renderer.finishPDF()
+        } finally {
+            if (os != null) {
+                try {
+                    os.close()
+                } catch (e: IOException) { /*ignore*/
+                }
+            }
+        }
+        return os
+    }
+
 
     fun convertHTML(xmlInput: String, styleSheet: String) : String? {
 
@@ -515,7 +558,6 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
 
     companion object {
         private val log = LoggerFactory.getLogger(FHIRDocument::class.java)
-        const val SNOMEDCT = "http://snomed.info/sct"
     }
     fun getConditionSection(bundle: Bundle): Composition.SectionComponent {
         val section = Composition.SectionComponent()
@@ -606,7 +648,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                     .setCode("10160-0")
             )
             .addCoding(
-                Coding().setSystem(FHIRDocument.SNOMEDCT)
+                Coding().setSystem(FhirSystems.SNOMED_CT)
                     .setCode("933361000000108")
                     .setDisplay("Medications and medical devices")
             )
@@ -637,10 +679,15 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
     fun getObservationSection(bundle: Bundle): Composition.SectionComponent {
         val section = Composition.SectionComponent()
         val observations = ArrayList<Observation>()
-        section.code.addCoding()
-            .setSystem(FHIRDocument.SNOMEDCT)
-            .setCode("425044008")
-            .setDisplay("Physical exam section")
+        section.code
+            .addCoding(Coding()
+                .setSystem(FhirSystems.LOINC)
+                .setCode("8716-3"))
+            .addCoding(Coding()
+                .setSystem(FhirSystems.SNOMED_CT)
+                .setCode("425044008")
+                .setDisplay("Physical exam section"))
+
         section.setTitle("Physical exam section")
         for (entry in bundle.entry) {
             if (entry.resource is Observation) {
@@ -654,12 +701,92 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
         section.text.setDiv(getDiv("observation")).setStatus(Narrative.NarrativeStatus.GENERATED)
         return section
     }
+    fun getDiagnosticReportSection(bundle: Bundle): Composition.SectionComponent {
+        val section = Composition.SectionComponent()
+        val reports = ArrayList<DiagnosticReport>()
+        section.code
+            .addCoding(Coding()
+                .setSystem(FhirSystems.LOINC)
+                .setCode("30954-2"))
+
+        section.setTitle("Investigation Results")
+        for (entry in bundle.entry) {
+            if (entry.resource is DiagnosticReport) {
+                val report = entry.resource as DiagnosticReport
+                section.entry.add(Reference("urn:uuid:" + report.id))
+                reports.add(report)
+            }
+        }
+        var html : XhtmlNode? = null
+        reports.forEach {
+            ctxThymeleaf.clearVariables()
+            ctxThymeleaf.setVariable("reports", mutableListOf(it))
+            val node = getDiv("diagnosticReport")
+            if (node!==null) {
+                if (html === null) html = node
+                else {
+                    node.childNodes.forEach {
+                        html!!.childNodes.add(it)
+                    }
+                }
+
+            }
+            val observations = Bundle()
+            if (it.hasResult()) {
+                it.result.forEach{
+                    val observation = fhirBundleUtil.getResource(it)
+                    if (observation == null) {
+                        val obs = getObservation(it.reference.replace("Observation/",""))
+
+                        if (obs.hasEntry() && obs.entryFirstRep.resource is Observation) {
+                            val referenceObservation = obs.entryFirstRep.resource as Observation
+                            observations.addEntry().setResource(referenceObservation)
+                            if (referenceObservation.hasMember.size>0) {
+                                referenceObservation.hasMember.forEach{
+                                    val observation2 = fhirBundleUtil.getResource(it)
+                                    if (observation2 == null) {
+                                        val obs2 = getObservation(it.reference.replace("Observation/", ""))
+                                        if (obs2.hasEntry() && obs2.entryFirstRep.resource is Observation) {
+                                            observations.addEntry().setResource(obs2.entryFirstRep.resource)
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Not a observation group
+                            }
+                        }
+                    }
+                }
+            }
+            if (observations.hasEntry()) {
+                fhirBundleUtil.processBundleResources(observations)
+                ctxThymeleaf.clearVariables()
+                val subobs = ArrayList<Observation>()
+                observations.entry.forEach{
+                    if (it.hasResource() && it.resource is Observation) subobs.add(it.resource as Observation)
+                }
+                ctxThymeleaf.setVariable("observations", subobs)
+                val node = getDiv("observation")
+                if (node!==null) {
+                    if (html === null) html = node
+                    else {
+                        node.childNodes.forEach {
+                            html!!.childNodes.add(it)
+                        }
+                    }
+                }
+            }
+        }
+
+        section.text.setDiv(html).setStatus(Narrative.NarrativeStatus.GENERATED)
+        return section
+    }
 
     fun getProcedureSection(bundle: Bundle): Composition.SectionComponent {
         val section = Composition.SectionComponent()
         val procedures = ArrayList<Procedure>()
         section.code.addCoding()
-            .setSystem(FHIRDocument.SNOMEDCT)
+            .setSystem(FhirSystems.SNOMED_CT)
             .setCode("887171000000109")
             .setDisplay("Procedues")
         section.setTitle("Procedures")

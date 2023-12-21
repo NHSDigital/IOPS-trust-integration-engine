@@ -161,6 +161,14 @@ class FhirBundleUtil internal constructor(value: Bundle.BundleType?) {
         }
     }
 
+    fun getResource(reference : Reference) : Resource? {
+        for (entry in fhirDocument.entry) {
+            if (entry.hasResource() && reference.hasReference()
+                && reference.reference.contains(entry.resource.id)) return entry.resource
+        }
+        return null
+    }
+
     fun processBundleResources(bundle: Bundle) {
         val gp: Practitioner? = null
         val practice: Organization? = null
