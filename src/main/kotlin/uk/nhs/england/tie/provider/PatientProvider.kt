@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.thymeleaf.TemplateEngine
 import uk.nhs.england.tie.awsProvider.AWSPatient
-import uk.nhs.england.tie.component.PatientSummary
+import uk.nhs.england.tie.component.FHIRDocument
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import java.io.OutputStream
 import javax.servlet.http.HttpServletRequest
@@ -52,7 +52,7 @@ class PatientProvider(var awsPatient: AWSPatient, var cognitoAuthInterceptor: Co
         servletResponse: HttpServletResponse,
         @IdParam patientId: IdType,
         @OperationParam(name= "_format") format: StringType?) {
-        var patientSummary = PatientSummary(client,ctxFHIR,templateEngine)
+        var patientSummary = FHIRDocument(client,ctxFHIR,templateEngine)
 
         var bundle = patientSummary.getCareRecord(patientId.idPart)
         if (format !== null && (format.value.contains("pdf") || format.value.contains("text") )) {

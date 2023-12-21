@@ -5,7 +5,6 @@ import ca.uhn.fhir.rest.annotation.*
 import ca.uhn.fhir.rest.api.MethodOutcome
 import ca.uhn.fhir.rest.api.server.RequestDetails
 import ca.uhn.fhir.rest.client.api.IGenericClient
-import ca.uhn.fhir.rest.param.*
 
 import ca.uhn.fhir.rest.server.IResourceProvider
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Component
 import org.thymeleaf.TemplateEngine
 import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.awsProvider.AWSDiagnosticReport
-import uk.nhs.england.tie.component.PatientSummary
+import uk.nhs.england.tie.component.FHIRDocument
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import java.io.OutputStream
 import javax.servlet.http.HttpServletRequest
@@ -69,7 +68,7 @@ class DiagnosticReportProvider(var awsDiagnosticReport: AWSDiagnosticReport,
         servletResponse: HttpServletResponse,
         @IdParam reportId: IdType,
         @OperationParam(name= "_format") format: StringType?) {
-        var patientSummary = PatientSummary(client,ctxFHIR,templateEngine)
+        var patientSummary = FHIRDocument(client,ctxFHIR,templateEngine)
 
         var bundle = patientSummary.getDiagnosticReport(reportId.idPart)
         if (format !== null && (format.value.contains("pdf") || format.value.contains("text") )) {
