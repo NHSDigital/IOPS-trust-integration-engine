@@ -84,11 +84,16 @@ class DiagnosticReportProvider(var awsDiagnosticReport: AWSDiagnosticReport,
                 } else if (format.value.contains("pdf")) {
                     servletResponse.setContentType("application/pdf")
                     servletResponse.setCharacterEncoding("UTF-8")
-                    var pdfOutputStream = patientSummary.convertPDF(html)
-                    if (pdfOutputStream !== null) {
-                        val os: OutputStream = servletResponse.getOutputStream()
-                        val byteArray = pdfOutputStream.toByteArray()
+                    var diagnosticReport: DiagnosticReport? = null
+                    bundle.entry.forEach{
+                        if (it.hasResource() && it.resource is DiagnosticReport) diagnosticReport = it.resource as DiagnosticReport
+                    }
+                    if (diagnosticReport !== null && diagnosticReport!!.hasPresentedForm()
+                        && diagnosticReport!!.presentedFormFirstRep.hasContentType()
+                        && diagnosticReport!!.presentedFormFirstRep.contentType.equals("application/pdf")) {
 
+                        val os: OutputStream = servletResponse.getOutputStream()
+                        val byteArray = diagnosticReport!!.presentedFormFirstRep.data
                         try {
                             os.write(byteArray, 0, byteArray.size)
                         } catch (excp: Exception) {
@@ -98,6 +103,22 @@ class DiagnosticReportProvider(var awsDiagnosticReport: AWSDiagnosticReport,
                         }
                         // has been flushed    servletResponse.writer.flush()
                         return
+                    } else {
+                        var pdfOutputStream = patientSummary.convertPDF(html)
+                        if (pdfOutputStream !== null) {
+                            val os: OutputStream = servletResponse.getOutputStream()
+                            val byteArray = pdfOutputStream.toByteArray()
+
+                            try {
+                                os.write(byteArray, 0, byteArray.size)
+                            } catch (excp: Exception) {
+                                //handle error
+                            } finally {
+                                os.close()
+                            }
+                            // has been flushed    servletResponse.writer.flush()
+                            return
+                        }
                     }
                 }
             }

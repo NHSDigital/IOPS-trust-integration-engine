@@ -1,0 +1,46 @@
+
+<div>
+    <h2>Observation Group - <td th:text="${panel.getCode().getCodingFirstRep().getDisplay()}">No type given</td></h2>
+    <div th:if="${#lists.isEmpty(observations)}">
+        <p>None Recorded</p>
+    </div>
+    <div th:if="${not #lists.isEmpty(observations)}">
+
+        <div>
+            <table>
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="observation : ${observations}">
+                        <div th:if="${observation.hasEffective()}">
+                            <div th:if="${observation.hasEffectiveDateTimeType()}">
+                                <td th:text="${#dates.format(observation.getEffectiveDateTimeType().getValue(),'dd MMM YYYY HH:mm')}">Unknown</td>
+                            </div>
+                            <div th:if="${observation.hasEffectivePeriod()}">
+                                <td th:text="${#dates.format(observation.getEffectivePeriod().getStart(),'dd MMM YYYY HH:mm')}">Unknown</td>
+                            </div>
+                        </div>
+                        <div th:if="${!observation.hasEffective()}">
+                            <td></td>
+                        </div>
+
+                        <td th:text="${observation.getCode().getCodingFirstRep().getDisplay()}">No type given</td>
+
+
+                        <div th:if="${observation.hasValueQuantity()}">
+                            <td th:text="${observation.getValueQuantity().getValue()+' '+observation.getValueQuantity().getUnit()}">No provider specified</td>
+                        </div>
+                        <div th:if="${!observation.hasValueQuantity()}">
+                            <td>Lab Group?</td>
+                        </div>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

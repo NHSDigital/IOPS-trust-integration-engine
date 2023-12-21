@@ -1,4 +1,4 @@
-package uk.nhs.england.tie.component
+package uk.nhs.england.tie.util
 
 import org.hl7.fhir.r4.model.*
 import org.slf4j.LoggerFactory

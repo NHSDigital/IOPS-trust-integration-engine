@@ -15,6 +15,7 @@ import org.thymeleaf.context.Context
 import org.w3c.dom.Document
 import org.xhtmlrenderer.pdf.ITextRenderer
 import org.xhtmlrenderer.resource.FSEntityResolver
+import uk.nhs.england.tie.util.FhirBundleUtil
 import uk.nhs.england.tie.util.FhirSystems
 import java.io.*
 import java.nio.charset.StandardCharsets
@@ -215,6 +216,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .include(Patient.INCLUDE_ORGANIZATION)
                 .returnBundle(Bundle::class.java)
                 .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -241,6 +243,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .count(100) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -267,6 +270,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .count(100) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -292,6 +296,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .count(5) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
+                break;
         } catch (ex: Exception) {
             // do nothing
             log.error(ex.message)
@@ -316,6 +321,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .count(100) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -339,6 +345,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                 .count(100) // be careful of this TODO
                 .returnBundle(Bundle::class.java)
                 .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -363,6 +370,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
           //  .and(Condition.CLINICAL_STATUS.exactly().code("active"))
             .returnBundle(Bundle::class.java)
             .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -386,6 +394,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
                     .count(3) // Last 3 entries same as GP Connect
                     .returnBundle(Bundle::class.java)
                     .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -408,6 +417,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
             .where(Organization.IDENTIFIER.exactly().code(sdsCode))
             .returnBundle(Bundle::class.java)
             .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -433,6 +443,7 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
             .and(MedicationStatement.STATUS.exactly().code("active"))
             .returnBundle(Bundle::class.java)
             .execute()
+                break;
         } catch (ex: Exception) {
             // do nothing
             log.error(ex.message)
@@ -456,6 +467,7 @@ return bundle
             .sort().descending("date")
             .returnBundle(Bundle::class.java)
             .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -477,6 +489,7 @@ return bundle
                     .where(AllergyIntolerance.PATIENT.hasId(patientId))
                     .returnBundle(Bundle::class.java)
                     .execute()
+                break;
             } catch (ex: Exception) {
                 // do nothing
                 log.error(ex.message)
@@ -740,19 +753,41 @@ return bundle
 
                         if (obs.hasEntry() && obs.entryFirstRep.resource is Observation) {
                             val referenceObservation = obs.entryFirstRep.resource as Observation
-                            observations.addEntry().setResource(referenceObservation)
+
                             if (referenceObservation.hasMember.size>0) {
+                                val panelObservations = Bundle()
                                 referenceObservation.hasMember.forEach{
                                     val observation2 = fhirBundleUtil.getResource(it)
                                     if (observation2 == null) {
                                         val obs2 = getObservation(it.reference.replace("Observation/", ""))
                                         if (obs2.hasEntry() && obs2.entryFirstRep.resource is Observation) {
-                                            observations.addEntry().setResource(obs2.entryFirstRep.resource)
+                                            panelObservations.addEntry().setResource(obs2.entryFirstRep.resource)
+                                        }
+                                    }
+                                }
+                                if (panelObservations.hasEntry()) {
+                                    // TODO Panel Header
+                                    fhirBundleUtil.processBundleResources(panelObservations)
+                                    ctxThymeleaf.clearVariables()
+                                    val subobs = ArrayList<Observation>()
+                                    panelObservations.entry.forEach{
+                                        if (it.hasResource() && it.resource is Observation) subobs.add(it.resource as Observation)
+                                    }
+                                    ctxThymeleaf.setVariable("observations", subobs)
+                                    ctxThymeleaf.setVariable("panel", referenceObservation)
+                                    val node = getDiv("observationGroup")
+                                    if (node!==null) {
+                                        if (html === null) html = node
+                                        else {
+                                            node.childNodes.forEach {
+                                                html!!.childNodes.add(it)
+                                            }
                                         }
                                     }
                                 }
                             } else {
                                 // Not a observation group
+                                observations.addEntry().setResource(referenceObservation)
                             }
                         }
                     }
