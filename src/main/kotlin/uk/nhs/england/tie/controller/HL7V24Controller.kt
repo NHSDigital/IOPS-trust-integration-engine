@@ -2,6 +2,7 @@ package uk.nhs.england.tie.controller
 
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.hl7v2.DefaultHapiContext
+import ca.uhn.hl7v2.HL7Exception
 import ca.uhn.hl7v2.HapiContext
 import ca.uhn.hl7v2.model.Segment
 import ca.uhn.hl7v2.model.v24.message.ADT_A01
@@ -24,26 +25,27 @@ import org.springframework.web.bind.annotation.RestController
 
 import uk.nhs.england.tie.awsProvider.AWSEncounter
 import uk.nhs.england.tie.awsProvider.AWSPatient
-import uk.nhs.england.tie.transforms.PD1toFHIRPractitionerRole
-import uk.nhs.england.tie.transforms.PIDtoFHIRPatient
-import uk.nhs.england.tie.transforms.PV1toFHIRAppointment
-import uk.nhs.england.tie.transforms.PV1toFHIREncounter
+import uk.nhs.england.tie.transforms.v24.PD1toFHIRPractitionerRole
+import uk.nhs.england.tie.transforms.v24.PIDtoFHIRPatient
+import uk.nhs.england.tie.transforms.v24.PV1toFHIRAppointment
+import uk.nhs.england.tie.transforms.v24.PV1toFHIREncounter
 import uk.nhs.england.tie.util.FhirSystems
 import java.text.SimpleDateFormat
 import java.util.*
 
 
 @RestController
-@RequestMapping("/V2/ITK")
-@io.swagger.v3.oas.annotations.tags.Tag(name="ITK HL7 v2 Events - ADT", description =
+@RequestMapping("/HL7V2/2.4/")
+@io.swagger.v3.oas.annotations.tags.Tag(name="HL7 v2 Events - ADT", description =
 "[NHS Digital ITK HL7 v2 Message Specification](" +
         "https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/raw/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf) \n"
-+ "[IHE PIX](https://profiles.ihe.net/ITI/TF/Volume1/ch-5.html) \n"
+        + "[DHCW HL7 v2 ORU_R01](https://github.com/NHSDigital/IOPS-Frameworks/blob/main/documents/DHCW%20HL7%202.5%20ORUR01%20Specification%202.0.0.docx.pdf) \n"
+        + "[IHE PIX](https://profiles.ihe.net/ITI/TF/Volume1/ch-5.html) \n"
 )
 
-class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
-                     val awsPatient : AWSPatient,
-                      val awsEncounter : AWSEncounter) {
+class HL7V24Controller(@Qualifier("R4") private val fhirContext: FhirContext,
+                       val awsPatient : AWSPatient,
+                       val awsEncounter : AWSEncounter) {
     val v2MediaType = "x-application/hl7-v2+er7"
     var sdf = SimpleDateFormat("yyyyMMddHHmm")
 
@@ -144,8 +146,11 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                                 "ZU1||2|C|201011011530||300||||1|||GP|2|201011011624|201011011620|02|Y|0",
                         summary = "Pre Admit Patient")])])
     fun convertFHIR(@org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
-
-        var resource = convertADT(v2Message)
+        var resource : Resource? = null
+        try {
+            resource = convertADT(v2Message)
+        } catch (ex: HL7Exception) {
+        }
         if (resource == null) return "" else
         return fhirContext.newJsonParser().encodeResourceToString(resource)
 
@@ -254,6 +259,7 @@ class HL7V2Controller(@Qualifier("R4") private val fhirContext: FhirContext,
         return "MSH|^~\\&|TIE|NHS_TRUST|PAS|RCB|20160915003015||ACK|9B38584D|P|2.6.1|\n" +
                 "MSA|AA|9B38584D|Everything was okay dokay!|"
     }
+
 
     fun convertADT(message : String) : Resource? {
         var pid: PID? = null

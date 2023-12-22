@@ -1,4 +1,4 @@
-package uk.nhs.england.tie.transforms;
+package uk.nhs.england.tie.transforms.v24;
 
 import ca.uhn.hl7v2.model.v24.datatype.XAD;
 import org.apache.commons.collections4.Transformer;

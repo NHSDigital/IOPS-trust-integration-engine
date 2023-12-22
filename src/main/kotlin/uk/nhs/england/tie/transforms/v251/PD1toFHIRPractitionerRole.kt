@@ -1,6 +1,6 @@
-package uk.nhs.england.tie.transforms
+package uk.nhs.england.tie.transforms.v251
 
-import ca.uhn.hl7v2.model.v24.segment.PD1
+import ca.uhn.hl7v2.model.v251.segment.PD1
 import org.apache.commons.collections4.Transformer
 import org.hl7.fhir.r4.model.Identifier
 import org.hl7.fhir.r4.model.PractitionerRole
