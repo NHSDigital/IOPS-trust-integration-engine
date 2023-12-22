@@ -19,7 +19,12 @@
             </tr>
             <tr>
                 <td>Sex</td>
-                <td th:text="${patient.getGender().getDisplay()}"></td>
+                <div th:if="${patient.hasGender()}">
+                    <td th:text="${patient.getGender().getDisplay()}"></td>
+                </div>
+                <div th:if="${!patient.hasGender()}">
+                    <td></td>
+                </div>
             </tr>
             <tr>
                 <td></td>
