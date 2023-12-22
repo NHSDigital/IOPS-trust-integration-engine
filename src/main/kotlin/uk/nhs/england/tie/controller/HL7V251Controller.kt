@@ -31,6 +31,7 @@ import uk.nhs.england.tie.transforms.v251.*
 import uk.nhs.england.tie.util.FhirSystems
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.log
 
 
 @RestController
@@ -58,7 +59,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     var pD1toFHIRPractitionerRole = PD1toFHIRPractitionerRole()
     var orCtoFHIRDiagnosticReport = ORCtoFHIRDiagnosticReport()
     var obRtoFHIRDiagnosticReport = OBRtoFHIRDiagnosticReport()
-
+    var obXtoFHIRObservation = OBXtoFHIRObservation()
 
 
 
@@ -81,14 +82,22 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 ExampleObject(
                     name = "HL7 v2.5.1 ORU_R01 Unsolicited transmission of an observation message",
                     value = "MSH|^~\\&|ACMELab^2.16.840.1.113883.2.1.8.1.5.999^ISO|CAV^7A4BV^L|cymru.nhs.uk^2.16.840.1.113883.2. 1.8.1.5.200^ISO|NHSWales^RQFW3^L|20190514102527+0200||ORU^R01^ORU_R01|5051095-201905141025|T|2.5.1|||AL\n" +
-                            "PID|||403281375^^^154^PI~5189214567^^^NHS^NH||Bloggs^Joe^^^Mr||20010328|M|||A B M U Health Board^One Talbot Gateway^Baglan^Neath port talbot^SA12 7BR|||||||||||||||||||||01 PV1||O||||||||CAR\n" +
-                            "ORC|OR||||||||||||7A3C7MPAT^^^wales.nhs.uk&7A3&L,M,N^^^^^MH Pathology Dept, OBR|1||914694928301|B3051^HbA1c (IFCC traceable)|||201803091500|||^ABM: Angharad Shore||||201803091500|^^Dr Andar Gunneberg|^Gunneberg^Andar^^^Dr||||||201803091500|||C\n" +
+                            "PID|||403281375^^^154^PI~5189214567^^^NHS^NH||Bloggs^Joe^^^Mr||20010328|M|||A B M U Health Board^One Talbot Gateway^Baglan^Neath port talbot^SA12 7BR|||||||||||||||||||||01\n" +
+                            "PV1||O||||||||CAR\n" +
+                            "ORC|OR||||||||||||7A3C7MPAT^^^wales.nhs.uk&7A3&L,M,N^^^^^MH Pathology Dept\n" +
+                            "OBR|1||914694928301|B3051^HbA1c (IFCC traceable)|||201803091500|||^ABM: Angharad Shore||||201803091500|^^Dr Andar Gunneberg|^Gunneberg^Andar^^^Dr||||||201803091500|||C\n" +
                             "NTE|1||For monitoring known diabetic patients, please follow NICE guidelines. If not a known diabetic and the patient is asymptomatic, a second confirmatory sample is required within 2 weeks (WEDS Guidance). HbA1c is unreliable for diagnostic and monitoring purposes in the context of several conditions, including some haemoglobinopathies, abnormal haemoglobin levels, chronic renal failure, recent transfusion, pregnancy, or alcoholism.\n" +
-                            "OBX|1|NM|B3553^HbA1c (IFCC traceable)||49|mmol/mol|<48|H|||C|||201803091500 OBR|2||914694928301|B0001^Full blood count|||201803091500|||^ABM: Carl Owen||||201803091500|^^Dr Andar Gunneberg|^Gunneberg^Andar^^^Dr||||||201803091500|||F TQ1|||||||201803091400|201803091500|S^^^^^^^^Urgent\n" +
-                            "OBX|1|NM|B0300^White blood cell (WBC) count||3.5|x10\\S\\9/L|4.0-11.0|L|||F|||201803091500 OBX|2|NM|B0307^Haemoglobin (Hb)||200|g/L|130-180|H|||F|||201803091500\n" +
-                            "OBX|3|NM|B0314^Platelet (PLT) count||500|x10\\S\\9/L|150-400|H|||F|||201803091500 OBX|4|NM|B0306^Red blood cell (RBC) count||6.00|x10\\S\\12/L|4.50-6.00|N|||F|||201803091500 OBX|5|NM|B0308^Haematocrit (Hct)||0.60|L/L|0.40-0.52|H|||F|||201803091500\n" +
+                            "OBX|1|NM|B3553^HbA1c (IFCC traceable)||49|mmol/mol|<48|H|||C|||201803091500\n" +
+                            "OBR|2||914694928301|B0001^Full blood count|||201803091500|||^ABM: Carl Owen||||201803091500|^^Dr Andar Gunneberg|^Gunneberg^Andar^^^Dr||||||201803091500|||F\n" +
+                            "TQ1|||||||201803091400|201803091500|S^^^^^^^^Urgent\n" +
+                            "OBX|1|NM|B0300^White blood cell (WBC) count||3.5|x10\\S\\9/L|4.0-11.0|L|||F|||201803091500\n" +
+                            "OBX|2|NM|B0307^Haemoglobin (Hb)||200|g/L|130-180|H|||F|||201803091500\n" +
+                            "OBX|3|NM|B0314^Platelet (PLT) count||500|x10\\S\\9/L|150-400|H|||F|||201803091500\n" +
+                            "OBX|4|NM|B0306^Red blood cell (RBC) count||6.00|x10\\S\\12/L|4.50-6.00|N|||F|||201803091500\n" +
+                            "OBX|5|NM|B0308^Haematocrit (Hct)||0.60|L/L|0.40-0.52|H|||F|||201803091500\n" +
                             "OBX|6|NM|B0309^Mean cell volume (MCV)||120|fL|80-100|H|||F|||201803091500\n" +
-                            "OBX|7|NM|B0310^Mean cell haemoglobin (MCH)||34.0|pg|27.0-33.0|H|||F|||201803091500 SPM|1|^9146949283||BLOO^Blood^ACME|||||||||||||201803091400|201803091500\n",
+                            "OBX|7|NM|B0310^Mean cell haemoglobin (MCH)||34.0|pg|27.0-33.0|H|||F|||201803091500\n" +
+                            "SPM|1|^9146949283||BLOO^Blood^ACME|||||||||||||201803091400|201803091500\n",
                     summary = "Pathology Report")])])
     fun convertFHIR(@org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
         var resource : Resource? = null
@@ -139,6 +148,8 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
         var zu1: Segment? = null
 
         val message2 = message.replace("\n","\r")
+        var patientFullUrl : String? = null
+        var encounterFullUrl : String? = null
 
         val parser :PipeParser  = context.getPipeParser()
         parser.parserConfiguration.isValidating = false
@@ -149,6 +160,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 logger.info(v2message.name)
                 var patient : Patient? = null
                 var encounter : Encounter? = null
+                var placerRef: String? = null
 
                 if (v2message is ORU_R01) {
                     pid = v2message.patienT_RESULT.patient.pid
@@ -229,8 +241,11 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
 
                 var bundle = Bundle().setType(Bundle.BundleType.TRANSACTION)
                 if (patient !== null) {
+                    val uuid = UUID.randomUUID();
+                    patientFullUrl = "urn:uuid:" + uuid.toString()
                     bundle.addEntry(
                         Bundle.BundleEntryComponent()
+                            .setFullUrl(patientFullUrl)
                             .setResource(patient)
                             .setRequest(
                                 Bundle.BundleEntryRequestComponent()
@@ -240,8 +255,11 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                     )
                 }
                 if (encounter !== null) {
+                    val uuid = UUID.randomUUID();
+                    encounterFullUrl = "urn:uuid:" + uuid.toString()
                     bundle.addEntry(
                         Bundle.BundleEntryComponent()
+                            .setFullUrl(encounterFullUrl)
                             .setResource(encounter)
                             .setRequest(
                                 Bundle.BundleEntryRequestComponent()
@@ -252,9 +270,11 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 }
                 if (v2message is ORU_R01) {
                     logger.info(v2message.patienT_RESULT.ordeR_OBSERVATIONReps.toString())
+                    val result = v2message.patienT_RESULT.ordeR_OBSERVATION
+                    var diagnosticReport: DiagnosticReport? = null;
                     for (i in 1..v2message.patienT_RESULT.ordeR_OBSERVATIONReps) {
-                        logger.info(i.toString())
-                        val result = v2message.patienT_RESULT.getORDER_OBSERVATION(i)
+
+                        val result = v2message.patienT_RESULT.getORDER_OBSERVATION(i-1)
                         logger.info(result.name)
                         var diagnosticReport: DiagnosticReport? = null;
                         if (result.orc !== null) {
@@ -264,8 +284,22 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                             diagnosticReport = obRtoFHIRDiagnosticReport.transform(result.obr, diagnosticReport)
                         }
                         if (diagnosticReport !== null) {
+
+                            if (diagnosticReport.hasBasedOn() && diagnosticReport.basedOnFirstRep.hasIdentifier()) {
+                                placerRef = diagnosticReport.basedOnFirstRep.identifier.value
+                                diagnosticReport.addIdentifier(Identifier().setValue(placerRef + "-" + i))
+                                if (encounter !== null && !encounter.hasIdentifier()) {
+                                    encounter.addIdentifier(Identifier().setValue(placerRef))
+                                }
+                            }
+
+                            diagnosticReport.subject.reference = patientFullUrl
+                            diagnosticReport.encounter.reference = encounterFullUrl
+                            diagnosticReport.status =DiagnosticReport.DiagnosticReportStatus.FINAL
+                            val uuid = UUID.randomUUID();
                             bundle.addEntry(
                                 Bundle.BundleEntryComponent()
+                                    .setFullUrl("urn:uuid:" + uuid.toString())
                                     .setResource(diagnosticReport)
                                     .setRequest(
                                         Bundle.BundleEntryRequestComponent()
@@ -273,6 +307,31 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                                             .setUrl("DiagnosticReport")
                                     )
                             )
+                        }
+                        logger.info (result.observationReps.toString())
+                        for (f in 1..result.observationReps) {
+                            var obseravtionV2 = result.getOBSERVATION(f-1)
+                            val observation = obXtoFHIRObservation.transform(obseravtionV2.obx)
+                            if (observation !== null) {
+                                observation.subject.reference = patientFullUrl
+                                observation.encounter.reference = encounterFullUrl
+                                observation.status = Observation.ObservationStatus.FINAL
+                                if (placerRef !== null) observation.addIdentifier(Identifier().setValue(placerRef + "-" + i + "-" + f))
+                                val uuid = UUID.randomUUID();
+                                if (diagnosticReport !== null) {
+                                    diagnosticReport.result.add(Reference().setReference("urn:uuid:" + uuid.toString()))
+                                }
+                                bundle.addEntry(
+                                    Bundle.BundleEntryComponent()
+                                        .setFullUrl("urn:uuid:" + uuid.toString())
+                                        .setResource(observation)
+                                        .setRequest(
+                                            Bundle.BundleEntryRequestComponent()
+                                                .setMethod(Bundle.HTTPVerb.POST)
+                                                .setUrl("Observation")
+                                        )
+                                )
+                            }
                         }
                     }
                 }

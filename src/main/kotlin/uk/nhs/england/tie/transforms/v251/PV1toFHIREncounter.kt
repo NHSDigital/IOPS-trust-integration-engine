@@ -149,12 +149,14 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                     "Participation"
             }
         }
+        /*
+        no English spec
         if (pv1.hospitalService != null && pv1.hospitalService.value !== null) {
             encounter.serviceType = CodeableConcept().addCoding(Coding()
                 .setCode(pv1.hospitalService.value)
                 .setSystem("https://fhir.nhs.uk/CodeSystem/NHSDataModelAndDictionary-treatment-function"))
         }
-
+*/
         if (pv1.admitSource != null && pv1.admitSource.value !== null) {
             encounter.hospitalization.admitSource.addCoding().setCode(pv1.admitSource.value).system =
                 "https://fhir.nhs.uk/CodeSystem/UKCore-SourceOfAdmission"
