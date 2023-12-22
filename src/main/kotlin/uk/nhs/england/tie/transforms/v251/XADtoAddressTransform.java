@@ -1,6 +1,6 @@
 package uk.nhs.england.tie.transforms.v251;
 
-import ca.uhn.hl7v2.model.v24.datatype.XAD;
+import ca.uhn.hl7v2.model.v251.datatype.XAD;
 import org.apache.commons.collections4.Transformer;
 import org.hl7.fhir.r4.model.Address;
 

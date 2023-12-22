@@ -1,6 +1,6 @@
 package uk.nhs.england.tie.transforms.v251
 
-import ca.uhn.hl7v2.model.v24.segment.PV1
+import ca.uhn.hl7v2.model.v251.segment.PV1
 import org.apache.commons.collections4.Transformer
 import org.hl7.fhir.r4.model.*
 import uk.nhs.england.tie.util.FhirSystems
@@ -26,14 +26,14 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                         .setValue(pv1.assignedPatientLocation.facility.namespaceID.value)))
                 if (pv1.admitDateTime != null) {
                     try {
-                        location.period.start = pv1.admitDateTime.timeOfAnEvent.valueAsDate
+                        location.period.start = pv1.admitDateTime.time.valueAsDate
                     } catch (ex: Exception) {}
                 }
                 if (pv1.dischargeDateTime != null) {
                     for (ts in pv1.dischargeDateTime) {
 
                         try {
-                            location.period.end = ts.timeOfAnEvent.valueAsDate
+                            location.period.end = ts.time.valueAsDate
                         } catch (ex: Exception) {
                         }
                     }
@@ -41,17 +41,17 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                 encounter.addLocation(location)
             }
         }
-        if (pv1.visitNumber != null) {
+        if (pv1.visitNumber != null && pv1.visitNumber.idNumber !== null && pv1.visitNumber.idNumber.value !== null) {
             if (odsCode == null) {
-                encounter.addIdentifier().setValue(pv1.visitNumber.id.value).system =
+                encounter.addIdentifier().setValue(pv1.visitNumber.idNumber.value).system =
                     "http://terminology.hl7.org/CodeSystem/v2-0203"
             } else {
-                encounter.addIdentifier().setValue(pv1.visitNumber.id.value).system =
+                encounter.addIdentifier().setValue(pv1.visitNumber.idNumber.value).system =
                     "https://fhir.nhs.uk/" + odsCode + "/Id/Encounter"
             }
         }
         if (pv1.alternateVisitID != null) {
-            encounter.addIdentifier().value = pv1.alternateVisitID.id.value
+            encounter.addIdentifier().value = pv1.alternateVisitID.idNumber.value
         }
         if (pv1.patientClass.value != null) {
             when (pv1.patientClass.value) {
@@ -79,7 +79,7 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                 }
             }
         }
-        if (pv1.admissionType != null) {
+        if (pv1.admissionType != null && pv1.admissionType.value !== null) {
             var admissionMethod = Extension().setUrl("https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-AdmissionMethod")
                 .setValue(CodeableConcept().addCoding(
                     Coding().setSystem("https://fhir.hl7.org.uk/CodeSystem/UKCore-AdmissionMethodEngland").setCode(pv1.admissionType.value)
@@ -90,7 +90,7 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
 
         if (pv1.admitDateTime != null) {
             try {
-                encounter.period.start = pv1.admitDateTime.timeOfAnEvent.valueAsDate
+                encounter.period.start = pv1.admitDateTime.time.valueAsDate
                 encounter.status = Encounter.EncounterStatus.INPROGRESS
             } catch (ex: Exception) {
             }
@@ -99,7 +99,7 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
             for (ts in pv1.dischargeDateTime) {
                 encounter.status = Encounter.EncounterStatus.FINISHED
                 try {
-                    encounter.period.end = ts.timeOfAnEvent.valueAsDate
+                    encounter.period.end = ts.time.valueAsDate
                 } catch (ex: Exception) {
                 }
             }
@@ -149,13 +149,13 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                     "Participation"
             }
         }
-        if (pv1.hospitalService != null) {
+        if (pv1.hospitalService != null && pv1.hospitalService.value !== null) {
             encounter.serviceType = CodeableConcept().addCoding(Coding()
                 .setCode(pv1.hospitalService.value)
                 .setSystem("https://fhir.nhs.uk/CodeSystem/NHSDataModelAndDictionary-treatment-function"))
         }
 
-        if (pv1.admitSource != null) {
+        if (pv1.admitSource != null && pv1.admitSource.value !== null) {
             encounter.hospitalization.admitSource.addCoding().setCode(pv1.admitSource.value).system =
                 "https://fhir.nhs.uk/CodeSystem/UKCore-SourceOfAdmission"
         }

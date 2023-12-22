@@ -35,9 +35,9 @@ import java.util.*
 
 
 @RestController
-@RequestMapping("/HL7V2/2.4/")
+@RequestMapping("/HL7/v2.4/")
 @io.swagger.v3.oas.annotations.tags.Tag(name="HL7 v2 Events - ADT", description =
-"[NHS Digital ITK HL7 v2 Message Specification](" +
+"[NHS England HL7 v2 Message Specification](" +
         "https://github.com/NHSDigital/NHSDigital-FHIR-ImplementationGuide/raw/master/documents/HSCIC%20ITK%20HL7%20V2%20Message%20Specifications.pdf) \n"
         + "[DHCW HL7 v2 ORU_R01](https://github.com/NHSDigital/IOPS-Frameworks/blob/main/documents/DHCW%20HL7%202.5%20ORUR01%20Specification%202.0.0.docx.pdf) \n"
         + "[IHE PIX](https://profiles.ihe.net/ITI/TF/Volume1/ch-5.html) \n"
@@ -69,7 +69,7 @@ class HL7V24Controller(@Qualifier("R4") private val fhirContext: FhirContext,
 
     companion object : KLogging()
 
-    @Operation(summary = "Convert HL7 v2.4 ITK Message into FHIR R4 Resource")
+    @Operation(summary = "Convert HL7 v2.4 (NHS England) Message into FHIR R4 Resource")
     @PostMapping(path = ["/\$convertFHIRR4"], consumes = ["x-application/hl7-v2+er7"]
     , produces = ["application/fhir+json"])
     @RequestBody(
@@ -150,6 +150,18 @@ class HL7V24Controller(@Qualifier("R4") private val fhirContext: FhirContext,
         try {
             resource = convertADT(v2Message)
         } catch (ex: HL7Exception) {
+            return fhirContext.newJsonParser().encodeResourceToString(OperationOutcome().addIssue(OperationOutcome.OperationOutcomeIssueComponent()
+                .setSeverity(OperationOutcome.IssueSeverity.ERROR)
+                .setCode(OperationOutcome.IssueType.PROCESSING)
+                .setDiagnostics(ex.message)
+            ))
+        }
+        catch (ex: Exception) {
+            return fhirContext.newJsonParser().encodeResourceToString(OperationOutcome().addIssue(OperationOutcome.OperationOutcomeIssueComponent()
+                .setSeverity(OperationOutcome.IssueSeverity.ERROR)
+                .setCode(OperationOutcome.IssueType.PROCESSING)
+                .setDiagnostics(ex.message)
+            ))
         }
         if (resource == null) return "" else
         return fhirContext.newJsonParser().encodeResourceToString(resource)
@@ -167,7 +179,7 @@ class HL7V24Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 )))*/
     }
 
-    @Operation(summary = "Send a HL7 v2.4 ITK Message to a FHIR R4 Server")
+    @Operation(summary = "Send a HL7 v2.4 (NHS England) Message to a FHIR R4 Server")
     @PostMapping
         (path = ["/\$process-event"], consumes = ["x-application/hl7-v2+er7"], produces = ["x-application/hl7-v2+er7"])
     @RequestBody(

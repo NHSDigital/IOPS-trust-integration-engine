@@ -1,6 +1,6 @@
 package uk.nhs.england.tie.transforms.v251
 
-import ca.uhn.hl7v2.model.v24.segment.PID
+import ca.uhn.hl7v2.model.v251.segment.PID
 import org.apache.commons.collections4.Transformer
 import org.hl7.fhir.r4.model.*
 
@@ -16,7 +16,7 @@ class PIDtoFHIRPatient : Transformer<PID, Patient> {
 
 
         for (cx in pid.patientIdentifierList) {
-            val identifier = Identifier().setValue(cx.id.value)
+            val identifier = Identifier().setValue(cx.idNumber.value)
             if (cx.assigningAuthority != null && (cx.assigningAuthority.namespaceID != null) && (cx.assigningAuthority.namespaceID.value != null)) {
 
                 // Default
@@ -25,24 +25,9 @@ class PIDtoFHIRPatient : Transformer<PID, Patient> {
                             cx.assigningAuthority.namespaceID.value
                 if (cx.assigningAuthority.namespaceID.value == "NHS" || cx.assigningAuthority.namespaceID.value == "NH") {
                     identifier.system = "https://fhir.nhs.uk/Id/nhs-number"
-                   /*
-                    val extension = identifier.addExtension()
-                    extension.url =
-                        "https://fhir.nhs.uk/R4/StructureDefinition/Extension-UKCore-NHSNumberVerificationStatus"
-                    val concept = CodeableConcept()
-                    for (`is` in pid.identityReliabilityCode) {
-                        if (`is`.value.startsWith("NSTS")) {
-                            concept.addCoding()
-                                .setSystem("https://fhir.nhs.uk/R4/CodeSystem/UKCore-NHSNumberVerificationStatus").code =
-                                `is`.value.replace("NSTS", "")
-                        }
-                    }
-                    if (concept.coding.isEmpty()) {
-                        concept.addCoding()
-                            .setSystem("https://fhir.nhs.uk/R4/CodeSystem/UKCore-NHSNumberVerificationStatus").code =
-                            "01"
-                    }
-                    extension.setValue(concept)*/
+                }
+                if (cx.assigningAuthority.namespaceID.value.equals("154")) {
+                    identifier.system = "https://cardiff.nhs.uk/Id/mrn"
                 }
             }
             patient.addIdentifier(identifier)
@@ -53,7 +38,7 @@ class PIDtoFHIRPatient : Transformer<PID, Patient> {
 
         if (pid.dateTimeOfBirth != null) {
             try {
-                patient.birthDate = pid.dateTimeOfBirth.timeOfAnEvent.valueAsDate
+                patient.birthDate = pid.dateTimeOfBirth.time.valueAsDate
             } catch (ex: Exception) {
                 println(ex.message)
             }

@@ -1,6 +1,6 @@
 package uk.nhs.england.tie.transforms.v251
 
-import ca.uhn.hl7v2.model.v24.segment.PV1
+import ca.uhn.hl7v2.model.v251.segment.PV1
 import org.apache.commons.collections4.Transformer
 import org.hl7.fhir.r4.model.*
 import uk.nhs.england.tie.util.FhirSystems
@@ -31,15 +31,15 @@ class PV1toFHIRAppointment : Transformer<PV1, Appointment> {
         }
         if (pv1.visitNumber != null) {
             if (odsCode == null) {
-                appointment.addIdentifier().setValue(pv1.visitNumber.id.value).system =
+                appointment.addIdentifier().setValue(pv1.visitNumber.idNumber.value).system =
                     "http://terminology.hl7.org/CodeSystem/v2-0203"
             } else {
-                appointment.addIdentifier().setValue(pv1.visitNumber.id.value).system =
+                appointment.addIdentifier().setValue(pv1.visitNumber.idNumber.value).system =
                     "https://fhir.nhs.uk/" + odsCode + "/Id/Appointment"
             }
         }
         if (pv1.alternateVisitID != null) {
-            appointment.addIdentifier().value = pv1.alternateVisitID.id.value
+            appointment.addIdentifier().value = pv1.alternateVisitID.idNumber.value
         }
         /*
         if (pv1.patientClass.value != null) {
@@ -81,7 +81,7 @@ class PV1toFHIRAppointment : Transformer<PV1, Appointment> {
 
         if (pv1.admitDateTime != null) {
             try {
-                appointment.start = pv1.admitDateTime.timeOfAnEvent.valueAsDate
+                appointment.start = pv1.admitDateTime.time.valueAsDate
                 appointment.status = Appointment.AppointmentStatus.BOOKED
             } catch (ex: Exception) {
             }
@@ -90,7 +90,7 @@ class PV1toFHIRAppointment : Transformer<PV1, Appointment> {
             for (ts in pv1.dischargeDateTime) {
                 appointment.status = Appointment.AppointmentStatus.FULFILLED
                 try {
-                    appointment.end = ts.timeOfAnEvent.valueAsDate
+                    appointment.end = ts.time.valueAsDate
                 } catch (ex: Exception) {
                 }
             }
