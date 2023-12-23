@@ -60,7 +60,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     var orCtoFHIRDiagnosticReport = ORCtoFHIRDiagnosticReport()
     var obRtoFHIRDiagnosticReport = OBRtoFHIRDiagnosticReport()
     var obXtoFHIRObservation = OBXtoFHIRObservation()
-
+    var ntEtoFHIRAnnotation = NTEtoFHIRAnnotation()
 
 
     init {
@@ -80,7 +80,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
         content = [ Content(mediaType = "x-application/hl7-v2+er7" ,
             examples = [
                 ExampleObject(
-                    name = "HL7 v2.5.1 ORU_R01 Unsolicited transmission of an observation message",
+                    name = "HL7 v2.5.1 ORU_R01 Pathology Result",
                     value = "MSH|^~\\&|ACMELab^2.16.840.1.113883.2.1.8.1.5.999^ISO|CAV^7A4BV^L|cymru.nhs.uk^2.16.840.1.113883.2. 1.8.1.5.200^ISO|NHSWales^RQFW3^L|20190514102527+0200||ORU^R01^ORU_R01|5051095-201905141025|T|2.5.1|||AL\n" +
                             "PID|||403281375^^^154^PI~5189214567^^^NHS^NH||Bloggs^Joe^^^Mr||20010328|M|||A B M U Health Board^One Talbot Gateway^Baglan^Neath port talbot^SA12 7BR|||||||||||||||||||||01\n" +
                             "PV1||O||||||||CAR\n" +
@@ -98,7 +98,32 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                             "OBX|6|NM|B0309^Mean cell volume (MCV)||120|fL|80-100|H|||F|||201803091500\n" +
                             "OBX|7|NM|B0310^Mean cell haemoglobin (MCH)||34.0|pg|27.0-33.0|H|||F|||201803091500\n" +
                             "SPM|1|^9146949283||BLOO^Blood^ACME|||||||||||||201803091400|201803091500\n",
-                    summary = "Pathology Report")])])
+                    summary = "Pathology Result"),
+                ExampleObject(
+                    name = "HL7 v2.5.1 ORU_R01 Text based report",
+                    value = "MSH|^~\\&|ACMELab^2.16.840.1.113883.2.1.8.1.5.999^ISO|CAV^7A4BV^L|cymru.nhs.uk^2.16.840.1.113883.2. 1.8.1.5.200^ISO|NHSWales^RQFW3^L|20190514102527+0200||ORU^R01^ORU_R01|5051095-201905141025|T|2.5.1|||AL\n" +
+                            "PID|||403281375^^^154^PI~5189214567^^^NHS^NH||Bloggs^Joe^^^Mr||20010328|M|||A B M U Health Board^One Talbot Gateway^Baglan^Neath port talbot^SA12 7BR|||||||||||||||||||||01\n" +
+                            "PV1||U||||||||CAR\n" +
+                            "ORC|MC||||||||||||7A3C7MPAT^^^wales.nhs.uk&7A3&HL7^^^^^MH Pathology Dept,\n" +
+                            "OBR|1||8005372251-1-M0007|M0007^Urine MC\\T\\S|||201805240000|||^ABM: Dean Allen||||201805240000|^^Dr J A Chess|^Chess^J^^^^Dr||||||201805240000|||F" +
+                            "TQ1|||||||201805240000|201805240000|R^^^^^^^^Routine\n" +
+                            "OBX|1|TX|^Report Line 1||Specimen received: Mid Stream Urine||||||F|||201805240000\n" +
+                            "OBX|2|TX|^Report Line 2||||||||F|||201805240000\n" +
+                            "OBX|3|TX|^Report Line 3||Accession Number(s) U18S999001A||||||F|||201805240000\n" +
+                            "OBX|4|TX|^Report Line 4||White Blood Cell Count 10-99 x10\\S\\6/L||||||F|||201805240000\n" +
+                            "OBX|5|TX|^Report Line 5||Red Blood Cell Count >=100 x10\\S\\6/L||||||F|||201805240000\n" +
+                            "OBX|6|TX|^Report Line 6||||||||F|||201805240000\n" +
+                            "OBX|7|TX|^Report Line 7||>= 10\\S\\8 cfu/L Escherichia coli (ECOL)||||||F|||201805240000\n" +
+                            "OBX|8|TX|^Report Line 8||||||||F|||201805240000\n" +
+                            "OBX|9|TX|^Report Line 9|| Antibiotic/Culture: ECOL||||||F|||201805240000\n" +
+                            "OBX|10|TX|^Report Line 10|| ------------------- ------||||||F|||201805240000\n" +
+                            "OBX|11|TX|^Report Line 11|| Nitrofurantoin\n" +
+                            "OBX|12|TX|^Report Line 12|| Trimethoprim\n" +
+                            "OBX|13|TX|^Report Line 13|| Amoxicillin\n" +
+                            "OBX|14|TX|^Report Line 14||||||||F|||201805240000\n" +
+                            "SPM|1|^8005372251||MMSU^ Mid Stream Urine^ACME|||||||||||||201805240000|201805240000",
+                    summary = "Text based report")
+            ])])
     fun convertFHIR(@org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
         var resource : Resource? = null
         try {
@@ -284,7 +309,14 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                             diagnosticReport = obRtoFHIRDiagnosticReport.transform(result.obr, diagnosticReport)
                         }
                         if (diagnosticReport !== null) {
-
+                            if (result.nte !== null) {
+                                result.nteAll.forEach{
+                                    val annotation = ntEtoFHIRAnnotation.transform(it)
+                                    if (annotation !== null) {
+                                        diagnosticReport.conclusion = annotation.text
+                                    }
+                                }
+                            }
                             if (diagnosticReport.hasBasedOn() && diagnosticReport.basedOnFirstRep.hasIdentifier()) {
                                 placerRef = diagnosticReport.basedOnFirstRep.identifier.value
                                 diagnosticReport.addIdentifier(Identifier().setValue(placerRef + "-" + i))

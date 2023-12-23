@@ -34,8 +34,11 @@
                         <div th:if="${observation.hasValueQuantity()}">
                             <td th:text="${observation.getValueQuantity().getValue()+' '+observation.getValueQuantity().getUnit()}">No provider specified</td>
                         </div>
-                        <div th:if="${!observation.hasValueQuantity()}">
-                            <td>Lab Group?</td>
+                        <div th:if="${observation.hasValueStringType()}">
+                            <td th:text="${observation.getValueStringType().getValue()}">No provider specified</td>
+                        </div>
+                        <div th:if="${!observation.hasValueQuantity() && !observation.hasValueStringType()}">
+                            <td></td>
                         </div>
                     </tr>
                 </tbody>

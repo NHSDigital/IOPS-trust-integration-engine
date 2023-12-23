@@ -13,6 +13,7 @@
                     <th>Date</th>
                     <th>Code</th>
                     <th>Text</th>
+                    <th>Conclusion</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -34,8 +35,8 @@
                             </div>
                         </div>
                         <td th:text="${report.getCode().getCodingFirstRep().getDisplay()}">No display</td>
-                        <td th:text="${report.getCode().getText()}">No text</td>
-
+                        <td th:text="${report.getCode().getText()}"></td>
+                        <td th:text="${report.getConclusion()}"></td>
                     </tr>
                 </tbody>
             </table>

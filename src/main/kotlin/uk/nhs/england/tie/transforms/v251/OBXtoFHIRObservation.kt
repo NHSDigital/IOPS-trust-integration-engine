@@ -1,22 +1,22 @@
 package uk.nhs.england.tie.transforms.v251
 
 import ca.uhn.hl7v2.model.v251.datatype.NM
+import ca.uhn.hl7v2.model.v251.datatype.TX
 import ca.uhn.hl7v2.model.v251.segment.OBX
 import ca.uhn.hl7v2.model.v251.segment.ORC
 import mu.KLogging
 import org.apache.commons.collections4.Transformer
-import org.hl7.fhir.r4.model.Coding
-import org.hl7.fhir.r4.model.DiagnosticReport
-import org.hl7.fhir.r4.model.Observation
-import org.hl7.fhir.r4.model.Quantity
+import org.hl7.fhir.r4.model.*
 
 
 class OBXtoFHIRObservation : Transformer<OBX, Observation> {
     companion object : KLogging()
     override fun transform(obx : OBX?): Observation {
         var observation = Observation()
+
         if (obx !== null) {
             if (obx.observationIdentifier != null && obx.observationIdentifier.identifier !== null) {
+
                 observation.code.addCoding(
                     Coding()
                         .setCode(obx.observationIdentifier.identifier.value)
@@ -30,8 +30,11 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
             if (obx.observationValue !== null) {
                 obx.observationValue.forEach {
                     if (it.data is NM) {
-                        logger.info((it.data as NM).value)
+
                         quantity.value = (it.data as NM).value.toBigDecimal()
+                    } else
+                        if (it.data is TX) {
+                        observation.setValue(StringType((it.data as TX).value))
                     }
                 }
 

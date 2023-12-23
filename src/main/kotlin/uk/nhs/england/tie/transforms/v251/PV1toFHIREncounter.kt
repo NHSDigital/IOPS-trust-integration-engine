@@ -59,6 +59,11 @@ class PV1toFHIREncounter : Transformer<PV1, Encounter> {
                     encounter.class_ = Coding().setCode("EMER").setDisplay("emergency")
                         .setSystem("http://terminology.hl7.org/CodeSystem/v3-ActCode")
                 }
+                // TODO - Dirty fix
+                "U" -> {
+                    encounter.class_ = Coding().setCode("OBSENC").setDisplay("observation encounter")
+                        .setSystem("http://terminology.hl7.org/CodeSystem/v3-ActCode")
+                }
 
                 "O" -> {
                     encounter.class_ = Coding().setCode("AMB").setDisplay("ambulatory")
