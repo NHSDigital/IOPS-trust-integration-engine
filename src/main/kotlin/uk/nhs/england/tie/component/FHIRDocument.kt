@@ -355,7 +355,30 @@ class FHIRDocument(val client: IGenericClient, @Qualifier("R4") val ctxFHIR : Fh
         }
         return bundle
     }
-
+    private fun getSpecimen(
+        reportId: String
+    ): Bundle {
+        var bundle: Bundle = Bundle()
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle =  client
+                    .search<IBaseBundle>()
+                    .forResource(Specimen::class.java)
+                    .where(Specimen.RES_ID.exactly().code(reportId))
+                    .count(100) // be careful of this TODO
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break;
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        return bundle
+    }
 
     private fun getConditionBundle(patientId: String): Bundle {
 
@@ -732,8 +755,30 @@ return bundle
         }
         var html : XhtmlNode? = null
         reports.forEach {
+
+            // Specimens not added to returned bundle .... just for html generation TODO
+            val specimens = ArrayList<Specimen>()
+            if (it.hasSpecimen()) {
+                it.specimen.forEach{
+                    val specimen = fhirBundleUtil.getResource(it)
+                    if (specimen == null) {
+                        val spm = getSpecimen(it.reference.replace("Specimen/",""))
+                        if (spm.hasEntry()) {
+                            spm.entry.forEach{
+                                if (it.hasResource() && it.resource is Specimen) {
+                                    specimens.add(it.resource as Specimen)
+                                }
+                            }
+                        }
+                    } else {
+                        specimens.add(specimen as Specimen)
+                        specimen.type.codingFirstRep
+                    }
+                }
+            }
             ctxThymeleaf.clearVariables()
-            ctxThymeleaf.setVariable("reports", mutableListOf(it))
+            ctxThymeleaf.setVariable("report", it)
+            ctxThymeleaf.setVariable("specimens", specimens)
             val node = getDiv("diagnosticReport")
             if (node!==null) {
                 if (html === null) html = node
@@ -742,8 +787,8 @@ return bundle
                         html!!.childNodes.add(it)
                     }
                 }
-
             }
+
             val observations = Bundle()
             if (it.hasResult()) {
                 it.result.forEach{

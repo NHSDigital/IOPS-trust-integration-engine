@@ -1,9 +1,4 @@
-
-<div>
-    <div th:if="${#lists.isEmpty(reports)}">
-        <p>None Recorded</p>
-    </div>
-    <div th:if="${not #lists.isEmpty(reports)}">
+ <div>
 
         <div>
             <h2>Diagnostic Report</h2>
@@ -13,11 +8,10 @@
                     <th>Date</th>
                     <th>Code</th>
                     <th>Text</th>
-                    <th>Conclusion</th>
                 </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="report : ${reports}">
+                    <tr>
                         <div th:if="${report.hasEffective()}">
                             <div th:if="${report.hasEffectiveDateTimeType()}">
                                 <td th:text="${#dates.format(report.getEffectiveDateTimeType().getValue(),'dd MMM YYYY HH:mm')}">Unknown</td>
@@ -36,10 +30,33 @@
                         </div>
                         <td th:text="${report.getCode().getCodingFirstRep().getDisplay()}">No display</td>
                         <td th:text="${report.getCode().getText()}"></td>
-                        <td th:text="${report.getConclusion()}"></td>
                     </tr>
                 </tbody>
             </table>
+            <div th:if="${not #lists.isEmpty(specimens)}">
+                <h3>Specimens</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Collection Date</th>
+                        <th>Type</th>
+                        <th>Placer Id</th>
+                        <th>Filler Id</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="specimen : ${specimens}">
+                        <td th:text="${#dates.format(specimen.getCollection().getCollected().dateTimeValue().getValue(),'dd MMM YYYY')}">Unknown</td>
+                        <td th:text="${specimen.getType().getCodingFirstRep().getDisplay()}">No type given</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${report.hasConclusion()}">
+                <h3>Conclusion</h3>
+                <div th:text="${report.getConclusion()}"></div>
+            </div>
         </div>
     </div>
-</div>

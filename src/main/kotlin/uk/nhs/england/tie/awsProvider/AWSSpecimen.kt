@@ -107,6 +107,31 @@ class AWSSpecimen(val messageProperties: MessageProperties, val awsClient: IGene
         if (bundle == null || !bundle.hasEntry()) return null
         return bundle.entryFirstRep.resource as Specimen
     }
+    public fun getACCESSION(identifier: Identifier): Specimen? {
+        var bundle: Bundle? = null
+        var retry = 3
+        while (retry > 0) {
+            try {
+                bundle = awsClient
+                    .search<IBaseBundle>()
+                    .forResource(Specimen::class.java)
+                    .where(
+                        Specimen.ACCESSION.exactly()
+                            .systemAndCode(identifier.system, identifier.value)
+                    )
+                    .returnBundle(Bundle::class.java)
+                    .execute()
+                break
+            } catch (ex: Exception) {
+                // do nothing
+                log.error(ex.message)
+                retry--
+                if (retry == 0) throw ex
+            }
+        }
+        if (bundle == null || !bundle.hasEntry()) return null
+        return bundle.entryFirstRep.resource as Specimen
+    }
 
     private fun updateSpecimen(observation: Specimen, newSpecimen: Specimen): MethodOutcome? {
         var response: MethodOutcome? = null

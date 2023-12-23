@@ -61,6 +61,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     var obRtoFHIRDiagnosticReport = OBRtoFHIRDiagnosticReport()
     var obXtoFHIRObservation = OBXtoFHIRObservation()
     var ntEtoFHIRAnnotation = NTEtoFHIRAnnotation()
+    var spMtoFHIRSpecimen = SPMtoFHIRSpecimen()
 
 
     init {
@@ -317,7 +318,28 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                                     }
                                 }
                             }
-                            if (diagnosticReport.hasBasedOn() && diagnosticReport.basedOnFirstRep.hasIdentifier()) {
+
+                            if (result.specimenAll !== null) {
+                                result.specimenAll.forEach{
+                                    if (it.spm !== null) {
+                                        var specimen = spMtoFHIRSpecimen.transform(it.spm)
+                                        specimen.subject.reference = patientFullUrl
+                                        val uuid = UUID.randomUUID();
+                                        bundle.addEntry(
+                                            Bundle.BundleEntryComponent()
+                                                .setFullUrl("urn:uuid:" + uuid.toString())
+                                                .setResource(specimen)
+                                                .setRequest(
+                                                    Bundle.BundleEntryRequestComponent()
+                                                        .setMethod(Bundle.HTTPVerb.POST)
+                                                        .setUrl("Specimen")
+                                                )
+                                        )
+                                        diagnosticReport.specimen.add(Reference().setReference("urn:uuid:" + uuid.toString()))
+                                    }
+                                }
+                            }
+                             if (diagnosticReport.hasBasedOn() && diagnosticReport.basedOnFirstRep.hasIdentifier()) {
                                 placerRef = diagnosticReport.basedOnFirstRep.identifier.value
                                 diagnosticReport.addIdentifier(Identifier().setValue(placerRef + "-" + i))
                                 if (encounter !== null && !encounter.hasIdentifier()) {

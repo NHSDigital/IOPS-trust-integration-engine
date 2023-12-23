@@ -353,6 +353,15 @@ class TransactionProvider(
                                 "Specimen/" + getId(result.idElement)
                         }
                     }
+                    if (entry.request.method.equals(Bundle.HTTPVerb.POST) && (entry.resource as Specimen).hasAccessionIdentifier()) {
+                        val result = awsSpecimen.getACCESSION((entry.resource as Specimen).accessionIdentifier)
+                        if (result != null) {
+                            (entry.resource as Specimen).id = getId(result.idElement)
+                            entry.request.method = Bundle.HTTPVerb.PUT
+                            entry.request.url =
+                                "Specimen/" + getId(result.idElement)
+                        }
+                    }
                 }
                 "Task" -> {
                     entry.resource = awsTask.transform(entry.resource as Task)
