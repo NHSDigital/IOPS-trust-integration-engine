@@ -31,6 +31,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
     var MHD = "Documents"
     var FORMS = "Structured Data Capture"
     var WORKFLOW = "Workflow"
+    var DIAGNOSTICS = "Diagnostics"
     var APIM = "Security"
     var ADMINISTRATION = "Health Administration"
     var CARE = "Patient Care Coordination"
@@ -125,6 +126,16 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                 .name(COMMUNICATION)
                 .description("[HL7 FHIR Foundation Module](https://hl7.org/fhir/foundation-module.html) \n"
                         + " [IHE mACM](https://www.ihe.net/uploadedFiles/Documents/ITI/IHE_ITI_Suppl_mACM.pdf)")
+        )
+
+        oas.addTagsItem(
+            io.swagger.v3.oas.models.tags.Tag()
+                .name(DIAGNOSTICS)
+                .description("[NHS England Pathology](https://simplifier.net/guide/pathology-fhir-implementation-guide) \n"
+                    + "[NHS England Genomics](https://simplifier.net/guide/fhir-genomics-implementation-guide) \n"
+                        + "[HL7 Version 2 to FHIR Conversion - ORU_R01](https://build.fhir.org/ig/HL7/v2-to-fhir/ConceptMap-message-oru-r01-to-bundle.html) \n"
+                        + "[Europe Laboratory Report](https://build.fhir.org/ig/hl7-eu/laboratory/) /n/r"
+                        + "[IHE QEDm PCC-44](https://build.fhir.org/ig/IHE/QEDm/branches/master/PCC-44.html)")
         )
 
 /*
@@ -279,7 +290,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         val reportItem = PathItem()
             .get(
                 Operation()
-                    .addTagsItem(MHD)
+                    .addTagsItem(DIAGNOSTICS)
                     .summary("Europe Laboratory Report")
                     .description("Mock of [Europe Laboratory Report](https://build.fhir.org/ig/hl7-eu/laboratory/)")
                     .responses(getApiResponses())
@@ -1760,7 +1771,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         var diagnosticReportItem = PathItem()
             .post(
                 Operation()
-                    .addTagsItem(WORKFLOW)
+                    .addTagsItem(DIAGNOSTICS)
                     .summary("Create DiagnosticReport")
                     .responses(getApiResponses())
                     .requestBody(RequestBody().content(Content()
@@ -1771,7 +1782,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                     )))
             .get(
                 Operation()
-                    .addTagsItem(WORKFLOW)
+                    .addTagsItem(DIAGNOSTICS)
                     .summary("Query Reports")
                     .addParametersItem(Parameter()
                         .name("patient")
@@ -1815,7 +1826,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
         diagnosticReportItem
             .put(
                 Operation()
-                    .addTagsItem(WORKFLOW)
+                    .addTagsItem(DIAGNOSTICS)
                     .summary("Update DiagnosticReport")
                     .description("This transaction is used to update a DiagnosticReport")
                     .responses(getApiResponses())
@@ -1837,7 +1848,7 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
                         )))
             .delete(
                 Operation()
-                    .addTagsItem(WORKFLOW)
+                    .addTagsItem(DIAGNOSTICS)
                     .summary("Delete DiagnosticReport")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
@@ -1851,8 +1862,8 @@ class OpenApiConfig(@Qualifier("R4") val ctx : FhirContext) {
             )
             .get(
                 Operation()
-                    .addTagsItem(WORKFLOW)
-                    .summary("Read Endpoint")
+                    .addTagsItem(DIAGNOSTICS)
+                    .summary("Read Diagnostic Report")
                     .responses(getApiResponses())
                     .addParametersItem(Parameter()
                         .name("id")

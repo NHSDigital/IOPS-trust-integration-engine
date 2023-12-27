@@ -7,6 +7,7 @@ import org.hl7.fhir.r4.model.*
 
 
 class OBRtoFHIRDiagnosticReport : Transformer<ORC, DiagnosticReport> {
+    var XCNtoFHIRReference = XCNtoFHIRReference()
     fun transform(obr: OBR, report: DiagnosticReport? ): DiagnosticReport {
         var diagnosticReport = DiagnosticReport()
 
@@ -39,6 +40,13 @@ class OBRtoFHIRDiagnosticReport : Transformer<ORC, DiagnosticReport> {
         if (obr.observationDateTime !== null && obr.observationDateTime.time !==null) {
             diagnosticReport.effectiveDateTimeType.value = obr.observationDateTime.time.valueAsDate
         }
+        if (obr.collectorIdentifier !== null && obr.collectorIdentifier.size >0) {
+            obr.collectorIdentifier.forEach {
+                diagnosticReport.performer.add(XCNtoFHIRReference.transform(it))
+            }
+
+        }
+
 
         return diagnosticReport
     }

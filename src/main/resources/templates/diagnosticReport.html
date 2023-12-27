@@ -34,7 +34,7 @@
                 </tbody>
             </table>
             <div th:if="${not #lists.isEmpty(specimens)}">
-                <h3>Specimens</h3>
+                <h3>Specimen(s)</h3>
                 <table>
                     <thead>
                     <tr>
@@ -48,8 +48,16 @@
                     <tr th:each="specimen : ${specimens}">
                         <td th:text="${#dates.format(specimen.getCollection().getCollected().dateTimeValue().getValue(),'dd MMM YYYY')}">Unknown</td>
                         <td th:text="${specimen.getType().getCodingFirstRep().getDisplay()}">No type given</td>
-                        <td></td>
-                        <td></td>
+                        <td>
+                            <div th:if="${specimen.hasIdentifier()}">
+                                <div th:text="${specimen.getIdentifierFirstRep().getValue()}">No type given</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div th:if="${specimen.hasAccessionIdentifier()}">
+                                <div th:text="${specimen.getAccessionIdentifier().getValue()}">No type given</div>
+                            </div>
+                        </td>
                     </tr>
                     </tbody>
                 </table>

@@ -773,6 +773,7 @@ return bundle
                     } else {
                         specimens.add(specimen as Specimen)
                         specimen.type.codingFirstRep
+                        specimen.identifierFirstRep
                     }
                 }
             }

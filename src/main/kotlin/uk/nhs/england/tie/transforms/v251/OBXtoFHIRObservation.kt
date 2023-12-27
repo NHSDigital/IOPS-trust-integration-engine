@@ -43,7 +43,35 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
                 quantity.unit = (obx.units.identifier).value
             }
             if (quantity.value !== null) observation.setValue(quantity)
-
+            if (obx.referencesRange !== null) {
+                observation.referenceRange.add(
+                    Observation.ObservationReferenceRangeComponent().setText(obx.referencesRange.value)
+                )
+            }
+            if (obx.abnormalFlags !== null && obx.abnormalFlags.size>0) {
+                obx.abnormalFlags.forEach {
+                    when (it.value) {
+                        "H"-> {
+                           observation.interpretation.add(CodeableConcept().addCoding(Coding()
+                               .setSystem("http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation")
+                               .setCode("H")
+                           ))
+                        }
+                        "N"-> {
+                            observation.interpretation.add(CodeableConcept().addCoding(Coding()
+                                .setSystem("http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation")
+                                .setCode("N")
+                            ))
+                        }
+                        "L"-> {
+                            observation.interpretation.add(CodeableConcept().addCoding(Coding()
+                                .setSystem("http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation")
+                                .setCode("L")
+                            ))
+                        }
+                    }
+                }
+            }
         }
         return observation
     }

@@ -15,13 +15,13 @@ class XCNtoFHIRReference : Transformer<XCN, Reference> {
             val identifier = reference.identifier
 
             var name = ""
-            if (xcn.getPrefixEgDR() != null) {
+            if (xcn.getPrefixEgDR() !== null && xcn.getPrefixEgDR().value !== null) {
                 name += xcn.getPrefixEgDR().getValue()
             }
-            if (xcn.getGivenName() != null) {
+            if (xcn.getGivenName() !== null && xcn.getGivenName().value !== null) {
                 name += " " + xcn.getGivenName().getValue()
             }
-            if (xcn.getFamilyName() != null) {
+            if (xcn.getFamilyName() !== null && xcn.getFamilyName().surname != null) {
                 name += " " + xcn.getFamilyName().getSurname().getValue()
             }
             reference.display = name.trim()

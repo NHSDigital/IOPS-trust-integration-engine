@@ -59,6 +59,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     var pD1toFHIRPractitionerRole = PD1toFHIRPractitionerRole()
     var orCtoFHIRDiagnosticReport = ORCtoFHIRDiagnosticReport()
     var obRtoFHIRDiagnosticReport = OBRtoFHIRDiagnosticReport()
+    var obRtoFHIRServiceRequest = OBRtoFHIRServiceRequest()
     var obXtoFHIRObservation = OBXtoFHIRObservation()
     var ntEtoFHIRAnnotation = NTEtoFHIRAnnotation()
     var spMtoFHIRSpecimen = SPMtoFHIRSpecimen()
@@ -297,17 +298,62 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 if (v2message is ORU_R01) {
                     logger.info(v2message.patienT_RESULT.ordeR_OBSERVATIONReps.toString())
                     val result = v2message.patienT_RESULT.ordeR_OBSERVATION
-                    var diagnosticReport: DiagnosticReport? = null;
+                    var serviceRequest: ServiceRequest? = null;
+                    var serviceRequestFullUrl : String? = null
                     for (i in 1..v2message.patienT_RESULT.ordeR_OBSERVATIONReps) {
 
                         val result = v2message.patienT_RESULT.getORDER_OBSERVATION(i-1)
                         logger.info(result.name)
                         var diagnosticReport: DiagnosticReport? = null;
+
                         if (result.orc !== null) {
                             diagnosticReport = orCtoFHIRDiagnosticReport.transform(result.orc)
                         }
                         if (result.obr !== null) {
                             diagnosticReport = obRtoFHIRDiagnosticReport.transform(result.obr, diagnosticReport)
+                            var newServiceRequest = obRtoFHIRServiceRequest.transform(result.obr)
+                            if (newServiceRequest !== null) {
+                                if (serviceRequest == null) {
+                                    val uuid = UUID.randomUUID();
+                                    serviceRequest = newServiceRequest
+                                    serviceRequest.subject.reference = patientFullUrl
+                                    bundle.addEntry(
+                                        Bundle.BundleEntryComponent()
+                                            .setFullUrl("urn:uuid:" + uuid.toString())
+                                            .setResource(serviceRequest)
+                                            .setRequest(
+                                                Bundle.BundleEntryRequestComponent()
+                                                    .setMethod(Bundle.HTTPVerb.POST)
+                                                    .setUrl("ServiceRequest")
+                                            )
+                                    )
+                                    serviceRequestFullUrl = "urn:uuid:" +uuid
+                                } else {
+                                    if (newServiceRequest.hasIdentifier() && serviceRequest.hasIdentifier()
+                                        && !newServiceRequest.identifierFirstRep.value.equals(serviceRequest.identifierFirstRep.value)) {
+                                        val uuid = UUID.randomUUID();
+                                        serviceRequest = newServiceRequest
+                                        serviceRequest.subject.reference = patientFullUrl
+                                        bundle.addEntry(
+                                            Bundle.BundleEntryComponent()
+                                                .setFullUrl("urn:uuid:" + uuid.toString())
+                                                .setResource(serviceRequest)
+                                                .setRequest(
+                                                    Bundle.BundleEntryRequestComponent()
+                                                        .setMethod(Bundle.HTTPVerb.POST)
+                                                        .setUrl("ServiceRequest")
+                                                )
+                                        )
+                                        serviceRequestFullUrl = "urn:uuid:" +uuid
+                                    } else {
+                                        if (newServiceRequest.hasCode()) {
+                                            if (serviceRequest.hasCode() && !serviceRequest.hasOrderDetail()
+                                                ) serviceRequest.orderDetail.add(serviceRequest.code)
+                                            serviceRequest.orderDetail.add(newServiceRequest.code)
+                                        }
+                                    }
+                                }
+                            }
                         }
                         if (diagnosticReport !== null) {
                             if (result.nte !== null) {
@@ -347,6 +393,9 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                                 }
                             }
 
+                            if (serviceRequest !== null) {
+                                diagnosticReport.basedOnFirstRep.reference = serviceRequestFullUrl
+                            }
                             diagnosticReport.subject.reference = patientFullUrl
                             diagnosticReport.encounter.reference = encounterFullUrl
                             diagnosticReport.status =DiagnosticReport.DiagnosticReportStatus.FINAL
