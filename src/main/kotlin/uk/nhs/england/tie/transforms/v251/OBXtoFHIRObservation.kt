@@ -1,5 +1,6 @@
 package uk.nhs.england.tie.transforms.v251
 
+import ca.uhn.hl7v2.model.v251.datatype.CWE
 import ca.uhn.hl7v2.model.v251.datatype.NM
 import ca.uhn.hl7v2.model.v251.datatype.TX
 import ca.uhn.hl7v2.model.v251.segment.OBX
@@ -7,6 +8,7 @@ import ca.uhn.hl7v2.model.v251.segment.ORC
 import mu.KLogging
 import org.apache.commons.collections4.Transformer
 import org.hl7.fhir.r4.model.*
+import uk.nhs.england.tie.util.FhirSystems.*
 
 
 class OBXtoFHIRObservation : Transformer<OBX, Observation> {
@@ -16,12 +18,41 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
 
         if (obx !== null) {
             if (obx.observationIdentifier != null && obx.observationIdentifier.identifier !== null) {
+                var code =  Coding()
+                    .setCode(obx.observationIdentifier.identifier.value)
+                    .setDisplay(obx.observationIdentifier.text.value)
 
+                if (obx.observationIdentifier.nameOfCodingSystem !== null) {
+                    when (obx.observationIdentifier.nameOfCodingSystem.value) {
+                        "SCT" -> {
+                            code.system = SNOMED_CT
+                        }
+                        "LN" -> {
+                            code.system = LOINC
+                        }
+                    }
+                }
                 observation.code.addCoding(
-                    Coding()
-                        .setCode(obx.observationIdentifier.identifier.value)
-                        .setDisplay(obx.observationIdentifier.text.value)
+                    code
                 )
+                if (obx.observationIdentifier.alternateIdentifier !== null) {
+                    var altCode = Coding()
+                        .setCode(obx.observationIdentifier.alternateIdentifier.value)
+                        .setDisplay(obx.observationIdentifier.alternateText.value)
+                    if (obx.observationIdentifier.nameOfAlternateCodingSystem !== null) {
+                        when (obx.observationIdentifier.nameOfAlternateCodingSystem.value) {
+                            "SCT" -> {
+                                altCode.system = SNOMED_CT
+                            }
+                            "LN" -> {
+                                altCode.system = LOINC
+                            }
+                        }
+                    }
+                    observation.code.addCoding(
+                        altCode
+                    )
+                }
             }
             if (obx.dateTimeOfTheObservation !== null ) {
                 observation.effectiveDateTimeType.value = obx.dateTimeOfTheObservation.time.valueAsDate
@@ -32,7 +63,31 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
                     if (it.data is NM) {
 
                         quantity.value = (it.data as NM).value.toBigDecimal()
-                    } else
+                    } else if (it.data is CWE) {
+                        var cwe = it.data as CWE
+                        var concept = CodeableConcept()
+                        if (cwe.identifier !== null) {
+                            var code =  Coding()
+                                .setCode(cwe.identifier.value)
+                                .setDisplay(cwe.text.value)
+
+                            if (cwe.nameOfCodingSystem !== null) {
+                                when (cwe.nameOfCodingSystem.value) {
+                                    "SCT" -> {
+                                        code.system = SNOMED_CT
+                                    }
+                                    "LN" -> {
+                                        code.system = LOINC
+                                    }
+                                }
+                            }
+                            concept.addCoding(
+                                code
+                            )
+                        }
+                        observation.value = concept
+                    }
+                    else
                         if (it.data is TX) {
                         observation.setValue(StringType((it.data as TX).value))
                     }
@@ -40,7 +95,15 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
 
             }
             if (obx.units !== null) {
-                quantity.unit = (obx.units.identifier).value
+                quantity.code = (obx.units.identifier).value
+                if (obx.units.nameOfCodingSystem !== null) {
+                    when (obx.units.nameOfCodingSystem.value) {
+                        "UCUM" -> quantity.system = UNITS_OF_MEASURE
+                    }
+                }
+                if (obx.units.text !== null) {
+                    quantity.unit = obx.units.text.value
+                }
             }
             if (quantity.value !== null) observation.setValue(quantity)
             if (obx.referencesRange !== null) {
@@ -55,18 +118,21 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
                            observation.interpretation.add(CodeableConcept().addCoding(Coding()
                                .setSystem("http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation")
                                .setCode("H")
+                               .setDisplay("High")
                            ))
                         }
                         "N"-> {
                             observation.interpretation.add(CodeableConcept().addCoding(Coding()
                                 .setSystem("http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation")
                                 .setCode("N")
+                                .setDisplay("Normal")
                             ))
                         }
                         "L"-> {
                             observation.interpretation.add(CodeableConcept().addCoding(Coding()
                                 .setSystem("http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation")
                                 .setCode("L")
+                                .setDisplay("Low")
                             ))
                         }
                     }

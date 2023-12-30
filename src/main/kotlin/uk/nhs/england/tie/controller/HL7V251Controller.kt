@@ -63,6 +63,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
     var obXtoFHIRObservation = OBXtoFHIRObservation()
     var ntEtoFHIRAnnotation = NTEtoFHIRAnnotation()
     var spMtoFHIRSpecimen = SPMtoFHIRSpecimen()
+    var tQ1toFHIRServiceRequest = TQ1toFHIRServiceRequest()
 
 
     init {
@@ -82,7 +83,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
         content = [ Content(mediaType = "x-application/hl7-v2+er7" ,
             examples = [
                 ExampleObject(
-                    name = "HL7 v2.5.1 ORU_R01 Pathology Result",
+                    name = "Pathology Result (DHCW)",
                     value = "MSH|^~\\&|ACMELab^2.16.840.1.113883.2.1.8.1.5.999^ISO|CAV^7A4BV^L|cymru.nhs.uk^2.16.840.1.113883.2. 1.8.1.5.200^ISO|NHSWales^RQFW3^L|20190514102527+0200||ORU^R01^ORU_R01|5051095-201905141025|T|2.5.1|||AL\n" +
                             "PID|||403281375^^^154^PI~5189214567^^^NHS^NH||Bloggs^Joe^^^Mr||20010328|M|||A B M U Health Board^One Talbot Gateway^Baglan^Neath port talbot^SA12 7BR|||||||||||||||||||||01\n" +
                             "PV1||O||||||||CAR\n" +
@@ -100,7 +101,29 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                             "OBX|6|NM|B0309^Mean cell volume (MCV)||120|fL|80-100|H|||F|||201803091500\n" +
                             "OBX|7|NM|B0310^Mean cell haemoglobin (MCH)||34.0|pg|27.0-33.0|H|||F|||201803091500\n" +
                             "SPM|1|^9146949283||BLOO^Blood^ACME|||||||||||||201803091400|201803091500\n",
-                    summary = "Pathology Result"),
+                    summary = "Pathology Result (DHCW)"),
+                ExampleObject(
+                    name = "HL7 ORU_R01 - 3  Basic-NG",
+                    value = "MSH|^~\\&|NIST Test Lab APP|NIST Lab Facility||NIST EHR Facility|20150926140551||ORU^R01^ORU_R01|NIST-LOI_5.0_1.1-NG|T|2.5.1|||AL|AL|||||\n" +
+                            "PID|1||PATID5421^^^NIST MPI^MR||Wilson^Patrice^Natasha^^^^L||19820304|F||2106-3^White^HL70005|144 East 12th Street^^Los Angeles^CA^90012^^H||^PRN^PH^^^203^2290210|||||||||N^Not Hispanic or Latino^HL70189\n" +
+                            "ORC|NW|ORD448811^NIST EHR|R-511^NIST Lab Filler||||||20120628070100|||5742200012^Radon^Nicholas^^^^^^NPI^L^^^NPI\n" +
+                            "OBR|1|ORD448811^NIST EHR|R-511^NIST Lab Filler|1000^Hepatitis A B C Panel^99USL|||20120628070100|||||||||5742200012^Radon^Nicholas^^^^^^NPI^L^^^NPI\n" +
+                            "OBX|1|CWE|22314-9^Hepatitis A virus IgM Ab [Presence] in Serum^LN^HAVM^Hepatitis A IgM antibodies (IgM anti-HAV)^L^2.52||260385009^Negative (qualifier value)^SCT^NEG^NEGATIVE^L^201509USEd^^Negative (qualifier value)||Negative|N|||F|||20150925|||||201509261400\n" +
+                            "OBX|2|CWE|20575-7^Hepatitis A virus Ab [Presence] in Serum^LN^HAVAB^Hepatitis A antibodies (anti-HAV)^L^2.52||260385009^Negative (qualifier value)^SCT^NEG^NEGATIVE^L^201509USEd^^Negative (qualifier value)||Negative|N|||F|||20150925|||||201509261400\n" +
+                            "OBX|3|NM|22316-4^Hepatitis B virus core Ab [Units/volume] in Serum^LN^HBcAbQ^Hepatitis B core antibodies (anti-HBVc) Quant^L^2.52||0.70|[IU]/mL^international unit per milliliter^UCUM^IU/ml^^L^1.9|<0.50 IU/mL|H|||F|||20150925|||||201509261400",
+                    summary = "HL7 ORU_R01 - 3  Basic-NG"),
+                ExampleObject(
+                    name = "HL7 ORU_R01 - 4  Lipid Panel",
+                    value = "MSH|^~\\&#|^372520^L|^372521^L||^372523^L|20150926140551||ORU^R01^ORU_R01|LRI_3.0_1.1-NG|D|2.5.1|||AL|AL|||||LRI_Common_Component^^2.16.840.1.113883.9.16^ISO~LRI_NG_Component^^2.16.840.1.113883.9.13^ISO~LRI_FRU_Component^^2.16.840.1.113883.9.83^ISO\n" +
+                            "PID|1||PATID1234^^^NIST MPI^MR||Jones^William^A^^^^L||19610627|M||2106-3^White^HL70005||||||||PATID1234^^^NIST MPI^AN\n" +
+                            "ORC|RE|ORD777888^NIST EHR|R-220713^NIST Lab Filler|GORD874244^NIST EHR||||||||5742200012^Radon^Nicholas^^^^^^NPI^L^^^NPI\n" +
+                            "OBR|1|ORD777888^NIST EHR|R-220713^NIST Lab Filler|24331-1^Lipid 1996 panel in Serum or Plasma^LN^345789^Lipid Panel^99USL^2.52^^Lipid 1996 panel in Serum or Plasma|||20150925||||||F^Patient was fasting prior to the procedure.^HL70916^^^^2.7.1^^fasting 12 hours|||5742200012^Radon^Nicholas^^^^^^NPI^L^^^NPI||||||20150926140551|||F|||10092000194^Hamlin^Pafford^^^^^^NPI^L^^^NPI|||||||||||||||||||||CC^Copies Requested^HL70507\n" +
+                            "OBX|1|NM|2093-3^Cholesterol [Mass/volume] in Serum or Plasma^LN^^^^2.52^^Cholesterol [Mass/volume] in Serum or Plasma||196|mg/dL^milligrams per deciliter^UCUM^^^^1.9|Recommended: <200; Moderate Risk: 200-239 ; High Risk: >240|N|||F|||20150925|||||201509261400||||Century Hospital^^^^^CLIA^XX^^^24D9871327|2070 Test Park^^Los Angeles^CA^90067^^B|5432178916^Knowsalot^Phil^^^Dr.^^^NPI^L^^^NPI||||RSLT\n" +
+                            "OBX|2|NM|2571-8^Triglyceride [Mass/volume] in Serum or Plasma^LN^^^^2.52^^Triglyceride [Mass/volume] in Serum or Plasma||100|mg/dL^milligrams per deciliter^UCUM^^^^1.9|40 to 160|N|||F|||20150925|||||201509261400||||Century Hospital^^^^^CLIA^XX^^^24D9871327|2070 Test Park^^Los Angeles^CA^90067^^B|5432178916^Knowsalot^Phil^^^Dr.^^^NPI^L^^^NPI||||RSLT\n" +
+                            "OBX|3|NM|2085-9^Cholesterol in HDL [Mass/volume] in Serum or Plasma^LN^^^^2.52^^Cholesterol in HDL [Mass/volume] in Serum or Plasma||60|mg/dL^milligrams per deciliter^UCUM^^^^1.9|29 to 72|N|||F|||20150925|||||201509261400||||Century Hospital^^^^^CLIA^XX^^^24D9871327|2070 Test Park^^Los Angeles^CA^90067|5432178916^Knowsalot^Phil^^^Dr.^^^NPI^L^^^NPI||||RSLT\n" +
+                            "OBX|4|NM|2089-1^Cholesterol in LDL [Mass/volume] in Serum or Plasma^LN^^^^2.52^^Cholesterol in LDL [Mass/volume] in Serum or Plasma||116|mg/dL^milligrams per deciliter^UCUM^^^^1.9|Recommended: <130; Moderate Risk: 130-159; High Risk: >160|N|||F|||20150925|||||201509261400||||Century Hospital^^^^^CLIA^XX^^^24D9871327|2070 Test Park^^Los Angeles^CA^90067^^B|5432178916^Knowsalot^Phil^^^Dr.^^^NPI^L^^^NPI||||RSLT\n" +
+                            "SPM|1|S2015-777888&NIST EHR^S-220713-1&NIST Lab Filler||119297000^BLD^SCT^^^^201509USEd^^Blood|||||||||||||20150925",
+                    summary = "HL7 ORU_R01 - 4  Lipid Panel"),
                 ExampleObject(
                     name = "HL7 v2.5.1 ORU_R01 Text based report",
                     value = "MSH|^~\\&|ACMELab^2.16.840.1.113883.2.1.8.1.5.999^ISO|CAV^7A4BV^L|cymru.nhs.uk^2.16.840.1.113883.2. 1.8.1.5.200^ISO|NHSWales^RQFW3^L|20190514102527+0200||ORU^R01^ORU_R01|5051095-201905141025|T|2.5.1|||AL\n" +
@@ -124,7 +147,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                             "OBX|13|TX|^Report Line 13|| Amoxicillin\n" +
                             "OBX|14|TX|^Report Line 14||||||||F|||201805240000\n" +
                             "SPM|1|^8005372251||MMSU^ Mid Stream Urine^ACME|||||||||||||201805240000|201805240000",
-                    summary = "Text based report")
+                    summary = "Text based report (DHCW)")
             ])])
     fun convertFHIR(@org.springframework.web.bind.annotation.RequestBody v2Message : String): String {
         var resource : Resource? = null
@@ -353,6 +376,11 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                                         }
                                     }
                                 }
+                            }
+                        }
+                        if (result.timinG_QTYAll !== null && serviceRequest !== null) {
+                            result.timinG_QTYAll.forEach {
+                                tQ1toFHIRServiceRequest.transform(it.tQ1, serviceRequest)
                             }
                         }
                         if (diagnosticReport !== null) {
