@@ -296,7 +296,7 @@ class AWSServiceRequest(val messageProperties: MessageProperties, val awsClient:
                 }
         }
         if (newServiceRequest.hasRequester() ) {
-            if (newServiceRequest.requester.hasIdentifier()) {
+            if (newServiceRequest.requester.hasIdentifier() && newServiceRequest.requester.identifier.hasSystem()) {
                 if (newServiceRequest.requester.identifier.system.equals(FhirSystems.NHS_GMC_NUMBER)||
                     newServiceRequest.requester.identifier.system.equals(FhirSystems.NHS_GMP_NUMBER)) {
                     val dr = awsPractitioner.get(newServiceRequest.requester.identifier)

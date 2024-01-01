@@ -105,7 +105,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 ExampleObject(
                     name = "HL7 ORU_R01 - 3  Basic-NG",
                     value = "MSH|^~\\&|NIST Test Lab APP|NIST Lab Facility||NIST EHR Facility|20150926140551||ORU^R01^ORU_R01|NIST-LOI_5.0_1.1-NG|T|2.5.1|||AL|AL|||||\n" +
-                            "PID|1||PATID5421^^^NIST MPI^MR||Wilson^Patrice^Natasha^^^^L||19820304|F||2106-3^White^HL70005|144 East 12th Street^^Los Angeles^CA^90012^^H||^PRN^PH^^^203^2290210|||||||||N^Not Hispanic or Latino^HL70189\n" +
+                            "PID|1||PATID5421^^^https://fhir.example.org/NISTMPI^MR||Wilson^Patrice^Natasha^^^^L||19820304|F||2106-3^White^HL70005|144 East 12th Street^^Los Angeles^CA^90012^^H||^PRN^PH^^^203^2290210|||||||||N^Not Hispanic or Latino^HL70189\n" +
                             "ORC|NW|ORD448811^NIST EHR|R-511^NIST Lab Filler||||||20120628070100|||5742200012^Radon^Nicholas^^^^^^NPI^L^^^NPI\n" +
                             "OBR|1|ORD448811^NIST EHR|R-511^NIST Lab Filler|1000^Hepatitis A B C Panel^99USL|||20120628070100|||||||||5742200012^Radon^Nicholas^^^^^^NPI^L^^^NPI\n" +
                             "OBX|1|CWE|22314-9^Hepatitis A virus IgM Ab [Presence] in Serum^LN^HAVM^Hepatitis A IgM antibodies (IgM anti-HAV)^L^2.52||260385009^Negative (qualifier value)^SCT^NEG^NEGATIVE^L^201509USEd^^Negative (qualifier value)||Negative|N|||F|||20150925|||||201509261400\n" +
@@ -115,7 +115,7 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 ExampleObject(
                     name = "HL7 ORU_R01 - 4  Lipid Panel",
                     value = "MSH|^~\\&#|^372520^L|^372521^L||^372523^L|20150926140551||ORU^R01^ORU_R01|LRI_3.0_1.1-NG|D|2.5.1|||AL|AL|||||LRI_Common_Component^^2.16.840.1.113883.9.16^ISO~LRI_NG_Component^^2.16.840.1.113883.9.13^ISO~LRI_FRU_Component^^2.16.840.1.113883.9.83^ISO\n" +
-                            "PID|1||PATID1234^^^NIST MPI^MR||Jones^William^A^^^^L||19610627|M||2106-3^White^HL70005||||||||PATID1234^^^NIST MPI^AN\n" +
+                            "PID|1||PATID1234^^^https://fhir.example.org/NISTMPI^MR||Jones^William^A^^^^L||19610627|M||2106-3^White^HL70005||||||||PATID1234^^^NIST MPI^AN\n" +
                             "ORC|RE|ORD777888^NIST EHR|R-220713^NIST Lab Filler|GORD874244^NIST EHR||||||||5742200012^Radon^Nicholas^^^^^^NPI^L^^^NPI\n" +
                             "OBR|1|ORD777888^NIST EHR|R-220713^NIST Lab Filler|24331-1^Lipid 1996 panel in Serum or Plasma^LN^345789^Lipid Panel^99USL^2.52^^Lipid 1996 panel in Serum or Plasma|||20150925||||||F^Patient was fasting prior to the procedure.^HL70916^^^^2.7.1^^fasting 12 hours|||5742200012^Radon^Nicholas^^^^^^NPI^L^^^NPI||||||20150926140551|||F|||10092000194^Hamlin^Pafford^^^^^^NPI^L^^^NPI|||||||||||||||||||||CC^Copies Requested^HL70507\n" +
                             "OBX|1|NM|2093-3^Cholesterol [Mass/volume] in Serum or Plasma^LN^^^^2.52^^Cholesterol [Mass/volume] in Serum or Plasma||196|mg/dL^milligrams per deciliter^UCUM^^^^1.9|Recommended: <200; Moderate Risk: 200-239 ; High Risk: >240|N|||F|||20150925|||||201509261400||||Century Hospital^^^^^CLIA^XX^^^24D9871327|2070 Test Park^^Los Angeles^CA^90067^^B|5432178916^Knowsalot^Phil^^^Dr.^^^NPI^L^^^NPI||||RSLT\n" +
@@ -221,65 +221,64 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                 }
 
 
-                if (pv1 != null && pid != null) {
-                    if (pv1 !== null) encounter = pV1toFHIREncounter.transform(pv1)
-                    if (pid !== null) patient = piDtoFHIRPatient.transform(pid)
-                    if (msh != null) {
 
-                        if (msh.messageType.triggerEvent.value.equals("A04")) {
-                            encounterType = CodeableConcept().addCoding(Coding()
-                                .setSystem(FhirSystems.SNOMED_CT)
-                                .setCode("11429006")
-                                .setDisplay("Consultation"))
-                        }
+                if (pv1 !== null && pv1.patientClass !== null && pv1.patientClass.value !== null) encounter = pV1toFHIREncounter.transform(pv1)
+                if (pid !== null) patient = piDtoFHIRPatient.transform(pid)
+                if (msh != null) {
 
-                        // Need to double check this is correct - does admit mean arrived`
-                        if (encounter != null) {
-                            encounter.status =
-                                Encounter.EncounterStatus.INPROGRESS
-                            when (msh.messageType.triggerEvent.value) {
-                                "A01" -> {
-                                    encounter.status =
-                                        Encounter.EncounterStatus.INPROGRESS
-                                }
-
-                                "A03" -> {
-                                    encounter.status =
-                                        Encounter.EncounterStatus.FINISHED
-                                }
-
-                                "A05" -> {
-                                    encounter.status =
-                                        Encounter.EncounterStatus.PLANNED
-                                }
-                            }
-                            // Provider fix
-                            if (encounter.hasIdentifier()) {
-                                val odsCode = msh.sendingFacility.namespaceID.value
-                                if (odsCode == null) {
-                                    encounter.identifierFirstRep.setValue(pv1.visitNumber.idNumber.value).system =
-                                        "http://terminology.hl7.org/CodeSystem/v2-0203"
-                                } else {
-                                    encounter.identifierFirstRep.setValue(pv1.visitNumber.idNumber.value).system =
-                                        "https://fhir.nhs.uk/" + odsCode + "/Id/Encounter"
-                                    encounter.serviceProvider = Reference().setIdentifier(
-                                        Identifier()
-                                            .setSystem(FhirSystems.ODS_CODE)
-                                            .setValue(odsCode)
-                                    )
-                                }
-                            }
-
-                            if (encounterType != null) encounter.serviceType = encounterType
-                            if (patient !== null)
-                                for (identifier in patient.identifier) {
-                                    if (identifier.system.equals(FhirSystems.NHS_NUMBER)) encounter.subject =
-                                        Reference().setIdentifier(identifier)
-                                }
-                        }
+                    if (msh.messageType.triggerEvent.value.equals("A04")) {
+                        encounterType = CodeableConcept().addCoding(Coding()
+                            .setSystem(FhirSystems.SNOMED_CT)
+                            .setCode("11429006")
+                            .setDisplay("Consultation"))
                     }
 
+                    // Need to double check this is correct - does admit mean arrived`
+                    if (encounter != null && pv1 !== null) {
+                        encounter.status =
+                            Encounter.EncounterStatus.INPROGRESS
+                        when (msh.messageType.triggerEvent.value) {
+                            "A01" -> {
+                                encounter.status =
+                                    Encounter.EncounterStatus.INPROGRESS
+                            }
+
+                            "A03" -> {
+                                encounter.status =
+                                    Encounter.EncounterStatus.FINISHED
+                            }
+
+                            "A05" -> {
+                                encounter.status =
+                                    Encounter.EncounterStatus.PLANNED
+                            }
+                        }
+                        // Provider fix
+                        if (encounter.hasIdentifier()) {
+                            val odsCode = msh.sendingFacility.namespaceID.value
+                            if (odsCode == null) {
+                                encounter.identifierFirstRep.setValue(pv1.visitNumber.idNumber.value).system =
+                                    "http://terminology.hl7.org/CodeSystem/v2-0203"
+                            } else {
+                                encounter.identifierFirstRep.setValue(pv1.visitNumber.idNumber.value).system =
+                                    "https://fhir.nhs.uk/" + odsCode + "/Id/Encounter"
+                                encounter.serviceProvider = Reference().setIdentifier(
+                                    Identifier()
+                                        .setSystem(FhirSystems.ODS_CODE)
+                                        .setValue(odsCode)
+                                )
+                            }
+                        }
+
+                        if (encounterType != null) encounter.serviceType = encounterType
+                        if (patient !== null)
+                            for (identifier in patient.identifier) {
+                                if (identifier.system.equals(FhirSystems.NHS_NUMBER)) encounter.subject =
+                                    Reference().setIdentifier(identifier)
+                            }
+                    }
                 }
+
 
                 if (pd1 !=null && patient !== null) {
                     var practitionerRole = pD1toFHIRPractitionerRole.transform(pd1)

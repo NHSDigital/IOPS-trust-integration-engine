@@ -22,7 +22,7 @@ class PIDtoFHIRPatient : Transformer<PID, Patient> {
                 // Default
                 identifier.system =
                    // HL7V2Properties.getServerIdentifierPrefix() + "/" +
-                            cx.assigningAuthority.namespaceID.value
+                            cx.assigningAuthority.namespaceID.value.replace(" ","")
                 if (cx.assigningAuthority.namespaceID.value == "NHS" || cx.assigningAuthority.namespaceID.value == "NH") {
                     identifier.system = "https://fhir.nhs.uk/Id/nhs-number"
                 }
