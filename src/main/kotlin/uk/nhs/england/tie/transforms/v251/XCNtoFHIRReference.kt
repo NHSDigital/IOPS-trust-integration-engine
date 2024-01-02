@@ -21,10 +21,10 @@ class XCNtoFHIRReference : Transformer<XCN, Reference> {
             if (xcn.getGivenName() !== null && xcn.getGivenName().value !== null) {
                 name += " " + xcn.getGivenName().getValue()
             }
-            if (xcn.getFamilyName() !== null && xcn.getFamilyName().surname != null) {
+            if (xcn.getFamilyName() !== null && xcn.getFamilyName().surname != null && xcn.getFamilyName().surname.value != null) {
                 name += " " + xcn.getFamilyName().getSurname().getValue()
             }
-            reference.display = name.trim()
+            if (!name.isEmpty()) reference.display = name.trim()
             if (xcn.getIDNumber() != null) {
                 identifier.value = xcn.getIDNumber().getValue()
             }

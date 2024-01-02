@@ -13,7 +13,20 @@ class OBRtoFHIRDiagnosticReport : Transformer<ORC, DiagnosticReport> {
     companion object : KLogging()
     fun transform(obr: OBR, report: DiagnosticReport? ): DiagnosticReport {
         var diagnosticReport = DiagnosticReport()
-
+        if (obr.diagnosticServSectID == null || obr.diagnosticServSectID.value == null) {
+            // default to laboratory
+            diagnosticReport.addCategory().addCoding(
+                Coding()
+                    .setSystem("http://terminology.hl7.org/CodeSystem/v2-0074")
+                    .setCode("LAB")
+            )
+        } else {
+            diagnosticReport.addCategory().addCoding(
+                Coding()
+                    .setSystem("http://terminology.hl7.org/CodeSystem/v2-0074")
+                    .setCode(obr.diagnosticServSectID.value)
+            )
+        }
         if (obr.universalServiceIdentifier !== null ) {
 
             if (obr.universalServiceIdentifier.identifier !== null) {

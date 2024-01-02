@@ -36,6 +36,12 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
                 observation.code.addCoding(
                     code
                 )
+                observation.category.add(CodeableConcept().addCoding(Coding()
+                    .setSystem("http://terminology.hl7.org/CodeSystem/observation-category")
+                    .setCode("laboratory")
+                    .setDisplay("Laboratory")
+                ))
+
                 if (obx.observationIdentifier.alternateIdentifier !== null) {
                     var altCode = Coding()
                         .setCode(obx.observationIdentifier.alternateIdentifier.value)
@@ -139,11 +145,12 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
                     }
                 }
             }
-            if (obx.performingOrganizationName !== null && obx.performingOrganizationName.organizationName !== null) {
+            if (obx.performingOrganizationName !== null && obx.performingOrganizationName.organizationName !== null && obx.performingOrganizationName.organizationName.value !== null) {
                 observation.performer.add(Reference().setDisplay(obx.performingOrganizationName.organizationName.value))
             }
             if (obx.performingOrganizationMedicalDirector !== null) {
-                observation.performer.add(xcNtoFHIRReference.transform(obx.performingOrganizationMedicalDirector))
+                val director = xcNtoFHIRReference.transform(obx.performingOrganizationMedicalDirector)
+                if (director.display !== null || director.hasIdentifier()) observation.performer.add(director)
             }
         }
         return observation
