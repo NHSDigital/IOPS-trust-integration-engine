@@ -13,6 +13,7 @@ import uk.nhs.england.tie.util.FhirSystems.*
 
 class OBXtoFHIRObservation : Transformer<OBX, Observation> {
     companion object : KLogging()
+    var xcNtoFHIRReference = XCNtoFHIRReference()
     override fun transform(obx : OBX?): Observation {
         var observation = Observation()
 
@@ -137,6 +138,12 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
                         }
                     }
                 }
+            }
+            if (obx.performingOrganizationName !== null && obx.performingOrganizationName.organizationName !== null) {
+                observation.performer.add(Reference().setDisplay(obx.performingOrganizationName.organizationName.value))
+            }
+            if (obx.performingOrganizationMedicalDirector !== null) {
+                observation.performer.add(xcNtoFHIRReference.transform(obx.performingOrganizationMedicalDirector))
             }
         }
         return observation

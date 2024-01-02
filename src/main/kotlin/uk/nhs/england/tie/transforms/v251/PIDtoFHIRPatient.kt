@@ -6,7 +6,6 @@ import org.hl7.fhir.r4.model.*
 
 class PIDtoFHIRPatient : Transformer<PID, Patient> {
 
-    var xcNtoReference: XCNtoFHIRReference = XCNtoFHIRReference()
     var xpNtoHumanName = XPNtoHumanName()
     var xaDtoAddressTransform = XADtoAddressTransform()
     var xtNtoContactPointTransform = XTNtoContactPointTransform()

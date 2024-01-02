@@ -1,13 +1,16 @@
 package uk.nhs.england.tie.transforms.v251
 
+import ca.uhn.hl7v2.model.GenericPrimitive
 import ca.uhn.hl7v2.model.v251.segment.OBR
 import ca.uhn.hl7v2.model.v251.segment.ORC
+import mu.KLogging
 import org.apache.commons.collections4.Transformer
 import org.hl7.fhir.r4.model.*
 
 
 class OBRtoFHIRDiagnosticReport : Transformer<ORC, DiagnosticReport> {
     var XCNtoFHIRReference = XCNtoFHIRReference()
+    companion object : KLogging()
     fun transform(obr: OBR, report: DiagnosticReport? ): DiagnosticReport {
         var diagnosticReport = DiagnosticReport()
 
@@ -44,6 +47,46 @@ class OBRtoFHIRDiagnosticReport : Transformer<ORC, DiagnosticReport> {
             obr.collectorIdentifier.forEach {
                 diagnosticReport.performer.add(XCNtoFHIRReference.transform(it))
             }
+
+        }
+        if (obr.relevantClinicalInformation !== null) {
+
+            if (obr.relevantClinicalInformation.extraComponents !== null) {
+                var extra = obr.relevantClinicalInformation.extraComponents
+                if (extra.numComponents() > 0)  {
+                    // In HL7 examples this is 2.7.1 CWE field, just processing the text element at present
+                    var varies = extra.getComponent(0)
+                    if (varies.data is GenericPrimitive) {
+                        var st = varies.data as GenericPrimitive
+                        if (st.value !== null && !st.value.isEmpty()) {
+                            var note = Extension("http://hl7.org/fhir/5.0/StructureDefinition/extension-DiagnosticReport.note")
+                            note.setValue(Annotation().setText(st.value))
+                            diagnosticReport.extension.add(note)
+                        }
+                    }
+                }
+                logger.info(extra.toString())
+            } else {
+                var note = Extension("http://hl7.org/fhir/5.0/StructureDefinition/extension-DiagnosticReport.note")
+                note.setValue(Annotation().setText(obr.relevantClinicalInformation.value))
+
+                diagnosticReport.extension.add(note)
+            }
+        }
+        if (obr.technician.isNotEmpty()) {
+            obr.technician.forEach {
+                logger.info(it.toString())
+            }
+        }
+        if (obr.principalResultInterpreter !== null) {
+                logger.info(obr.principalResultInterpreter.toString())
+
+        }
+        if (obr.assistantResultInterpreter.isNotEmpty()) {
+            obr.assistantResultInterpreter.forEach {
+                logger.info(it.toString())
+            }
+
 
         }
 
