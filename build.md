@@ -8,8 +8,8 @@ Use AWS SSO
 aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 365027538941.dkr.ecr.eu-west-2.amazonaws.com
 
 docker tag fhir-tie:latest 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:latest
-docker tag fhir-tie:latest 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:6.10.8
+docker tag fhir-tie:latest 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:6.10.9
 
 docker push 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:latest
 
-docker push 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:6.10.8
+docker push 365027538941.dkr.ecr.eu-west-2.amazonaws.com/fhir-tie:6.10.9

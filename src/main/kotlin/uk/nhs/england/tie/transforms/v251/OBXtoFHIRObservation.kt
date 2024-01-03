@@ -102,13 +102,15 @@ class OBXtoFHIRObservation : Transformer<OBX, Observation> {
 
             }
             if (obx.units !== null) {
-                quantity.code = (obx.units.identifier).value
-                if (obx.units.nameOfCodingSystem !== null) {
+                if (obx.units.nameOfCodingSystem !== null && obx.units.nameOfCodingSystem.value !== null) {
                     when (obx.units.nameOfCodingSystem.value) {
                         "UCUM" -> quantity.system = UNITS_OF_MEASURE
                     }
+                    quantity.code = (obx.units.identifier).value
+                } else {
+                    quantity.unit = (obx.units.identifier).value
                 }
-                if (obx.units.text !== null) {
+                if (obx.units.text !== null && obx.units.text.value !==null) {
                     quantity.unit = obx.units.text.value
                 }
             }
