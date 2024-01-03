@@ -16,12 +16,20 @@ class OBRtoFHIRServiceRequest : Transformer<OBR, ServiceRequest> {
         if (obr.placerOrderNumber !== null ) {
 
             if (obr.placerOrderNumber.entityIdentifier !== null && obr.placerOrderNumber.entityIdentifier.value !== null) {
-                serviceRequest.addIdentifier(Identifier().setValue(obr.placerOrderNumber.entityIdentifier.value))
+                serviceRequest.addIdentifier(Identifier()
+                    .setValue(obr.placerOrderNumber.entityIdentifier.value)
+                    .setType(CodeableConcept().addCoding(Coding()
+                        .setCode("PLAC")
+                        .setSystem("http://terminology.hl7.org/CodeSystem/v2-0203"))))
             }
         }
         if (obr.fillerOrderNumber !== null ) {
             if (obr.fillerOrderNumber.entityIdentifier !== null && obr.fillerOrderNumber.entityIdentifier.value !== null) {
-                serviceRequest.addIdentifier(Identifier().setValue(obr.fillerOrderNumber.entityIdentifier.value))
+                serviceRequest.addIdentifier(Identifier()
+                    .setValue(obr.fillerOrderNumber.entityIdentifier.value)
+                    .setType(CodeableConcept().addCoding(Coding()
+                        .setCode("FILL")
+                        .setSystem("http://terminology.hl7.org/CodeSystem/v2-0203"))))
             }
         }
         if (obr.universalServiceIdentifier !== null ) {

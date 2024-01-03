@@ -387,7 +387,9 @@ class HL7V251Controller(@Qualifier("R4") private val fhirContext: FhirContext,
                                 result.nteAll.forEach{
                                     val annotation = ntEtoFHIRAnnotation.transform(it)
                                     if (annotation !== null) {
-                                        diagnosticReport.conclusion = annotation.text
+                                        var note = Extension("http://hl7.org/fhir/5.0/StructureDefinition/extension-DiagnosticReport.note")
+                                        note.setValue(annotation)
+                                        diagnosticReport.extension.add(note)
                                     }
                                 }
                             }

@@ -42,14 +42,22 @@ class OBRtoFHIRDiagnosticReport : Transformer<ORC, DiagnosticReport> {
 
             if (obr.placerOrderNumber.entityIdentifier !== null && obr.placerOrderNumber.entityIdentifier.value !== null) {
                 diagnosticReport.basedOn.add(Reference()
-                    .setIdentifier(Identifier().setValue(obr.placerOrderNumber.entityIdentifier.value))
+                    .setIdentifier(Identifier()
+                        .setValue(obr.placerOrderNumber.entityIdentifier.value)
+                        .setType(CodeableConcept().addCoding(Coding()
+                            .setCode("PLAC")
+                            .setSystem("http://terminology.hl7.org/CodeSystem/v2-0203"))))
                     .setType("ServiceRequest"))
             }
         }
         if (obr.fillerOrderNumber !== null ) {
             if (obr.fillerOrderNumber.entityIdentifier !== null && obr.fillerOrderNumber.entityIdentifier.value !== null) {
                 diagnosticReport.basedOn.add(Reference()
-                    .setIdentifier(Identifier().setValue(obr.fillerOrderNumber.entityIdentifier.value))
+                    .setIdentifier(Identifier()
+                        .setValue(obr.fillerOrderNumber.entityIdentifier.value)
+                        .setType(CodeableConcept().addCoding(Coding()
+                            .setCode("FILL")
+                            .setSystem("http://terminology.hl7.org/CodeSystem/v2-0203"))))
                     .setType("ServiceRequest"))
             }
         }
