@@ -2,7 +2,7 @@ FROM openjdk:23
 
 VOLUME /tmp
 
-ENV JAVA_OPTS="-Xms128m -Xmx1024m"
+ENV JAVA_OPTS="-Xms128m -Xmx2048m"
 
 ADD target/fhir-tie.jar fhir-tie.jar
 
