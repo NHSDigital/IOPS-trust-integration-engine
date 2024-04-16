@@ -19,6 +19,9 @@ import java.util.*
 
 
 import jakarta.servlet.http.HttpServletRequest
+import uk.nhs.england.tie.main
+import java.net.URI
+import java.net.URL
 
 @Component
 class QuestionnaireResponseProvider(
@@ -166,84 +169,190 @@ class QuestionnaireResponseProvider(
             } else {
                 // Need to capture the mapping here
                 if (questionItem.hasDefinition()) {
-                    when (questionItem.definition) {
+                    var url = URI(questionItem.definition)
+                    var paths = url.path.split("/")
+                    var resource = paths[paths.size - 1].replace("UKCore-", "")
+                    var newResource: Resource? = null
+
+                    when (resource) {
                         "Condition" -> {
-                            var condition = Condition()
-                            var entry = BundleEntryComponent()
-                            var uuid = UUID.randomUUID();
-                            entry.fullUrl = "urn:uuid:" + uuid.toString()
-                            entry.resource = condition
-                            entry.request.url = "Condition"
-                            entry.request.method = Bundle.HTTPVerb.POST
-                            bundle.entry.add(entry)
+                            newResource = Condition()
+                            newResource.setSubject(questionnaireResponse.subject)
+                        }
 
-                            if (questionnaireResponse.hasIdentifier()) {
-                                var identifier = Identifier()
-                                identifier.system = questionnaireResponse.identifier.system
-                                identifier.value = questionnaireResponse.identifier.value + item.linkId
-                                condition.addIdentifier(identifier)
-                            }
-                            if (questionnaireResponse.hasAuthor()) {
-                                condition.recorder = questionnaireResponse.author
-                            }
+                        "Patient" -> {
+                            newResource = Patient()
 
-                            condition.setSubject(questionnaireResponse.subject)
-                            if (questionnaireResponse.hasAuthored()) {
-                                condition.setRecordedDate(questionnaireResponse.authored )
-                            }
+                        }
 
-                            mainResource = condition
+                        "RelatedPerson" -> {
+                            newResource = RelatedPerson()
+                            (newResource as RelatedPerson).id = questionnaireResponse.subject.id
+                        }
+
+                        "Consent" -> {
+                            newResource = Consent()
+                            (newResource as Consent).setPatient(questionnaireResponse.subject)
                         }
                     }
-                }
-                if (mainResource !== null)
-                {
-                    if (mainResource is Observation && questionItem.hasDefinition()) {
-                        when (questionItem.definition) {
-                            "Observation.note" -> {
-                                if (item.hasAnswer() && item.answer.size > 0 && item.answerFirstRep.hasValueStringType()) mainResource.addNote(
-                                    Annotation().setText(item.answerFirstRep.valueStringType.value)
-                                )
-                            }
+                    if (newResource !== null &&
+                        (mainResource == null || !newResource.fhirType().equals(mainResource.fhirType()))
+                        ) {
+                        var entry = BundleEntryComponent()
+                        var uuid = UUID.randomUUID();
+                        entry.fullUrl = "urn:uuid:" + uuid.toString()
+                        entry.resource = newResource
+                        entry.request.url = newResource.fhirType()
+                        entry.request.method = Bundle.HTTPVerb.POST
+                        bundle.entry.add(entry)
+                        mainResource = newResource
+                    }
 
-                            "Observation.interpretation" -> {
-                                if (item.hasAnswer() && item.answer.size > 0 && item.answerFirstRep.hasValueStringType()) {
-                                    mainResource.addInterpretation(CodeableConcept().setText(item.answerFirstRep.valueStringType.value))
+                    if (mainResource !== null && url.fragment !== null) {
+                        if (mainResource is Observation ) {
+                            when (url.fragment) {
+                                "note" -> {
+                                    if (item.hasAnswer() && item.answer.size > 0 && item.answerFirstRep.hasValueStringType()) mainResource.addNote(
+                                        Annotation().setText(item.answerFirstRep.valueStringType.value)
+                                    )
                                 }
-                            }
 
-                            else -> {
-                                System.out.println(questionItem.definition)
-                            }
-
-                        }
-                    }
-
-                    if (mainResource is Condition && questionItem.hasDefinition()) {
-                        when (questionItem.definition) {
-                            "Condition.code" -> {
-                                if (item.hasAnswer()) {
-                                    for (answer in item.answer) {
-                                        if (answer.hasValueCoding()) mainResource.code.coding.add(answer.valueCoding)
+                                "interpretation" -> {
+                                    if (item.hasAnswer() && item.answer.size > 0 && item.answerFirstRep.hasValueStringType()) {
+                                        mainResource.addInterpretation(CodeableConcept().setText(item.answerFirstRep.valueStringType.value))
                                     }
                                 }
+                                else -> {
+                                    System.out.println(questionItem.definition)
+                                }
+
                             }
+                        }
 
-                            "Condition.status" -> {
-                                if (item.hasAnswer()) {
-                                    for (answer in item.answer) {
-                                        if (answer.hasValueCoding()) {
-
-                                            (mainResource as Condition).clinicalStatus.coding.add(answer.valueCoding)
+                        if (mainResource is Condition) {
+                            when (url.fragment) {
+                                "code" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueCoding()) mainResource.code.coding.add(answer.valueCoding)
                                         }
                                     }
                                 }
-                            }
 
-                            else -> {
-                                System.out.println(questionItem.definition)
-                            }
+                                "status" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueCoding()) {
 
+                                                (mainResource as Condition).clinicalStatus.coding.add(answer.valueCoding)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                else -> {
+                                    System.out.println(questionItem.definition)
+                                }
+
+                            }
+                        }
+                        if (mainResource is Patient) {
+                            when (url.fragment) {
+                                "identifier" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueStringType()) mainResource.identifier.add(Identifier().setValue(answer.valueStringType.value))
+                                        }
+                                    }
+                                }
+                                "name.given" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueStringType()) mainResource.nameFirstRep.addGiven(answer.valueStringType.value)
+                                        }
+                                    }
+                                }
+                                "name.family" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueStringType()) mainResource.nameFirstRep.setFamily(answer.valueStringType.value)
+                                        }
+                                    }
+                                }
+                                "birthDate" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueDateType()) mainResource.birthDate = answer.valueDateType.value
+                                        }
+                                    }
+                                }
+                                "address.postalCode" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueStringType()) mainResource.addressFirstRep.setPostalCode(answer.valueStringType.value)
+                                        }
+                                    }
+                                }
+                                else -> {
+                                    System.out.println(questionItem.definition)
+                                }
+                            }
+                        }
+                        if (mainResource is RelatedPerson) {
+                            when (url.fragment) {
+                                "identifier" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueStringType()) mainResource.identifier.add(Identifier().setValue(answer.valueStringType.value))
+                                        }
+                                    }
+                                }
+                                "relationship" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueCoding()) mainResource.relationship.add(CodeableConcept().addCoding(answer.valueCoding))
+                                        }
+                                    }
+                                }
+                                else -> {
+                                    System.out.println(questionItem.definition)
+                                }
+                            }
+                        }
+                        if (mainResource is Consent) {
+                            when (url.fragment) {
+                                "provision.class" -> {
+                                    if (item.hasAnswer()) {
+                                        for (answer in item.answer) {
+                                            if (answer.hasValueCoding() && answer.valueCoding.hasCode()) {
+                                                when (answer.valueCoding.code) {
+                                                    "medicines" -> {
+                                                        if (!mainResource.provision.hasAction()) mainResource.provision.action.add(CodeableConcept().addCoding(Coding().setSystem("http://terminology.hl7.org/CodeSystem/consentaction").setCode("correct")))
+                                                        mainResource.provision.class_.add(Coding().setSystem("http://hl7.org/fhir/resource-types").setCode("MedicationRequest"))
+                                                    }
+                                                    "appointments" -> {
+                                                        if (!mainResource.provision.hasAction()) mainResource.provision.action.add(CodeableConcept().addCoding(Coding().setSystem("http://terminology.hl7.org/CodeSystem/consentaction").setCode("correct")))
+                                                        mainResource.provision.class_.add(Coding().setSystem("http://hl7.org/fhir/resource-types").setCode("Appointment"))
+                                                    }
+                                                    "demographics" -> {
+                                                        if (!mainResource.provision.hasAction()) mainResource.provision.action.add(CodeableConcept().addCoding(Coding().setSystem("http://terminology.hl7.org/CodeSystem/consentaction").setCode("correct")))
+                                                        mainResource.provision.class_.add(Coding().setSystem("http://hl7.org/fhir/resource-types").setCode("Patient"))
+                                                    }
+                                                    "records" -> {
+                                                        if (!mainResource.provision.hasAction()) mainResource.provision.action.add(CodeableConcept().addCoding(Coding().setSystem("http://terminology.hl7.org/CodeSystem/consentaction").setCode("access")))
+                                                        mainResource.provision.class_.add(Coding().setSystem("http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem").setCode("urn:ihe:pcc:xds-ms:2007"))
+                                                    }
+                                                }
+
+                                            }
+                                        }
+                                    }
+                                }
+
+                                else -> {
+                                    System.out.println(questionItem.definition)
+                                }
+                            }
                         }
                     }
                 }
