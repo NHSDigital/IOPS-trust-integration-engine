@@ -7,7 +7,7 @@ import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class ServiceRequestPlainProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,

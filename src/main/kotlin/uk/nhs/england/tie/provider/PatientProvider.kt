@@ -14,8 +14,8 @@ import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.component.FHIRDocument
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 import java.io.OutputStream
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @Component
 class PatientProvider(var awsPatient: AWSPatient, var cognitoAuthInterceptor: CognitoAuthInterceptor,

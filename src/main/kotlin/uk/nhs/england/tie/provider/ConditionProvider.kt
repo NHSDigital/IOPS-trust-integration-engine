@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSCondition
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class ConditionProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,

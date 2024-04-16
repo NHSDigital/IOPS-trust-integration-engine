@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSMedicationRequest
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class MedicationRequestProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,

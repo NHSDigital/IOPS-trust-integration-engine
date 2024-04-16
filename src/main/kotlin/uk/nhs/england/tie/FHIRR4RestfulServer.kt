@@ -14,7 +14,7 @@ import uk.nhs.england.tie.interceptor.AWSAuditEventLoggingInterceptor
 import uk.nhs.england.tie.interceptor.CapabilityStatementInterceptor
 import uk.nhs.england.tie.interceptor.ValidationInterceptor
 import java.util.*
-import javax.servlet.annotation.WebServlet
+import jakarta.servlet.annotation.WebServlet
 
 @WebServlet("/FHIR/R4/*", loadOnStartup = 1)
 class FHIRR4RestfulServer(

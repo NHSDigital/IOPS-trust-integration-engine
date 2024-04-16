@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.awsProvider.AWSQuestionnaire
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class QuestionnairePlainProvider (@Qualifier("R4") private val fhirContext: FhirContext,
@@ -40,7 +40,9 @@ class QuestionnairePlainProvider (@Qualifier("R4") private val fhirContext: Fhir
         @OptionalParam(name = Questionnaire.SP_STATUS) status: TokenParam?,
         @OptionalParam(name = Questionnaire.SP_TITLE) title: StringParam?,
         @OptionalParam(name = Questionnaire.SP_VERSION) version: TokenParam?,
-        @OptionalParam(name = Questionnaire.SP_DEFINITION) definition: TokenParam?
+        @OptionalParam(name = Questionnaire.SP_DEFINITION) definition: TokenParam?,
+        @OptionalParam(name = "_getpages")  pages : StringParam?,
+        @OptionalParam(name = "_count")  count : StringParam?
     ): Bundle? {
         val queryString = awsPatient.processQueryString(httpRequest.queryString,null)
         val resource: Resource? = cognitoAuthInterceptor.readFromUrl(httpRequest.pathInfo, queryString,"Questionnaire")

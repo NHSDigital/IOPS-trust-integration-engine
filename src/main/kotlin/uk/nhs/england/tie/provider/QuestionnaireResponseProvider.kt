@@ -18,7 +18,7 @@ import uk.nhs.england.tie.util.FhirSystems
 import java.util.*
 
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class QuestionnaireResponseProvider(

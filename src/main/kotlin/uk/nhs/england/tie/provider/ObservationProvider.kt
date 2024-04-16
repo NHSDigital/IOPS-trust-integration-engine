@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSObservation
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class ObservationProvider (@Qualifier("R4") private val fhirContext: FhirContext,

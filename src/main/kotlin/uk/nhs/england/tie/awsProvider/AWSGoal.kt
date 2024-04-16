@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.configuration.FHIRServerProperties
 import uk.nhs.england.tie.configuration.MessageProperties
 import uk.nhs.england.tie.util.FhirSystems
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class AWSGoal(val messageProperties: MessageProperties, val awsClient: IGenericClient,

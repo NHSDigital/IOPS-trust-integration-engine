@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSCommunication
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class CommunicationProvider( var cognitoAuthInterceptor: CognitoAuthInterceptor,

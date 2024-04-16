@@ -10,7 +10,7 @@ import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSBinary
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class BinaryProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor, val awsBinary: AWSBinary) : IResourceProvider {

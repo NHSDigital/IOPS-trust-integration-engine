@@ -5,7 +5,7 @@ import ca.uhn.fhir.rest.annotation.Search
 import ca.uhn.fhir.rest.param.*
 import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
 

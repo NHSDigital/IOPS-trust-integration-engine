@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSObservation
 import uk.nhs.england.tie.awsProvider.AWSQuestionnaire
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class QuestionnaireProvider (@Qualifier("R4") private val fhirContext: FhirContext,

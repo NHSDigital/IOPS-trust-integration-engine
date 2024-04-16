@@ -7,7 +7,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider
 import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSEncounter
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class EncounterProvider(var awsEncounter: AWSEncounter) : IResourceProvider {

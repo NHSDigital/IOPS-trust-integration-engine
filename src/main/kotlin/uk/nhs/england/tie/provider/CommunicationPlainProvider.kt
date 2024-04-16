@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSCommunication
 import uk.nhs.england.tie.awsProvider.AWSPatient
 import uk.nhs.england.tie.interceptor.CognitoAuthInterceptor
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class CommunicationPlainProvider(var cognitoAuthInterceptor: CognitoAuthInterceptor,

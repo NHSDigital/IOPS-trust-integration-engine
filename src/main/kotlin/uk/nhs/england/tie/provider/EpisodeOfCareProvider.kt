@@ -7,7 +7,7 @@ import ca.uhn.fhir.rest.server.IResourceProvider
 import org.hl7.fhir.r4.model.*
 import org.springframework.stereotype.Component
 import uk.nhs.england.tie.awsProvider.AWSEpisodeOfCare
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @Component
 class EpisodeOfCareProvider(var awsEpisodeOfCare: AWSEpisodeOfCare) : IResourceProvider {

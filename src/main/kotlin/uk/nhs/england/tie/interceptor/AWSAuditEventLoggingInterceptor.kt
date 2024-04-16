@@ -20,9 +20,9 @@ import uk.nhs.england.tie.configuration.MessageProperties
 import uk.nhs.england.tie.util.FhirSystems
 import java.io.IOException
 import java.util.*
-import javax.servlet.ServletException
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.ServletException
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @Interceptor
 class AWSAuditEventLoggingInterceptor(

@@ -1,9 +1,7 @@
 package uk.nhs.england.tie.configuration
 
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.context.properties.ConstructorBinding
 
-@ConstructorBinding
 @ConfigurationProperties(prefix = "fhir")
 data class FHIRServerProperties(
     var server: Server
