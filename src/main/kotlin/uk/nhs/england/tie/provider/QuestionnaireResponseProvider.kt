@@ -169,9 +169,9 @@ class QuestionnaireResponseProvider(
             } else {
                 // Need to capture the mapping here
                 if (questionItem.hasDefinition()) {
-                    var url = URI(questionItem.definition)
-                    var paths = url.path.split("/")
-                    var resource = paths[paths.size - 1].replace("UKCore-", "")
+                    val url = URI(questionItem.definition)
+                    val paths = url.path.split("/")
+                    val resource = paths[paths.size - 1].replace("UKCore-", "")
                     var newResource: Resource? = null
 
                     when (resource) {
@@ -198,8 +198,9 @@ class QuestionnaireResponseProvider(
                     if (newResource !== null &&
                         (mainResource == null || !newResource.fhirType().equals(mainResource.fhirType()))
                         ) {
-                        var entry = BundleEntryComponent()
-                        var uuid = UUID.randomUUID();
+                        processHiddenQuestions(newResource, questionnaire)
+                        val entry = BundleEntryComponent()
+                        val uuid = UUID.randomUUID();
                         entry.fullUrl = "urn:uuid:" + uuid.toString()
                         entry.resource = newResource
                         entry.request.url = newResource.fhirType()
@@ -258,35 +259,35 @@ class QuestionnaireResponseProvider(
                         }
                         if (mainResource is Patient) {
                             when (url.fragment) {
-                                "identifier" -> {
+                                "identifier","Patient.identifier" -> {
                                     if (item.hasAnswer()) {
                                         for (answer in item.answer) {
                                             if (answer.hasValueStringType()) mainResource.identifier.add(Identifier().setValue(answer.valueStringType.value))
                                         }
                                     }
                                 }
-                                "name.given" -> {
+                                "name.given","Patient.name.given" -> {
                                     if (item.hasAnswer()) {
                                         for (answer in item.answer) {
                                             if (answer.hasValueStringType()) mainResource.nameFirstRep.addGiven(answer.valueStringType.value)
                                         }
                                     }
                                 }
-                                "name.family" -> {
+                                "name.family","Patient.name.family"  -> {
                                     if (item.hasAnswer()) {
                                         for (answer in item.answer) {
                                             if (answer.hasValueStringType()) mainResource.nameFirstRep.setFamily(answer.valueStringType.value)
                                         }
                                     }
                                 }
-                                "birthDate" -> {
+                                "birthDate","Patient.birthDate" -> {
                                     if (item.hasAnswer()) {
                                         for (answer in item.answer) {
                                             if (answer.hasValueDateType()) mainResource.birthDate = answer.valueDateType.value
                                         }
                                     }
                                 }
-                                "address.postalCode" -> {
+                                "address.postalCode","Patient.address.postalCode" -> {
                                     if (item.hasAnswer()) {
                                         for (answer in item.answer) {
                                             if (answer.hasValueStringType()) mainResource.addressFirstRep.setPostalCode(answer.valueStringType.value)
@@ -300,14 +301,14 @@ class QuestionnaireResponseProvider(
                         }
                         if (mainResource is RelatedPerson) {
                             when (url.fragment) {
-                                "identifier" -> {
+                                "identifier","RelatedPerson.identifier" -> {
                                     if (item.hasAnswer()) {
                                         for (answer in item.answer) {
                                             if (answer.hasValueStringType()) mainResource.identifier.add(Identifier().setValue(answer.valueStringType.value))
                                         }
                                     }
                                 }
-                                "relationship" -> {
+                                "relationship","RelatedPerson.relationship" -> {
                                     if (item.hasAnswer()) {
                                         for (answer in item.answer) {
                                             if (answer.hasValueCoding()) mainResource.relationship.add(CodeableConcept().addCoding(answer.valueCoding))
@@ -321,7 +322,7 @@ class QuestionnaireResponseProvider(
                         }
                         if (mainResource is Consent) {
                             when (url.fragment) {
-                                "provision.class" -> {
+                                "provision.class","Consent.provision.class" -> {
                                     if (item.hasAnswer()) {
                                         for (answer in item.answer) {
                                             if (answer.hasValueCoding() && answer.valueCoding.hasCode()) {
@@ -379,6 +380,46 @@ class QuestionnaireResponseProvider(
             }
         }
         return null
+    }
+
+    private fun processHiddenQuestions(resource : Resource, questionnaire: Questionnaire) {
+        if (questionnaire.hasItem()) processHiddenItems(resource, questionnaire, questionnaire.item)
+    }
+    private fun processHiddenItems(newResource : Resource, questionnaire: Questionnaire, items: List<Questionnaire.QuestionnaireItemComponent>) {
+        for (item in items) {
+            if (item.hasExtension("http://hl7.org/fhir/StructureDefinition/questionnaire-hidden")
+                && item.hasDefinition()
+                && item.getExtensionByUrl("http://hl7.org/fhir/StructureDefinition/questionnaire-hidden").hasValue()
+                && item.getExtensionByUrl("http://hl7.org/fhir/StructureDefinition/questionnaire-hidden").value is BooleanType) {
+                val url = URI(item.definition)
+                val paths = url.path.split("/")
+                val resource = paths[paths.size - 1].replace("UKCore-", "")
+                if (newResource is Consent && resource.equals("Consent")) {
+                    val consent = newResource as Consent
+                    when (url.fragment) {
+                        "Consent.scope", "scope" -> {
+                            if (item.hasInitial()) {
+                                for (answer in item.initial) {
+                                    if (answer.hasValueCoding()) consent.scope.coding.add(answer.valueCoding)
+                                }
+                            }
+                        }
+                        "Consent.category", "category" -> {
+                            if (item.hasInitial()) {
+                                for (answer in item.initial) {
+                                    if (answer.hasValueCoding()) consent.categoryFirstRep.coding.add(answer.valueCoding)
+                                }
+                            }
+                        }
+                        else -> {
+                            System.out.println(item.definition)
+                        }
+                    }
+                }
+            }
+
+            if (item.hasItem()) processHiddenItems(newResource, questionnaire, item.item)
+        }
     }
 
 
