@@ -15,8 +15,8 @@ management:
 fhir:
   server:
     name: Orchestration Services
-    baseUrl: https://3cdzg7kbj4.execute-api.eu-west-2.amazonaws.com/poc/events
-    version: 7.0.3
+    baseUrl: https://oh5vdeg59i.execute-api.eu-west-2.amazonaws.com
+    version: 7.6.0
     authorize: https://launch.smarthealthit.org/v/r4/auth/authorize
     token: https://launch.smarthealthit.org/v/r4/auth/token
     introspect: https://launch.smarthealthit.org/v/r4/auth/introspect

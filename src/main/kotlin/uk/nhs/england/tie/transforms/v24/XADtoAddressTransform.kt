@@ -1,43 +1,39 @@
-package uk.nhs.england.tie.transforms.v24;
+package uk.nhs.england.tie.transforms.v24
 
-import ca.uhn.hl7v2.model.v24.datatype.XAD;
-import org.apache.commons.collections4.Transformer;
-import org.hl7.fhir.r4.model.Address;
+import ca.uhn.hl7v2.model.v24.datatype.XAD
+import org.apache.commons.collections4.Transformer
+import org.hl7.fhir.r4.model.Address
 
-public class XADtoAddressTransform implements Transformer<XAD, Address> {
-    @Override
-    public Address transform(XAD xad) {
-        Address address = new Address();
-        if (xad.getStreetAddress() != null) {
-            if (xad.getStreetAddress().getDwellingNumber() != null) {
-                address.addLine(xad.getStreetAddress().getDwellingNumber().getValue());
+class XADtoAddressTransform : Transformer<XAD?, Address?> {
+    override fun transform(xad: XAD?): Address? {
+        val address: Address = Address()
+        if (xad != null) {
+            if (xad.streetAddress != null) {
+                if (xad.streetAddress.dwellingNumber != null) {
+                    address.addLine(xad.streetAddress.dwellingNumber.value)
+                }
+                if (xad.streetAddress.streetName != null) {
+                    address.addLine(xad.streetAddress.streetName.value)
+                }
             }
-            if (xad.getStreetAddress().getStreetName() != null) {
-                address.addLine(xad.getStreetAddress().getStreetName().getValue());
+
+            if (xad.city != null) {
+                address.setCity(xad.city.value)
             }
-        }
-        if (xad.getCity()!= null) {
-            address.setCity(xad.getCity().getValue());
-        }
-        if (xad.getStateOrProvince() != null) {
-            address.setDistrict(xad.getStateOrProvince().getValue());
-        }
-        if (xad.getZipOrPostalCode() !=null) {
-            address.setPostalCode(xad.getZipOrPostalCode().getValue());
-        }
-        if (xad.getAddressType() != null && xad.getAddressType().getValue() != null) {
-            switch (xad.getAddressType().getValue()) {
-                case "H":
-                    address.setUse(Address.AddressUse.HOME);
-                    break;
-                case "B":
-                    address.setUse(Address.AddressUse.WORK);
-                    break;
-                case "C":
-                    address.setUse(Address.AddressUse.TEMP);
-                    break;
+            if (xad.stateOrProvince != null) {
+                address.setDistrict(xad.stateOrProvince.value)
+            }
+            if (xad.zipOrPostalCode != null) {
+                address.setPostalCode(xad.zipOrPostalCode.value)
+            }
+            if (xad.addressType != null && xad.addressType.value != null) {
+                when (xad.addressType.value) {
+                    "H" -> address.setUse(Address.AddressUse.HOME)
+                    "B" -> address.setUse(Address.AddressUse.WORK)
+                    "C" -> address.setUse(Address.AddressUse.TEMP)
+                }
             }
         }
-        return address;
+        return address
     }
 }

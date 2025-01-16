@@ -5,19 +5,19 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.2</version>
+        <version>3.2.6</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>uk.nhs.england.tie</groupId>
     <artifactId>iops-integration-engine</artifactId>
-    <version>7.0.3</version>
+    <version>7.6.0</version>
     <name>iops-integration-engine</name>
     <description>IOPS FHIR Integration Engine</description>
     <properties>
         <java.version>20</java.version>
         <kotlin.version>1.9.22</kotlin.version>
-        <fhir.version>7.0.2</fhir.version>
-        <swagger_version>2.2.20</swagger_version>
+        <fhir.version>7.6.0</fhir.version>
+        <swagger_version>2.2.25</swagger_version>
         <parser_version>2.1.20</parser_version>
         <jackson_databind_version>2.17.0</jackson_databind_version>
     </properties>
@@ -175,9 +175,10 @@
             <version>${fhir.version}</version>
         </dependency>
         <dependency>
-            <groupId>ca.uhn.hapi.fhir</groupId>
-            <artifactId>hapi-fhir-validation</artifactId>
-            <version>${fhir.version}</version>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+            <!-- <version>9.8.0-3</version> -->
+            <version>9.5.1-5</version>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
@@ -241,18 +242,30 @@
             <artifactId>json</artifactId>
             <version>20210307</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson_databind_version}</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-models</artifactId>
+            <artifactId>swagger-models-jakarta</artifactId>
             <version>${swagger_version}</version>
         </dependency>
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-core</artifactId>
+            <artifactId>swagger-core-jakarta</artifactId>
             <version>${swagger_version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations-jakarta -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations-jakarta</artifactId>
+            <version>${swagger_version}</version>
+        </dependency>
+
 
         <!-- https://mvnrepository.com/artifact/io.swagger.parser.v3/swagger-parser -->
         <dependency>
@@ -268,16 +281,39 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.6.4</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>2.5.5</version>
         </dependency>
+
+        <!-- https://medium.com/@phasslr/access-microsoft-excel-from-java-the-low-budget-way-6b57eece4204 -->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.13.0</version>
+        </dependency>
+
+        <!-- HL7 v2 -->
+
+        <!-- https://mvnrepository.com/artifact/ca.uhn.hapi/hapi -->
+        <dependency>
+            <groupId>ca.uhn.hapi</groupId>
+            <artifactId>hapi</artifactId>
+            <version>2.3</version>
+            <type>pom</type>
+        </dependency>
+
+        <dependency>
+            <groupId>ca.uhn.hapi</groupId>
+            <artifactId>hapi-structures-v251</artifactId>
+            <version>2.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>ca.uhn.hapi</groupId>
+            <artifactId>hapi-structures-v24</artifactId>
+            <version>2.5.1</version>
+        </dependency>
+
         <!-- For stylesheet transform -->
         <dependency>
             <groupId>xalan</groupId>
@@ -301,7 +337,6 @@
     <build>
         <finalName>fhir-tie</finalName>
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
-        <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

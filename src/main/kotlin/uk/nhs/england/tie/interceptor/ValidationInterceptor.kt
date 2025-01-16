@@ -161,20 +161,21 @@ class ValidationInterceptor(val ctx : FhirContext, val messageProperties: Messag
 
             }
             catch (ex : IOException) {
-                val `is` = InputStreamReader(conn.errorStream)
-                try {
-                    val rd = BufferedReader(`is`)
-                    val postedResource: Resource = ctx.newJsonParser().parseResource(IOUtils.toString(rd)) as Resource
-                    if (postedResource != null && postedResource is Resource) {
-                        method.resource = postedResource
+
+                    val `is` = InputStreamReader(conn.errorStream)
+                    try {
+                        val rd = BufferedReader(`is`)
+                        val postedResource: Resource =
+                            ctx.newJsonParser().parseResource(IOUtils.toString(rd)) as Resource
+                        if (postedResource != null && postedResource is Resource) {
+                            method.resource = postedResource
+                        }
+                        return method
+                    } catch (exOther: Exception) {
+                        throw ex
+                    } finally {
+                        `is`.close()
                     }
-                    return method
-                }
-                catch (exOther: Exception) {
-                    throw ex
-                } finally {
-                    `is`.close()
-                }
 
             }
             catch (ex: Exception) {

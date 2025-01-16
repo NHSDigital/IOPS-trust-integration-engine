@@ -66,7 +66,8 @@ class ValueSetProvider (@Qualifier("R4") private val fhirContext: FhirContext,
         httpRequest : HttpServletRequest,
         @ResourceParam valueSet: ValueSet?,
         @OperationParam(name = ValueSet.SP_URL) url: TokenParam?,
-        @OperationParam(name = "filter") filter: StringParam?): ValueSet? {
+        @OperationParam(name = "filter") filter: StringParam?,
+        @OperationParam(name = "_total") total: StringParam?): ValueSet? {
 
         val resource: Resource? = cognitoAuthInterceptor.readFromUrl(messageProperties.getValidationFhirServer()+"/FHIR/R4",httpRequest.pathInfo, httpRequest.queryString,"ValueSet")
         if (resource != null && resource is ValueSet) {
